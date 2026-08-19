@@ -1,0 +1,187 @@
+================================================================================
+COMO FUNCIONA LA APP DEL MINI MARKET
+(explicado facil, en espanol)
+================================================================================
+
+Imagina que la tienda es una caja grande de juguetes.
+La app es un cuaderno magico que recuerda:
+  - que hay en la caja
+  - cuando entra algo nuevo
+  - cuando alguien se lleva algo
+
+
+--------------------------------------------------------------------------------
+1. LLEGA EL CAMION
+--------------------------------------------------------------------------------
+
+Es lunes por la manana.
+
+El dueno enciende el computador de la tienda.
+Hace clic en el dibujo que dice "Mini_market_system".
+Entra con su nombre y su clave.
+
+Llega un camion con Coca-Cola:
+
+  - 2 paquetes de Coca-Cola de 1 litro
+    (cada paquete tiene 6 botellas = 12 botellas)
+  - 1 paquete de Coca-Cola de 2 litros
+    (6 botellas)
+
+El dueno tiene una pistola que lee el codigo de barras.
+Esa pistola es como un dedo que escribe solo.
+El la apunta a la botella, "piip", y el computador ya sabe
+que producto es.
+
+
+--------------------------------------------------------------------------------
+2. LA PRIMERA VEZ HAY QUE PRESENTAR EL PRODUCTO
+--------------------------------------------------------------------------------
+
+La pistola es lista, pero no es magica.
+
+Si la app nunca vio esa Coca-Cola, no sabe su nombre
+ni cuanto cuesta.
+
+Entonces, SOLO LA PRIMERA VEZ, el dueno la anota:
+
+  Coca-Cola 1 litro
+    - el codigo de la botella (lo pone la pistola)
+    - cuanto el la compra: 6 dirhams
+    - cuanto el la vende: 8 dirhams
+    - si quedan 10 o menos, avisar: "compra mas"
+
+Hace lo mismo con la Coca-Cola de 2 litros.
+Esa tiene OTRO codigo. No es la misma.
+
+Despues de eso, nunca mas escribe el nombre.
+Solo hace "piip" con la pistola.
+
+
+--------------------------------------------------------------------------------
+3. LAS BOTELLAS ENTRAN A LA TIENDA
+--------------------------------------------------------------------------------
+
+El dueno abre la pagina que dice "Compras" (llegada).
+
+  1. "Piip" en una botella de 1 litro.
+     La app dice: Coca-Cola 1L, cantidad 1.
+  2. El cambia el numero a 12. (llego un monton)
+  3. "Piip" en una botella de 2 litros.
+     El pone cantidad 6.
+  4. Hace clic en "Recibir".
+
+La app hace tres cosas juntas, como un solo paso:
+
+  - guarda el papel de la compra
+  - las botellas de 1L pasan de 0 a 12
+  - las botellas de 2L pasan de 0 a 6
+  - escribe en el cuaderno: "entraron 12" y "entraron 6"
+
+Si algo sale mal, no guarda NADA.
+Asi nunca pasa que diga "compre" pero las botellas no estan.
+
+
+--------------------------------------------------------------------------------
+4. UN CLIENTE COMPRA
+--------------------------------------------------------------------------------
+
+Por la tarde llega un cliente.
+
+El cajero abre la caja (POS).
+Primero cuenta el dinero que ya hay, por ejemplo 200 dirhams.
+
+El cliente quiere:
+  - 2 botellas de 1 litro
+  - 1 botella de 2 litros
+
+  1. "Piip" 1L
+  2. "Piip" 1L otra vez
+  3. "Piip" 2L
+
+La app suma:
+  2 x 8 = 16
+  1 x 11 = 11
+  Total = 27 dirhams
+
+El cliente paga 50.
+La app dice: "devuelve 23".
+El cajero hace clic en "Pagar".
+
+Otra vez, todo junto:
+
+  - guarda el ticket
+  - las de 1L bajan de 12 a 10
+  - las de 2L bajan de 6 a 5
+  - el cuaderno escribe: "salieron 2" y "salio 1"
+
+Si el cajero intenta vender 20 y solo hay 10,
+la app dice que NO. No se puede vender lo que no hay.
+
+
+--------------------------------------------------------------------------------
+5. LA SEMANA QUE VIENE
+--------------------------------------------------------------------------------
+
+Llega mas Coca-Cola de 1 litro.
+
+Ya esta en la app. No hay que escribirla otra vez.
+
+"Piip", pone 6, clic en Recibir.
+Las botellas suben de 10 a 16.
+
+Listo.
+
+
+--------------------------------------------------------------------------------
+6. AL FINAL DEL DIA
+--------------------------------------------------------------------------------
+
+El dueno cierra la caja.
+
+La app compara:
+  - el dinero de la manana
+  - mas lo que vendio
+  - menos el cambio que dio
+  - y el dinero que hay ahora en el cajon
+
+En la pantalla grande ve:
+  - cuanto vendio hoy
+  - cuantos tickets hizo
+  - si alguna cosa esta acabandose (rojo = hay que comprar)
+
+Al final, copia un archivito (la base de datos) a una USB.
+Eso es por si el computador se rompe.
+Es como una foto del cuaderno magico.
+
+
+--------------------------------------------------------------------------------
+7. TODA LA HISTORIA EN UNA LINEA
+--------------------------------------------------------------------------------
+
+  Camion llega
+      -> la primera vez: anotar el producto
+      -> "piip" + cuantas botellas -> Recibir
+      -> las botellas SUBEN
+      -> luego el cliente
+      -> "piip" + pagar
+      -> las botellas BAJAN
+      -> cerrar la caja y guardar una copia
+
+
+--------------------------------------------------------------------------------
+LA REGLA FACIL
+--------------------------------------------------------------------------------
+
+  Comprar  = las cosas ENTRAN a la tienda.
+  Vender   = las cosas SALEN de la tienda.
+  La pistola solo dice QUE cosa es.
+  La app recuerda CUANTAS hay, y el precio.
+
+Todas las botellas de 1 litro tienen el MISMO codigo.
+Todas las de 2 litros tienen OTRO codigo.
+La pistola no lee cada botella como unica.
+Lee el tipo: "esta es de 1 litro" o "esta es de 2 litros".
+
+================================================================================
+FIN
+================================================================================

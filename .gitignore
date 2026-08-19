@@ -1,0 +1,17 @@
+.DS_Store
+Thumbs.db
+*.log
+.cursor/
+.idea/
+.vscode/
+*.sqlite
+*.sqlite-journal
+.env
+.env.backup
+.env.production
+node_modules/
+vendor/
+/Mini_market_system/public/build
+/Mini_market_system/public/hot
+/Mini_market_system/public/storage
+/Mini_market_system/storage/*.key

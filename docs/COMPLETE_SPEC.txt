@@ -1,0 +1,548 @@
+================================================================================
+MINI_MARKET_SYSTEM
+Complete specification for a LIVE shop
+Stack: Laravel 12 + React + Inertia.js + SQLite + Tailwind CSS
+================================================================================
+
+This file replaces the short PDF as the real working spec.
+It keeps the same logic (buy = stock in, sell = stock out) and adds everything
+needed for a real mini market: barcode scan, prices, quantity, caisse, alerts.
+
+HOW WE WORK
+  1. Build the app on YOUR personal PC (this project).
+  2. When it is ready, YOU install it ONCE on the shop PC.
+  3. The owner only double-clicks a shortcut. He never installs PHP/Node.
+  4. No paid server. No domain. No monthly hosting.
+  5. Scanner works on localhost. Same as after deploy. It is just a keyboard.
+  6. Optional LATER: wrap the same app as a Windows .exe (see section 15).
+     V1 is a local web app + desktop shortcut. Not an .exe yet.
+
+
+--------------------------------------------------------------------------------
+1. HOW THE BARCODE SCANNER CONNECTS TO THE WEB APP
+--------------------------------------------------------------------------------
+
+This is NOT a special integration. No SDK. No driver. No cable to the server.
+
+A USB barcode scanner behaves like a KEYBOARD.
+
+  [USB scanner] --cable--> [the shop computer] --browser--> [our web app]
+
+What happens when the owner scans a product:
+
+  1. The scanner is plugged into the SAME computer that has the website open
+     (USB port, like a mouse or keyboard).
+  2. Chrome (or Edge) is open on our app, on the Purchase page or the POS page.
+  3. The page keeps a barcode input focused (always ready to receive a scan).
+  4. Owner points the scanner at the barcode and presses the trigger.
+  5. The scanner TYPES the numbers very fast, then presses ENTER.
+     Example: 5 4 4 9 0 0 0 0 0 0 9 9 6  [Enter]
+  6. Our JavaScript hears that Enter, reads the code, searches the product,
+     and adds it with quantity.
+
+The scanner never talks to Laravel, the database, or the internet.
+It only types into the browser, the same way a keyboard would.
+
+It works on localhost while we build, and on the shop PC when live.
+No need to "deploy online" for the scanner to work.
+
+FIRST TIME SETUP IN THE SHOP (2 minutes):
+  - Plug the USB scanner into the cashier PC / laptop.
+  - Windows will detect it as a keyboard. No software to install.
+  - Open the web app in Chrome.
+  - Click inside the scan box (or the page focuses it automatically).
+  - Scan any product to test. If the code appears, it is connected.
+
+IF THEY USE A TABLET:
+  - Use a Bluetooth scanner.
+  - Pair it in tablet settings as a keyboard.
+  - Same behaviour: it types the barcode + Enter.
+
+BACKUP IF THE SCANNER BREAKS:
+  - Cashier can type the barcode by hand, or search by product name.
+  - Phone/webcam camera scan can be added later as extra. Not required for v1.
+
+IMPORTANT:
+  All 1L Coca-Cola bottles share ONE barcode.
+  All 2L Coca-Cola bottles share a DIFFERENT barcode.
+  The scanner identifies WHICH PRODUCT it is, not a unique bottle.
+
+
+--------------------------------------------------------------------------------
+2. PROJECT GOAL
+--------------------------------------------------------------------------------
+
+Build a professional stock + caisse application for a real mini market.
+
+- Owner receives deliveries with a barcode scanner.
+- Cashier sells with a barcode scanner (POS).
+- Stock always stays correct.
+- Architecture must be reusable later for other shops (pharmacy, clothing, etc.).
+
+
+--------------------------------------------------------------------------------
+3. AGREED STACK
+--------------------------------------------------------------------------------
+
+  Backend:     Laravel 12
+  Frontend:    React + Inertia.js
+  Database:    SQLite (one file, easy to copy and backup on the shop PC)
+  CSS:         Tailwind CSS
+  Auth:        Laravel Breeze / Fortify style (Inertia React)
+  Versioning:  Git
+
+  Why SQLite, not PostgreSQL:
+    One shop, one PC, no budget for a server.
+    SQLite = one file inside the project. Copy the folder, the data comes with it.
+    Backup = copy that file to a USB or Google Drive.
+    If we ever host online or add several PCs, we can switch to PostgreSQL later
+    without rewriting the app (Laravel makes that change small).
+
+Architecture rules:
+  - Fat services, thin controllers
+  - PurchaseService, SaleService, StockService
+  - Form Requests for validation
+  - Policies for permissions
+  - Eloquent relationships
+  - Database transactions for every stock change
+  - Reusable React components (BarcodeInput, ProductSelect, DataTable, etc.)
+  - Stock movements are the source of truth
+  - products.stock_quantity is a cached number updated ONLY by StockService
+
+
+--------------------------------------------------------------------------------
+4. MAIN MODULES
+--------------------------------------------------------------------------------
+
+  1. Authentication & Roles
+  2. Dashboard
+  3. Categories
+  4. Suppliers
+  5. Products (barcode, prices, quantity, min stock)
+  6. Purchases (receive stock by scan)
+  7. Sales / POS (sell by scan)
+  8. Stock
+  9. Stock Movements
+  10. Inventory adjustment (damage, loss, correction)
+  11. Cash sessions (ouverture / fermeture caisse)
+  12. Reports
+  13. Settings
+  14. Users & Permissions
+
+
+--------------------------------------------------------------------------------
+5. BARCODE RULES (HOW PRODUCTS WORK)
+--------------------------------------------------------------------------------
+
+  One product = one size = one barcode = one stock quantity.
+
+  Example:
+    Coca-Cola 1L     barcode 5449000000996     stock 24 bottles     sale price 150
+    Coca-Cola 1.5L   barcode 5449000001502     stock 12 bottles     sale price 180
+    Coca-Cola 2L     barcode 5449000002004     stock 18 bottles     sale price 220
+
+  Receiving a pack of 6 x 1L:
+    Scan the 1L barcode ONCE, then set quantity = 6.
+    (Or scan 6 times; each scan adds +1.)
+    Stock of Coca-Cola 1L increases by 6.
+
+  Selling 2 bottles of 1L:
+    Scan the 1L barcode twice, or scan once and set qty 2.
+    Stock decreases by 2.
+
+  First time a new product arrives:
+    Owner creates it ONCE (name, barcode, buy price, sell price, min stock).
+    After that, only scanning + quantity. No more typing the name.
+
+
+--------------------------------------------------------------------------------
+6. DATABASE TABLES
+--------------------------------------------------------------------------------
+
+users
+  id, name, username, password, role_id, is_active, remember_token, timestamps
+  (login = username + password, no email)
+
+roles
+  id, name, slug          (admin, owner, cashier)
+
+permissions
+  id, name, slug
+
+permission_role
+  permission_id, role_id
+
+categories
+  id, name, slug, is_active, timestamps
+
+suppliers
+  id, name, phone, address, notes, is_active, timestamps
+
+products
+  id
+  category_id
+  name                          (Coca-Cola 1L)
+  barcode                       UNIQUE, nullable if no barcode yet
+  sku                           optional internal code
+  cost_price                    buy price from supplier
+  sale_price                    sell price to customer
+  stock_quantity                current qty (integer or decimal for kg later)
+  min_stock                     alert when stock <= this number
+  unit                          piece, kg, litre, pack  (default: piece)
+  image_path                    optional
+  is_active
+  timestamps
+
+purchases                       (a delivery from a supplier)
+  id
+  reference                     unique, auto (PUR-2026-0001)
+  supplier_id
+  user_id                       who received it
+  invoice_number                optional, from supplier paper
+  status                        draft, received, cancelled
+  purchase_date
+  notes
+  total
+  timestamps
+
+purchase_items
+  id
+  purchase_id
+  product_id
+  quantity                      how many received (example: 6)
+  unit_cost                     buy price at that moment
+  line_total                    quantity * unit_cost
+
+sales                           (a ticket at the caisse)
+  id
+  reference                     unique, auto (SAL-2026-0001)
+  user_id                       cashier
+  cash_session_id
+  status                        completed, cancelled
+  sale_date
+  subtotal
+  discount
+  total
+  amount_paid                   cash given by customer
+  change_amount                 always cash. no card.
+  timestamps
+
+sale_items
+  id
+  sale_id
+  product_id
+  quantity
+  unit_price                    sale price at that moment
+  line_total                    quantity * unit_price
+
+stock_movements                 (ledger: never delete, source of truth)
+  id
+  product_id
+  user_id
+  type                          purchase, sale, adjustment, return
+  direction                     in, out
+  quantity                      always positive
+  quantity_before
+  quantity_after
+  unit_cost                     optional, for valuation
+  reference_type                Purchase, Sale, or null for manual adjustment
+  reference_id
+  reason                        "purchase", "sale", "damaged", "count correction"
+  timestamps
+
+cash_sessions                   (one open caisse per cashier)
+  id
+  user_id
+  opened_at
+  closed_at
+  opening_amount                cash in drawer at start
+  closing_amount                cash counted at end
+  expected_amount
+  difference
+  status                        open, closed
+  notes
+  timestamps
+
+settings
+  id, key, value
+  Examples:
+    shop_name, shop_address, shop_phone, currency, currency_symbol,
+    ticket_footer, low_stock_enabled
+
+--------------------------------------------------------------------------------
+7. ROLES
+--------------------------------------------------------------------------------
+
+  Admin / Owner
+    Everything: products, purchases, sales, stock, users, reports, settings
+
+  Cashier
+    POS (sell), see product stock, open/close own caisse
+    Cannot change prices, cannot receive purchases, cannot delete products
+
+  (Can add Manager later if needed)
+
+
+--------------------------------------------------------------------------------
+8. SCREEN FLOWS
+--------------------------------------------------------------------------------
+
+A) RECEIVE STOCK (Purchases)  — owner + scanner
+
+  1. Open Purchases -> New delivery
+  2. Choose supplier
+  3. Cursor sits in the barcode box
+  4. Scan Coca-Cola 1L
+  5. Product appears on the list with quantity 1, cost price filled
+  6. Owner changes quantity to 6 (pack of 6)
+  7. Scan Coca-Cola 2L, set quantity, etc.
+  8. If barcode is unknown: popup "Product not found" -> create it now
+     (name, barcode already filled, cost price, sale price, min stock)
+  9. Click Receive
+ 10. Transaction:
+       save purchase + items
+       for each line: StockService.increase()
+       write stock_movements
+ 11. Done. Stock is updated.
+
+B) SELL (POS)  — cashier + scanner
+
+  1. Open POS (caisse must be open)
+  2. Cursor sits in the barcode box
+  3. Scan products. Each scan adds +1 to the cart (or +qty)
+  4. Total updates live
+  5. Payment is always cash
+  6. Enter amount paid, show change
+  7. Click Pay
+  8. Transaction:
+       refuse if stock is not enough
+       save sale + items
+       for each line: StockService.decrease()
+       write stock_movements
+  9. Ticket can be printed later (v1 can show a printable receipt page)
+
+C) CREATE PRODUCT (first time only)
+
+  Name, category, barcode (or scan to fill it), cost price, sale price,
+  min stock, unit, starting quantity optional.
+
+D) STOCK
+
+  List of products with current qty, barcode, min stock.
+  Red row if qty <= min_stock.
+  Click a product -> movement history.
+
+E) ADJUSTMENT
+
+  Damaged / lost / count correction.
+  Reason required.
+  Goes through StockService + stock_movements. Never edit qty by hand in DB.
+
+F) DASHBOARD
+
+  Today sales total
+  Today tickets count
+  Low stock list
+  Top selling products
+  Stock value (sum of qty * cost_price)
+
+G) REPORTS
+
+  Sales by day / period
+  Purchases by supplier
+  Profit estimate (sale_price - cost_price) * qty sold
+  Stock movements
+  Low stock
+  Cash session report (opening, sales cash, expected, counted)
+
+
+--------------------------------------------------------------------------------
+9. HARD RULES FOR STOCK
+--------------------------------------------------------------------------------
+
+  - Never update products.stock_quantity except inside StockService.
+  - Every purchase receive, sale, or adjustment runs in a DB transaction.
+  - If sale would make stock < 0, block it (unless settings allow negative later).
+  - stock_movements are never deleted.
+  - Same barcode cannot be used on two products.
+
+
+--------------------------------------------------------------------------------
+10. HARDWARE IN THE SHOP + SCANNER PRICE (MOROCCO)
+--------------------------------------------------------------------------------
+
+  Required:
+    - 1 computer or laptop at the caisse (Windows)
+    - 1 USB barcode scanner
+    - Chrome or Edge
+    - NO internet required for daily sales (app runs on that PC)
+
+  Optional later:
+    - Receipt printer
+    - Cash drawer
+    - Second screen
+    - Bluetooth scanner for a tablet
+
+  Scanner prices in Morocco (approx., Jumia / shops 2026):
+    Cheap USB 1D generic          300–450 MAD     enough to start
+    USB 1D/2D generic             330–700 MAD     a bit better
+    Honeywell USB pro             700–1250 MAD    more solid
+
+  Buy: USB wired 1D around 350–500 MAD.
+  Bottle barcodes (EAN-13) are 1D. No special brand needed.
+
+
+--------------------------------------------------------------------------------
+10b. HOW THE APP RUNS ON THE SHOP PC (V1 PLAN)
+--------------------------------------------------------------------------------
+
+  This is a LOCAL app. Not a website on the internet.
+
+    Your PC (build)              Shop PC (use)
+    PHP + Node + Git             PHP (Laragon) only
+    you write code               owner double-clicks shortcut
+    npm run build                Node is NOT installed
+    SQLite database file         same file, copied on USB
+
+  The owner does NOT install React, Node, or Composer.
+  You do the install once. After that he only opens the shortcut.
+
+  STEP A — on YOUR PC, when the app is finished
+    1. Run: npm run build
+       (this turns React into normal JS/CSS. Shop never needs Node.)
+    2. Copy the whole project folder to a USB stick
+       (including vendor, public/build, and the SQLite database file)
+
+  STEP B — on the SHOP PC, you do this once
+    1. Install Laragon (one Windows installer = PHP + local server)
+    2. Paste the project folder into Laragon
+    3. Create/copy .env, run: php artisan migrate
+    4. Create a desktop shortcut named "Mini_market_system" that:
+         - starts Laragon
+         - opens Chrome on http://localhost
+    5. Plug the USB scanner into that PC
+    6. Test: open the shortcut, scan a product
+
+  STEP C — every day for the owner
+    Double-click "Mini_market_system".
+    Scan. Sell. Close the window at night.
+
+  BACKUP (mandatory)
+    Copy the SQLite file (database/database.sqlite) to a USB or Google Drive
+    every day. If the PC dies, restore that file on another PC + Laragon.
+
+  WHAT WE DO NOT DO IN V1
+    - No paid hosting
+    - No domain name
+    - No .exe yet (that is optional later, section 15)
+    - No PostgreSQL on the shop PC
+
+
+--------------------------------------------------------------------------------
+10c. YOUR PC vs SHOP PC
+--------------------------------------------------------------------------------
+
+  Your PC (developer)              Shop PC (owner)
+  -------------------------------- --------------------------------
+  Laravel + React source           same app, already built
+  Node.js + npm                    NOT needed
+  Composer                         NOT needed (vendor already copied)
+  php artisan serve / Laragon      Laragon + shortcut
+  Git                              not needed for him
+  scanner optional for tests       USB scanner required
+  dummy products                   real shop products + real stock
+
+
+--------------------------------------------------------------------------------
+11. WHAT IS NOT IN V1 (LATER / ERP)
+--------------------------------------------------------------------------------
+
+  - Multi-shop / multi-warehouse
+  - Expiry dates / batches (pharmacy)
+  - Size/color variants (clothing)
+  - Recipes (restaurant)
+  - Supplier credit / unpaid invoices module
+  - Customer accounts
+  - Online store
+  - Camera barcode as main method (USB scanner is the main method)
+  - Windows .exe wrapper (NativePHP) — optional after V1 works
+  - PostgreSQL / paid hosting / domain — not needed for one shop PC
+
+
+--------------------------------------------------------------------------------
+12. ROADMAP
+--------------------------------------------------------------------------------
+
+  1.  Project setup (Laravel 12, React, Inertia, SQLite, Tailwind, Git)
+  2.  Database migrations (full schema above)
+  3.  Authentication & roles
+  4.  Settings
+  5.  Categories CRUD
+  6.  Suppliers CRUD
+  7.  Products CRUD + barcode field + scan-to-fill
+  8.  StockService + stock movements
+  9.  Purchases module (scan + quantity + receive)
+  10. Cash sessions
+  11. Sales / POS module (scan + pay)
+  12. Dashboard
+  13. Reports
+  14. Permissions polish + testing
+
+Milestones
+  M1  Auth & Dashboard shell
+  M2  Categories & Suppliers
+  M3  Products (barcode, prices, min stock)
+  M4  Purchases (scan receive)
+  M5  Sales / POS (scan sell)
+  M6  Stock history & adjustments
+  M7  Cash sessions & Reports
+  M8  Permissions & live testing with a real scanner
+
+
+--------------------------------------------------------------------------------
+13. LONG-TERM VISION
+--------------------------------------------------------------------------------
+
+This remains the foundation of a small ERP.
+Most modules (auth, products, purchases, sales, stock, reports) can be reused
+for pharmacies, restaurants, clothing stores, by adding extra fields later
+WITHOUT changing the buy/sell/stock logic.
+
+
+--------------------------------------------------------------------------------
+14. OPTIONAL LATER: WINDOWS .EXE (NOT V1)
+--------------------------------------------------------------------------------
+
+  V1 = local website + shortcut. Owner opens Chrome on localhost.
+  Later we CAN wrap the SAME app as MiniMarket.exe (desktop icon, own window).
+
+  What an .exe would mean:
+    It is still our Laravel + React app.
+    We put PHP + the app + a small browser inside one Windows program.
+    Owner double-clicks MiniMarket.exe.
+    A window opens that LOOKS like a normal app (WhatsApp, Word).
+    He does not open Chrome. He does not type localhost.
+    The scanner still works the same (it types into that window).
+
+  Tool for this: NativePHP (Laravel desktop wrapper).
+  This is extra work. We do it ONLY after the shop app works locally.
+
+  We do NOT start tomorrow with an .exe.
+  Tomorrow we start the web app on your PC.
+
+
+--------------------------------------------------------------------------------
+15. START TOMORROW
+--------------------------------------------------------------------------------
+
+  First task: project setup on YOUR PC
+    Laravel 12 + React + Inertia + SQLite + Tailwind + Git
+
+  Then follow the roadmap (auth, categories, products + barcode, purchases,
+  POS, stock, reports).
+
+  Shop PC install happens at the END, when the app is ready to give him.
+
+================================================================================
+END OF SPEC
+================================================================================
