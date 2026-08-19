@@ -5,7 +5,7 @@ import { Input } from '@/Components/ui/input';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
-export default function ForgotPassword({ status }: { status?: string }) {
+export default function ForgotPassword() {
     const { data, setData, post, processing, errors } = useForm({
         email: '',
     });
@@ -24,12 +24,6 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 address and we will email you a password reset link that will
                 allow you to choose a new one.
             </div>
-
-            {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
 
             <form onSubmit={submit} className="space-y-4">
                 <div className="space-y-2">

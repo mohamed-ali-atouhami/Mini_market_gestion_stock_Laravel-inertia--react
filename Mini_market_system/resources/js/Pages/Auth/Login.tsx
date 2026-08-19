@@ -1,11 +1,13 @@
+import FlashToasts from '@/Components/FlashToasts';
 import { LoginForm } from '@/Components/login-form';
 import { Head } from '@inertiajs/react';
 import { ShoppingBasket } from 'lucide-react';
 
-export default function LoginPage({ status }: { status?: string }) {
+export default function LoginPage() {
     return (
         <div className="flex min-h-svh flex-col items-center justify-center bg-muted px-6 py-12 md:px-10">
             <Head title="Log in" />
+            <FlashToasts />
 
             <div className="flex w-full max-w-md flex-col items-center gap-8">
                 <div className="flex items-center gap-2.5">
@@ -17,7 +19,7 @@ export default function LoginPage({ status }: { status?: string }) {
                     </span>
                 </div>
 
-                <LoginForm className="w-full" status={status} />
+                <LoginForm className="w-full" />
             </div>
         </div>
     );

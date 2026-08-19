@@ -1,6 +1,6 @@
 # Mini_market_system – Development Roadmap
 
-**Last updated:** 18 August 2026 (Milestone 3 done)
+**Last updated:** 19 August 2026 (Milestone 4 done; next is Milestone 5)
 
 ---
 
@@ -12,13 +12,13 @@
 | **1 – Foundations** (Laravel 12, Inertia, React, Tailwind, SQLite, shadcn, TypeScript) | ✅ Done |
 | **2 – Auth & roles** (username login, owner/cashier, seed owner, owner creates users) | ✅ Done |
 | **3 – Database tables** (products, purchases, sales, stock…) | ✅ Done |
-| **4 – Categories / suppliers / products + barcode** | ⬜ Not started |
+| **4 – Categories / suppliers / products + barcode** | ✅ Done |
 | **5 – Purchases (stock in)** | ⬜ Not started |
 | **6 – POS / caisse (stock out, cash only)** | ⬜ Not started |
 | **7 – Dashboard, stock history, reports** | ⬜ Not started |
 | **8 – Shop PC install + live scanner test** | ⬜ Not started |
 
-### Done in the code (Milestone 0 + 1 + 2 + 3)
+### Done in the code (Milestone 0 + 1 + 2 + 3 + 4)
 
 - Spec files: `COMPLETE_SPEC.txt`, `docs/DATABASE_COLUMNS.md`, `docs/COMO_FUNCIONA_LA_APP.txt`
 - Laravel **12.66** in `Mini_market_system/` via Composer (`composer create-project`)
@@ -36,18 +36,26 @@
 - Demo seed: Drinks / Food / Cleaning, one supplier, Coca-Cola 1L + 2L
 - Payments will be **cash only**
 - App runs with `php artisan serve` + `npm run dev`
+- **19 August 2026 (today):**
+  - shadcn **sidebar** using TMS navigation logic (`AppSidebar`: Dashboard + owner-only Users)
+  - Authenticated layout: page content sits in `SidebarInset` (no longer under the sidebar)
+  - Reusable Users table: search, sort, filters, pagination, create/edit modal
+  - Fixed sort / ⋮ Edit / search (`Button` + `Input` forward refs; edit dialog outside the dropdown; `@/Components/ui/input` in `TableSearch`)
+  - First git commit + GitHub remote: [Mini_market_gestion_stock_Laravel-inertia--react](https://github.com/mohamed-ali-atouhami/Mini_market_gestion_stock_Laravel-inertia--react)
+  - Bugbot review of the initial commit: no bugs
+  - Categories / suppliers / products screens (search, sort, filters, Active/Disabled, barcode scan-to-fill)
+  - Sonner toasts for flash messages (`FlashToasts`)
 
 ### Not done yet (the real shop)
 
-- Screens to create categories, suppliers, products
 - Scanner receive / POS sell
 - Reports and shop-PC install
 
 ### Next step
 
-**Milestone 4 – Master data**
+**Milestone 5 – Stock engine & purchases**
 
-Categories, suppliers, and products screens (barcode, prices, min stock). Do **not** start purchases or POS before the owner can create a product.
+`StockService` (only place that changes stock) and the receive-delivery screen. Do **not** start POS before StockService exists.
 
 ---
 
@@ -56,6 +64,9 @@ Categories, suppliers, and products screens (barcode, prices, min stock). Do **n
 - **Milestone:** A checkpoint that marks the completion of a meaningful chunk of work. We do not start the next milestone until the current one is usable and tested.
 - **Stock movement:** A permanent history line that says stock went IN (purchase) or OUT (sale / adjustment). Movements are the source of truth. The number on the product is only a cache.
 - **HID scanner:** A USB barcode scanner that behaves like a keyboard. It types the barcode and presses Enter. No special driver. Works on localhost.
+- **`is_active`:** Everyday “delete” in V1. The row stays in the table and still shows on the list as Disabled. POS / login ignore it. Uncheck to hide, check again to restore. Not the same as removing the row.
+- **Soft delete (`deleted_at`):** Laravel hides the row from normal queries. It looks deleted but the row is still in the database. **Do not use in V1** — it duplicates `is_active` and fights unique barcodes (a “deleted” Coca-Cola 1L would still block a new one).
+- **Safe delete:** A real `DELETE` that removes the row **only if nothing uses it**. Unused typo product / empty category → gone. Product that was purchased or sold → refuse; keep the row and use `is_active`. Owner only. See §6.
 
 ---
 
@@ -145,7 +156,7 @@ Categories, suppliers, and products screens (barcode, prices, min stock). Do **n
 - Frontend converted to **TypeScript**.
 - Public Welcome page removed. `/` redirects to login or dashboard.
 - Public Register removed.
-- **Not in M1:** Git first commit (do when you ask). Username login (M2).
+- **Not in M1:** Username login (M2). Git first commit done 19 August 2026.
 - **Deliverables:** App runs. Login page. SQLite file. shadcn + TS. ✅
 
 ### Milestone 2 – Auth & Roles (Weeks 1–2) ✅ *Done*
@@ -157,6 +168,7 @@ Categories, suppliers, and products screens (barcode, prices, min stock). Do **n
 - Cashier cannot create users, change prices, receive purchases, or delete products.
 - Middleware / gates on routes.
 - **Deliverables:** Sign in / sign out with username. Role-restricted menus. Seeded owner. Owner can add a cashier. ✅
+- **19 Aug polish:** shadcn sidebar (TMS logic), working Users table (search / sort / filter / pagination / edit modal).
 
 ### Milestone 3 – Core Data Models (Week 2) ✅ *Done*
 
@@ -172,10 +184,10 @@ Categories, suppliers, and products screens (barcode, prices, min stock). Do **n
 - Seed: sample categories, one supplier, Coca-Cola 1L / 2L (demo barcodes).
 - **Deliverables:** Schema ready. `php artisan migrate:fresh --seed` works. ✅
 
-### Milestone 4 – Master Data (Weeks 3–4) ⬜ *Next*
+### Milestone 4 – Master Data (Weeks 3–4) ✅ *Done*
 
-- **Categories CRUD** — list, create, edit, activate/deactivate.
-- **Suppliers CRUD** — name, phone, address, notes.
+- **Categories CRUD** — list, create, edit, activate/deactivate. No `destroy` in V1 (`is_active` only).
+- **Suppliers CRUD** — name, phone, address, notes, activate/deactivate. No `destroy` in V1.
 - **Products CRUD:**
   - name, category, barcode (unique)
   - cost price, sale price
@@ -184,6 +196,7 @@ Categories, suppliers, and products screens (barcode, prices, min stock). Do **n
   - scan-to-fill barcode field (HID input + Enter)
 - Reusable React pieces: `BarcodeInput`, `DataTable`, form layout.
 - Product list: search by name or barcode, filter by category, low-stock highlight.
+- **No hard delete in V1.** Hide with Active / Disabled. If the owner later creates many unused mistakes, add **safe delete** (see §6) — not Laravel SoftDeletes.
 - **Deliverables:** Owner can create Coca-Cola 1L by scanning once and saving prices.
 
 ### Milestone 5 – Stock Engine & Purchases (Weeks 5–6)
@@ -283,6 +296,20 @@ Categories, suppliers, and products screens (barcode, prices, min stock). Do **n
 - **Status:** ⏸️ Deferred
 - **Reason:** Owner scans the bottle code and types quantity 6. Matches how many small shops work.
 
+### Safe delete (unused mistakes only)
+- **Status:** ⏸️ Deferred — add if the owner piles up unused rows (typo products, empty categories, suppliers never purchased from)
+- **Not the same as `is_active`:** Active / Disabled hides a row that must stay (old tickets, purchases, stock movements). Safe delete **removes** a row that was never used.
+- **Not Laravel SoftDeletes:** Do not add `deleted_at`. That hides rows from queries and still occupies unique barcodes. V1 already has `is_active`.
+- **When to build:** After the shop is live, if Disabled leftovers become noisy. Not needed before purchases/POS.
+- **Rules if we add it:**
+  - Owner only (cashier already cannot `delete-products`).
+  - ⋮ menu → Delete, confirm, then `DELETE` the row.
+  - **Allow** when nothing references it: category with 0 products; supplier with 0 purchases; product with 0 purchase items, sale items, and stock movements (and stock 0).
+  - **Refuse** with a toast if it is in history: “This product was sold or received. Disable it instead.”
+  - Users: do not hard-delete. Disable the account so old tickets still show who sold.
+  - Stock movements: never deleted.
+- **Why wait:** A mistake product with no history is rare at first. Disable is enough until we see the owner doing it a lot.
+
 ---
 
 ## 7. Weekly Rhythm (Suggested)
@@ -308,7 +335,7 @@ Setup → Auth → Schema → Categories/Suppliers/Products
 - Spec: `COMPLETE_SPEC.txt` (full rules, tables, scanner, shop PC).
 - Simple story (Spanish): `COMO_FUNCIONA_LA_APP.txt`.
 - This file: `docs/ROADMAP.md` — mark tasks `[x]` when done.
-- Git: commit after each milestone.
+- Git: [GitHub repo](https://github.com/mohamed-ali-atouhami/Mini_market_gestion_stock_Laravel-inertia--react). Commit after each milestone.
 - No Docker. No paid hosting in V1.
 - Developer already has: PHP 8.2.12, Node 22, Composer 2.8, `pdo_sqlite`.
 
@@ -316,9 +343,8 @@ Setup → Auth → Schema → Categories/Suppliers/Products
 
 ## 9. Next Actions
 
-1. **Start Milestone 2** — username login, roles, seed owner, owner creates users.
-2. Then Milestone 3 — shop database tables.
-3. Do not jump to POS before StockService exists.
+1. **Start Milestone 5 – Stock engine & purchases** — `StockService` then receive delivery (scan, qty, stock UP, movement recorded).
+2. Do not jump to POS before StockService exists.
 
 ---
 

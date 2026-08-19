@@ -1,3 +1,4 @@
+import FlashToasts from '@/Components/FlashToasts';
 import { AppSidebar } from '@/Components/layout/AppSidebar';
 import {
     SidebarInset,
@@ -21,6 +22,7 @@ export default function AuthenticatedLayout({
 
     return (
         <SidebarProvider>
+            <FlashToasts />
             <AppSidebar />
             <SidebarInset>
                 <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">

@@ -12,6 +12,8 @@ class Product extends Model
 {
     public const UNIT_PIECE = 'piece';
 
+    public const UNIT_KG = 'kg';
+
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
 

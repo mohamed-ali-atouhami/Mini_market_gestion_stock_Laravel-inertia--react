@@ -18,9 +18,8 @@ import { FormEventHandler } from 'react';
 
 export function LoginForm({
     className,
-    status,
     ...props
-}: React.ComponentProps<'div'> & { status?: string }) {
+}: React.ComponentProps<'div'>) {
     const { data, setData, post, processing, errors, reset } = useForm({
         username: '',
         password: '',
@@ -39,12 +38,6 @@ export function LoginForm({
         <div className={cn('flex flex-col', className)} {...props}>
             <Card className="py-8 shadow-sm">
                 <CardContent className="px-8 pt-2">
-                    {status && (
-                        <p className="mb-6 text-center text-sm font-medium text-green-600">
-                            {status}
-                        </p>
-                    )}
-
                     <form onSubmit={submit}>
                         <FieldGroup className="gap-6">
                             <Field

@@ -52,6 +52,9 @@ class HandleInertiaRequests extends Middleware
                 'receivePurchases' => $user?->can('receive-purchases') ?? false,
                 'deleteProducts' => $user?->can('delete-products') ?? false,
             ],
+            'flash' => [
+                'status' => $request->session()->get('status'),
+            ],
         ];
     }
 }

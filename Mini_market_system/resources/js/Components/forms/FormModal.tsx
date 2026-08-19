@@ -1,3 +1,6 @@
+import CategoryForm from '@/Components/forms/CategoryForm';
+import ProductForm from '@/Components/forms/ProductForm';
+import SupplierForm from '@/Components/forms/SupplierForm';
 import UserForm from '@/Components/forms/UserForm';
 import { Button } from '@/Components/ui/button';
 import {
@@ -7,18 +10,54 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/Components/ui/dialog';
-import { RoleOption, ShopUser } from '@/types';
-import { Plus, Edit } from 'lucide-react';
+import {
+    CategoryOption,
+    RoleOption,
+    ShopCategory,
+    ShopProduct,
+    ShopSupplier,
+    ShopUser,
+} from '@/types';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
-export type FormTable = 'users';
+export type FormTable = 'users' | 'categories' | 'suppliers' | 'products';
+
+type FormRecord = ShopUser | ShopCategory | ShopSupplier | ShopProduct;
+
+const TABLE_COPY: Record<
+    FormTable,
+    { singular: string; create: string; edit: string }
+> = {
+    users: {
+        singular: 'user',
+        create: 'Add a person who can log in to the shop.',
+        edit: 'Update this account.',
+    },
+    categories: {
+        singular: 'category',
+        create: 'Add a product category such as Drinks or Food.',
+        edit: 'Update this category.',
+    },
+    suppliers: {
+        singular: 'supplier',
+        create: 'Add who you buy from.',
+        edit: 'Update this supplier.',
+    },
+    products: {
+        singular: 'product',
+        create: 'Scan the barcode once, then save the prices.',
+        edit: 'Update this product. Stock stays as it is.',
+    },
+};
 
 export type FormModalProps = {
     table: FormTable;
     type: 'create' | 'edit';
-    data?: ShopUser | null;
+    data?: FormRecord | null;
     relatedData?: {
         roles?: RoleOption[];
+        categories?: CategoryOption[];
     };
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
@@ -41,46 +80,57 @@ export default function FormModal({
         }
         onOpenChange?.(next);
     };
+    const copy = TABLE_COPY[table];
     const roles = relatedData?.roles ?? [];
+    const categories = relatedData?.categories ?? [];
 
     return (
         <>
-            {!isControlled &&
-                (type === 'create' ? (
-                    <Button onClick={() => setOpen(true)}>
-                        <Plus className="h-4 w-4" />
-                        Create {table.slice(0, -1)}
-                    </Button>
-                ) : (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start"
-                        onClick={() => setOpen(true)}
-                    >
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                    </Button>
-                ))}
+            {!isControlled && type === 'create' ? (
+                <Button onClick={() => setOpen(true)}>
+                    <Plus className="h-4 w-4" />
+                    Create {copy.singular}
+                </Button>
+            ) : null}
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>
                             {type === 'create' ? 'Create' : 'Edit'}{' '}
-                            {table.slice(0, -1)}
+                            {copy.singular}
                         </DialogTitle>
                         <DialogDescription>
-                            {type === 'create'
-                                ? 'Add a person who can log in to the shop.'
-                                : 'Update this account.'}
+                            {type === 'create' ? copy.create : copy.edit}
                         </DialogDescription>
                     </DialogHeader>
-                    {table === 'users' && (
+                    {open && table === 'users' && (
                         <UserForm
                             type={type}
-                            data={data}
+                            data={data as ShopUser | null}
                             roles={roles}
+                            setOpen={setOpen}
+                        />
+                    )}
+                    {open && table === 'categories' && (
+                        <CategoryForm
+                            type={type}
+                            data={data as ShopCategory | null}
+                            setOpen={setOpen}
+                        />
+                    )}
+                    {open && table === 'suppliers' && (
+                        <SupplierForm
+                            type={type}
+                            data={data as ShopSupplier | null}
+                            setOpen={setOpen}
+                        />
+                    )}
+                    {open && table === 'products' && (
+                        <ProductForm
+                            type={type}
+                            data={data as ShopProduct | null}
+                            categories={categories}
                             setOpen={setOpen}
                         />
                     )}

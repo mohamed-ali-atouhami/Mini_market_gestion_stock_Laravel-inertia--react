@@ -15,7 +15,10 @@ import { Link, router, usePage } from '@inertiajs/react';
 import {
     LayoutDashboard,
     LogOut,
+    Package,
     ShoppingBasket,
+    Tags,
+    Truck,
     UserRound,
     Users,
     type LucideIcon,
@@ -44,6 +47,27 @@ const navigation: NavigationItem[] = [
         href: 'users.index',
         match: 'users.*',
         icon: Users,
+        visible: ['owner'],
+    },
+    {
+        name: 'Categories',
+        href: 'categories.index',
+        match: 'categories.*',
+        icon: Tags,
+        visible: ['owner'],
+    },
+    {
+        name: 'Suppliers',
+        href: 'suppliers.index',
+        match: 'suppliers.*',
+        icon: Truck,
+        visible: ['owner'],
+    },
+    {
+        name: 'Products',
+        href: 'products.index',
+        match: 'products.*',
+        icon: Package,
         visible: ['owner'],
     },
 ];

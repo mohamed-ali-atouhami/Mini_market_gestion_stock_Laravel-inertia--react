@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -63,7 +64,6 @@ class UserController extends Controller
         return Inertia::render('Users/Index', [
             'users' => $users,
             'roles' => $this->roleOptions(),
-            'status' => session('status'),
         ]);
     }
 
@@ -109,7 +109,7 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
         if ($user->is($request->user()) && ! $request->boolean('is_active')) {
-            return back()->withErrors([
+            throw ValidationException::withMessages([
                 'is_active' => 'You cannot disable your own account.',
             ]);
         }
@@ -121,7 +121,7 @@ class UserController extends Controller
             && $newRole->slug !== Role::OWNER
             && ! $this->hasAnotherActiveOwner($user)
         ) {
-            return back()->withErrors([
+            throw ValidationException::withMessages([
                 'role_id' => 'There must be at least one active owner.',
             ]);
         }

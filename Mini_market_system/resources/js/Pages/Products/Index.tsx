@@ -2,34 +2,56 @@ import FormModal from '@/Components/forms/FormModal';
 import Pagination from '@/Components/tables/Pagination';
 import TableSearch from '@/Components/tables/TableSearch';
 import { TableColumn } from '@/Components/tables/Table';
-import { UsersTable } from '@/Components/tables/UsersTable';
+import { ProductsTable } from '@/Components/tables/ProductsTable';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Paginated, RoleOption, ShopUser } from '@/types';
-//import { Head } from '@inertiajs/react';
+import { CategoryOption, Paginated, ShopProduct } from '@/types';
 
-const getColumns = (): TableColumn[] => [
+const getColumns = (categories: CategoryOption[]): TableColumn[] => [
     {
         header: 'Name',
         accessor: 'name',
         sortable: true,
     },
     {
-        header: 'Username',
-        accessor: 'username',
+        header: 'Barcode',
+        accessor: 'barcode',
         className: 'hidden md:table-cell',
         sortable: true,
     },
     {
-        header: 'Role',
-        accessor: 'role',
+        header: 'Category',
+        accessor: 'category',
         filter: {
             type: 'select',
-            paramKey: 'role',
+            paramKey: 'category',
             defaultValue: 'ALL',
             options: [
-                { value: 'ALL', label: 'All roles' },
-                { value: 'owner', label: 'Owner' },
-                { value: 'cashier', label: 'Cashier' },
+                { value: 'ALL', label: 'All categories' },
+                ...categories.map((category) => ({
+                    value: String(category.id),
+                    label: category.name,
+                })),
+            ],
+        },
+    },
+    {
+        header: 'Sale price',
+        accessor: 'sale_price',
+        className: 'hidden md:table-cell',
+        sortable: true,
+    },
+    {
+        header: 'Stock',
+        accessor: 'stock_quantity',
+        sortable: true,
+        filter: {
+            type: 'select',
+            paramKey: 'stock',
+            defaultValue: 'ALL',
+            options: [
+                { value: 'ALL', label: 'All stock' },
+                { value: 'LOW', label: 'Low stock' },
+                { value: 'OK', label: 'OK' },
             ],
         },
     },
@@ -54,41 +76,41 @@ const getColumns = (): TableColumn[] => [
 ];
 
 export default function Index({
-    users,
-    roles,
+    products,
+    categories,
 }: {
-    users: Paginated<ShopUser>;
-    roles: RoleOption[];
+    products: Paginated<ShopProduct>;
+    categories: CategoryOption[];
 }) {
     return (
         <AuthenticatedLayout>
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl font-bold">User Management</h1>
+                    <h1 className="text-3xl font-bold">Products</h1>
                 </div>
 
                 <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
                     <div className="mb-4 flex flex-col items-center justify-between gap-4 md:flex-row">
                         <h2 className="hidden text-lg font-semibold md:block">
-                            All Users
+                            All Products
                         </h2>
                         <div className="flex w-full flex-col items-center gap-4 md:w-auto md:flex-row">
-                            <TableSearch placeholder="Search by name or username..." />
+                            <TableSearch placeholder="Search by name or barcode..." />
                             <FormModal
-                                table="users"
+                                table="products"
                                 type="create"
-                                relatedData={{ roles }}
+                                relatedData={{ categories }}
                             />
                         </div>
                     </div>
-                    <UsersTable
-                        users={users.data}
-                        columns={getColumns()}
-                        roles={roles}
+                    <ProductsTable
+                        products={products.data}
+                        columns={getColumns(categories)}
+                        categories={categories}
                     />
                     <Pagination
-                        page={users.current_page}
-                        totalCount={users.total}
+                        page={products.current_page}
+                        totalCount={products.total}
                     />
                 </div>
             </div>

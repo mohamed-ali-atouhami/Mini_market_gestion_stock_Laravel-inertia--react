@@ -1,0 +1,124 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
+use App\Models\Category;
+use App\Models\Product;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class ProductController extends Controller
+{
+    private const PER_PAGE = 10;
+
+    public function index(Request $request): Response
+    {
+        $this->authorize('viewAny', Product::class);
+
+        $search = $request->string('search')->toString();
+        $category = $request->string('category')->toString();
+        $status = $request->string('status')->toString();
+        $stock = $request->string('stock')->toString();
+        $sort = $request->string('sort')->toString();
+        $order = $request->string('order')->toString() === 'desc' ? 'desc' : 'asc';
+
+        $query = Product::query()->with('category');
+
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder
+                    ->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('barcode', 'like', '%'.$search.'%');
+            });
+        }
+
+        if ($category !== '' && $category !== 'ALL') {
+            $query->where('category_id', $category);
+        }
+
+        if ($status === 'ACTIVE') {
+            $query->where('is_active', true);
+        } elseif ($status === 'INACTIVE') {
+            $query->where('is_active', false);
+        }
+
+        if ($stock === 'LOW') {
+            $query->whereColumn('stock_quantity', '<=', 'min_stock');
+        } elseif ($stock === 'OK') {
+            $query->whereColumn('stock_quantity', '>', 'min_stock');
+        }
+
+        $sortColumn = in_array($sort, ['name', 'barcode', 'sale_price', 'stock_quantity'], true)
+            ? $sort
+            : 'name';
+
+        $products = $query
+            ->orderBy($sortColumn, $order)
+            ->paginate(self::PER_PAGE)
+            ->withQueryString()
+            ->through(fn (Product $product) => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'barcode' => $product->barcode,
+                'category' => $product->category?->name,
+                'category_id' => $product->category_id,
+                'cost_price' => $product->cost_price,
+                'sale_price' => $product->sale_price,
+                'stock_quantity' => $product->stock_quantity,
+                'min_stock' => $product->min_stock,
+                'unit' => $product->unit,
+                'is_active' => $product->is_active,
+                'is_low_stock' => $product->isLowStock(),
+            ]);
+
+        return Inertia::render('Products/Index', [
+            'products' => $products,
+            'categories' => $this->categoryOptions(),
+        ]);
+    }
+
+    public function store(StoreProductRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
+        $data['is_active'] = $request->boolean('is_active', true);
+        $data['stock_quantity'] = $data['stock_quantity'] ?? 0;
+        $data['unit'] = $data['unit'] ?? Product::UNIT_PIECE;
+
+        Product::query()->create($data);
+
+        return redirect()
+            ->route('products.index')
+            ->with('status', 'Product created.');
+    }
+
+    public function update(UpdateProductRequest $request, Product $product): RedirectResponse
+    {
+        $data = $request->safe()->except(['stock_quantity']);
+        $data['is_active'] = $request->boolean('is_active');
+
+        $product->update($data);
+
+        return redirect()
+            ->route('products.index')
+            ->with('status', 'Product updated.');
+    }
+
+    /**
+     * @return list<array{id: int, name: string}>
+     */
+    private function categoryOptions(): array
+    {
+        return Category::query()
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn (Category $category) => [
+                'id' => $category->id,
+                'name' => $category->name,
+            ])
+            ->all();
+    }
+}
