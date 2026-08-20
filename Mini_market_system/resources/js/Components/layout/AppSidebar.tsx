@@ -16,6 +16,7 @@ import {
     LayoutDashboard,
     LogOut,
     Package,
+    PackagePlus,
     ShoppingBasket,
     Tags,
     Truck,
@@ -70,6 +71,13 @@ const navigation: NavigationItem[] = [
         icon: Package,
         visible: ['owner'],
     },
+    {
+        name: 'Purchases',
+        href: 'purchases.index',
+        match: 'purchases.*',
+        icon: PackagePlus,
+        visible: ['owner'],
+    },
 ];
 
 export function AppSidebar() {
@@ -92,12 +100,16 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             size="lg"
+                            tooltip="Mini market"
+                            className="group-data-[collapsible=icon]:p-2!"
                             render={<Link href={route('dashboard')} />}
                         >
-                            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                            <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground group-data-[collapsible=icon]:size-4 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:text-current">
                                 <ShoppingBasket className="size-4" />
                             </div>
-                            <span className="font-semibold">Mini market</span>
+                            <span className="truncate font-semibold group-data-[collapsible=icon]:hidden">
+                                Mini market
+                            </span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>

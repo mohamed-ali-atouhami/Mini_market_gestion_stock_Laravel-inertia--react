@@ -1,0 +1,95 @@
+import Pagination from '@/Components/tables/Pagination';
+import { PurchasesTable } from '@/Components/tables/PurchasesTable';
+import TableSearch from '@/Components/tables/TableSearch';
+import { TableColumn } from '@/Components/tables/Table';
+import { Button } from '@/Components/ui/button';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Paginated, ShopPurchase } from '@/types';
+import { Link } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
+
+const getColumns = (): TableColumn[] => [
+    {
+        header: 'Reference',
+        accessor: 'reference',
+        sortable: true,
+    },
+    {
+        header: 'Supplier',
+        accessor: 'supplier',
+    },
+    {
+        header: 'Date',
+        accessor: 'purchase_date',
+        className: 'hidden md:table-cell',
+        sortable: true,
+    },
+    {
+        header: 'Total',
+        accessor: 'total',
+        className: 'hidden md:table-cell',
+        sortable: true,
+    },
+    {
+        header: 'Status',
+        accessor: 'status',
+        filter: {
+            type: 'select',
+            paramKey: 'status',
+            defaultValue: 'ALL',
+            options: [
+                { value: 'ALL', label: 'All status' },
+                { value: 'draft', label: 'Draft' },
+                { value: 'received', label: 'Received' },
+                { value: 'cancelled', label: 'Cancelled' },
+            ],
+        },
+    },
+    {
+        header: 'Actions',
+        accessor: 'actions',
+    },
+];
+
+export default function Index({
+    purchases,
+}: {
+    purchases: Paginated<ShopPurchase>;
+}) {
+    return (
+        <AuthenticatedLayout>
+            <div className="space-y-6">
+                <div>
+                    <h1 className="text-3xl font-bold">Purchases</h1>
+                </div>
+
+                <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
+                    <div className="mb-4 flex flex-col items-center justify-between gap-4 md:flex-row">
+                        <h2 className="hidden text-lg font-semibold md:block">
+                            All Deliveries
+                        </h2>
+                        <div className="flex w-full flex-col items-center gap-4 md:w-auto md:flex-row">
+                            <TableSearch placeholder="Search by reference, invoice, or supplier..." />
+                            <Button
+                                render={
+                                    <Link href={route('purchases.create')} />
+                                }
+                            >
+                                <Plus className="h-4 w-4" />
+                                New delivery
+                            </Button>
+                        </div>
+                    </div>
+                    <PurchasesTable
+                        purchases={purchases.data}
+                        columns={getColumns()}
+                    />
+                    <Pagination
+                        page={purchases.current_page}
+                        totalCount={purchases.total}
+                    />
+                </div>
+            </div>
+        </AuthenticatedLayout>
+    );
+}

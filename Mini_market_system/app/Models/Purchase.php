@@ -14,6 +14,23 @@ class Purchase extends Model
 
     public const STATUS_CANCELLED = 'cancelled';
 
+    public static function nextReference(): string
+    {
+        $year = now()->year;
+        $prefix = 'PUR-'.$year.'-';
+        $last = static::query()
+            ->where('reference', 'like', $prefix.'%')
+            ->orderByDesc('id')
+            ->value('reference');
+
+        $next = 1;
+        if (is_string($last) && preg_match('/(\d+)$/', $last, $matches) === 1) {
+            $next = (int) $matches[1] + 1;
+        }
+
+        return sprintf('PUR-%d-%04d', $year, $next);
+    }
+
     protected $fillable = [
         'reference',
         'supplier_id',

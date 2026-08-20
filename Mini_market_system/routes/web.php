@@ -3,6 +3,7 @@
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,16 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/products', [ProductController::class, 'index'])->name('products.index');
         Route::post('/products', [ProductController::class, 'store'])->name('products.store');
         Route::patch('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+
+        Route::get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
+        Route::get('/purchases/create', [PurchaseController::class, 'create'])->name('purchases.create');
+        Route::get('/purchases/lookup-product', [PurchaseController::class, 'lookupProduct'])->name('purchases.lookup-product');
+        Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
+        Route::get('/purchases/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
+        Route::get('/purchases/{purchase}/edit', [PurchaseController::class, 'edit'])->name('purchases.edit');
+        Route::patch('/purchases/{purchase}', [PurchaseController::class, 'update'])->name('purchases.update');
+        Route::post('/purchases/{purchase}/receive', [PurchaseController::class, 'receive'])->name('purchases.receive');
+        Route::post('/purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->name('purchases.cancel');
     });
 });
 

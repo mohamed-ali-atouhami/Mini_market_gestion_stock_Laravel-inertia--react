@@ -8,7 +8,8 @@ import {
     FieldLabel,
 } from '@/Components/ui/field';
 import { Input } from '@/Components/ui/input';
-import { CategoryOption, ShopProduct } from '@/types';
+import { CategoryOption, PageProps, ScannedProduct, ShopProduct } from '@/types';
+import { formatInputNumber } from '@/lib/utils';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
@@ -20,22 +21,30 @@ export default function ProductForm({
     data,
     categories,
     setOpen,
+    returnTo,
+    initialBarcode,
+    onCreated,
 }: {
     type: 'create' | 'edit';
     data?: ShopProduct | null;
     categories: CategoryOption[];
     setOpen: (open: boolean) => void;
+    returnTo?: string;
+    initialBarcode?: string;
+    onCreated?: (product: ScannedProduct) => void;
 }) {
+    const fromPurchases = returnTo === 'purchases';
     const form = useForm({
         name: data?.name ?? '',
         category_id: data?.category_id ?? categories[0]?.id ?? 0,
-        barcode: data?.barcode ?? '',
-        cost_price: data?.cost_price ?? '',
-        sale_price: data?.sale_price ?? '',
-        stock_quantity: data?.stock_quantity ?? '0',
-        min_stock: data?.min_stock ?? '0',
+        barcode: data?.barcode ?? initialBarcode ?? '',
+        cost_price: formatInputNumber(data?.cost_price),
+        sale_price: formatInputNumber(data?.sale_price),
+        stock_quantity: fromPurchases ? '0' : (formatInputNumber(data?.stock_quantity) || '0'),
+        min_stock: formatInputNumber(data?.min_stock) || '0',
         unit: data?.unit ?? 'piece',
         is_active: data?.is_active ?? true,
+        return_to: returnTo ?? '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -44,7 +53,15 @@ export default function ProductForm({
         if (type === 'create') {
             form.post(route('products.store'), {
                 preserveScroll: true,
-                onSuccess: () => setOpen(false),
+                preserveState: fromPurchases,
+                onSuccess: (page) => {
+                    setOpen(false);
+                    const created = (page.props as PageProps).flash
+                        .created_product;
+                    if (created) {
+                        onCreated?.(created);
+                    }
+                },
             });
             return;
         }
@@ -138,6 +155,7 @@ export default function ProductForm({
                     />
                     <FieldError>{form.errors.sale_price}</FieldError>
                 </Field>
+                {!fromPurchases && (
                 <Field>
                     <FieldLabel htmlFor="stock_quantity">Stock</FieldLabel>
                     <Input
@@ -158,6 +176,7 @@ export default function ProductForm({
                     </p>
                     <FieldError>{form.errors.stock_quantity}</FieldError>
                 </Field>
+                )}
                 <Field>
                     <FieldLabel htmlFor="min_stock">Min stock</FieldLabel>
                     <Input

@@ -1,6 +1,6 @@
 # Mini_market_system – Development Roadmap
 
-**Last updated:** 19 August 2026 (Milestone 4 done; next is Milestone 5)
+**Last updated:** 20 August 2026 (Milestone 5 done; next is Milestone 6)
 
 ---
 
@@ -13,12 +13,12 @@
 | **2 – Auth & roles** (username login, owner/cashier, seed owner, owner creates users) | ✅ Done |
 | **3 – Database tables** (products, purchases, sales, stock…) | ✅ Done |
 | **4 – Categories / suppliers / products + barcode** | ✅ Done |
-| **5 – Purchases (stock in)** | ⬜ Not started |
+| **5 – Purchases (stock in)** | ✅ Done |
 | **6 – POS / caisse (stock out, cash only)** | ⬜ Not started |
 | **7 – Dashboard, stock history, reports** | ⬜ Not started |
 | **8 – Shop PC install + live scanner test** | ⬜ Not started |
 
-### Done in the code (Milestone 0 + 1 + 2 + 3 + 4)
+### Done in the code (Milestone 0 + 1 + 2 + 3 + 4 + 5)
 
 - Spec files: `COMPLETE_SPEC.txt`, `docs/DATABASE_COLUMNS.md`, `docs/COMO_FUNCIONA_LA_APP.txt`
 - Laravel **12.66** in `Mini_market_system/` via Composer (`composer create-project`)
@@ -36,7 +36,7 @@
 - Demo seed: Drinks / Food / Cleaning, one supplier, Coca-Cola 1L + 2L
 - Payments will be **cash only**
 - App runs with `php artisan serve` + `npm run dev`
-- **19 August 2026 (today):**
+- **19 August 2026:**
   - shadcn **sidebar** using TMS navigation logic (`AppSidebar`: Dashboard + owner-only Users)
   - Authenticated layout: page content sits in `SidebarInset` (no longer under the sidebar)
   - Reusable Users table: search, sort, filters, pagination, create/edit modal
@@ -45,6 +45,11 @@
   - Bugbot review of the initial commit: no bugs
   - Categories / suppliers / products screens (search, sort, filters, Active/Disabled, barcode scan-to-fill)
   - Sonner toasts for flash messages (`FlashToasts`)
+- **20 August 2026:**
+  - `StockService` is the only place that changes `products.stock_quantity` (increase / decrease / adjust + `stock_movements`)
+  - Purchases: list, new delivery (scan + qty + cost), draft / receive / cancel, unknown barcode → create product now
+  - Cashier cannot receive deliveries
+  - Deliverable: receive 12× Coca-Cola 1L, stock 0 → 12, movement recorded
 
 ### Not done yet (the real shop)
 
@@ -53,9 +58,9 @@
 
 ### Next step
 
-**Milestone 5 – Stock engine & purchases**
+**Milestone 6 – Caisse & POS**
 
-`StockService` (only place that changes stock) and the receive-delivery screen. Do **not** start POS before StockService exists.
+Open/close cash session, scan-to-cart, cash payment, `SaleService` decreases stock through `StockService`.
 
 ---
 
@@ -100,12 +105,12 @@
 - [x] Public welcome and public register removed
 - [x] User authentication and roles (Owner / Cashier) — username + password
 - [x] Owner creates users and assigns role
-- [ ] Categories CRUD
-- [ ] Suppliers CRUD
-- [ ] Products CRUD: barcode, cost price, sale price, stock quantity, min stock, unit
-- [ ] Scan-to-fill barcode on product create/edit
-- [ ] Purchases (receive delivery): scan + quantity + receive → stock UP
-- [ ] Unknown barcode → create product now (barcode already filled)
+- [x] Categories CRUD
+- [x] Suppliers CRUD
+- [x] Products CRUD: barcode, cost price, sale price, stock quantity, min stock, unit
+- [x] Scan-to-fill barcode on product create/edit
+- [x] Purchases (receive delivery): scan + quantity + receive → stock UP
+- [x] Unknown barcode → create product now (barcode already filled)
 - [ ] Sales / POS: scan + cart + pay (cash only) → stock DOWN
 - [ ] Block sale if stock is not enough
 - [ ] Stock movements ledger (never deleted)
@@ -343,8 +348,8 @@ Setup → Auth → Schema → Categories/Suppliers/Products
 
 ## 9. Next Actions
 
-1. **Start Milestone 5 – Stock engine & purchases** — `StockService` then receive delivery (scan, qty, stock UP, movement recorded).
-2. Do not jump to POS before StockService exists.
+1. **Start Milestone 6 – Caisse & POS** — cash session, scan-to-cart, pay cash, stock DOWN through `StockService`.
+2. Do not skip cash sessions: POS must refuse sales when the caisse is closed.
 
 ---
 

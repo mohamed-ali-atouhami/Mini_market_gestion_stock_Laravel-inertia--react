@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'flash' => [
                 'status' => $request->session()->get('status'),
+                'created_product' => $request->session()->get('created_product'),
             ],
         ];
     }

@@ -66,10 +66,10 @@ class ProductController extends Controller
                 'barcode' => $product->barcode,
                 'category' => $product->category?->name,
                 'category_id' => $product->category_id,
-                'cost_price' => $product->cost_price,
-                'sale_price' => $product->sale_price,
-                'stock_quantity' => $product->stock_quantity,
-                'min_stock' => $product->min_stock,
+                'cost_price' => $this->formatDecimal($product->cost_price, 2),
+                'sale_price' => $this->formatDecimal($product->sale_price, 2),
+                'stock_quantity' => $this->formatDecimal($product->stock_quantity, 3),
+                'min_stock' => $this->formatDecimal($product->min_stock, 3),
                 'unit' => $product->unit,
                 'is_active' => $product->is_active,
                 'is_low_stock' => $product->isLowStock(),
@@ -88,7 +88,26 @@ class ProductController extends Controller
         $data['stock_quantity'] = $data['stock_quantity'] ?? 0;
         $data['unit'] = $data['unit'] ?? Product::UNIT_PIECE;
 
-        Product::query()->create($data);
+        if ($request->input('return_to') === 'purchases') {
+            $data['stock_quantity'] = 0;
+        }
+
+        $product = Product::query()->create($data);
+
+        $created = [
+            'id' => $product->id,
+            'name' => $product->name,
+            'barcode' => $product->barcode,
+            'cost_price' => $this->formatDecimal($product->cost_price, 2),
+            'unit' => $product->unit,
+            'is_active' => $product->is_active,
+        ];
+
+        if ($request->input('return_to') === 'purchases') {
+            return back()
+                ->with('status', 'Product created.')
+                ->with('created_product', $created);
+        }
 
         return redirect()
             ->route('products.index')
@@ -120,5 +139,13 @@ class ProductController extends Controller
                 'name' => $category->name,
             ])
             ->all();
+    }
+
+    private function formatDecimal(mixed $value, int $scale): string
+    {
+        $formatted = number_format((float) $value, $scale, '.', '');
+        $formatted = rtrim(rtrim($formatted, '0'), '.');
+
+        return $formatted === '' ? '0' : $formatted;
     }
 }

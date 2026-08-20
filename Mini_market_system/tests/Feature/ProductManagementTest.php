@@ -141,6 +141,28 @@ class ProductManagementTest extends TestCase
                 ->where('products.data.0.name', 'Pepsi 1L'));
     }
 
+    public function test_product_edit_fields_do_not_pad_decimals(): void
+    {
+        $owner = User::factory()->owner()->create();
+        Product::factory()->create([
+            'name' => 'Coca-Cola 1L',
+            'cost_price' => 5.50,
+            'sale_price' => 8.00,
+            'stock_quantity' => 12,
+            'min_stock' => 12,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('products.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Products/Index')
+                ->where('products.data.0.cost_price', '5.5')
+                ->where('products.data.0.sale_price', '8')
+                ->where('products.data.0.stock_quantity', '12')
+                ->where('products.data.0.min_stock', '12'));
+    }
+
     /**
      * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>

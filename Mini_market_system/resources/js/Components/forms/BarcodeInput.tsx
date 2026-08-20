@@ -1,5 +1,5 @@
 import { Input } from '@/Components/ui/input';
-import { KeyboardEvent, ComponentProps } from 'react';
+import { KeyboardEvent, ComponentProps, forwardRef } from 'react';
 
 type BarcodeInputProps = Omit<
     ComponentProps<typeof Input>,
@@ -7,31 +7,35 @@ type BarcodeInputProps = Omit<
 > & {
     value: string;
     onChange: (value: string) => void;
+    onScan?: (value: string) => void;
 };
 
-export default function BarcodeInput({
-    value,
-    onChange,
-    ...props
-}: BarcodeInputProps) {
-    const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-        if (event.key !== 'Enter') {
-            return;
-        }
+const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
+    function BarcodeInput({ value, onChange, onScan, ...props }, ref) {
+        const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+            if (event.key !== 'Enter') {
+                return;
+            }
 
-        event.preventDefault();
-        onChange(value.trim());
-    };
+            event.preventDefault();
+            const next = value.trim();
+            onChange(next);
+            onScan?.(next);
+        };
 
-    return (
-        <Input
-            inputMode="numeric"
-            autoComplete="off"
-            placeholder="Scan or type barcode"
-            {...props}
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            onKeyDown={handleKeyDown}
-        />
-    );
-}
+        return (
+            <Input
+                ref={ref}
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="Scan or type barcode"
+                {...props}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                onKeyDown={handleKeyDown}
+            />
+        );
+    },
+);
+
+export default BarcodeInput;

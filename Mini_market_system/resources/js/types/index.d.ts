@@ -77,5 +77,36 @@ export type PageProps<
     };
     flash: {
         status: string | null;
+        created_product: ScannedProduct | null;
     };
+};
+
+export type ScannedProduct = {
+    id: number;
+    name: string;
+    barcode: string | null;
+    cost_price: string;
+    unit: string;
+    is_active: boolean;
+};
+
+export type PurchaseLine = {
+    product_id: number;
+    name: string;
+    barcode: string | null;
+    quantity: string;
+    unit_cost: string;
+};
+
+export type ShopPurchase = {
+    id: number;
+    reference: string;
+    supplier: string | null;
+    supplier_id?: number;
+    purchase_date: string | null;
+    status: 'draft' | 'received' | 'cancelled';
+    total: string;
+    invoice_number: string | null;
+    notes?: string | null;
+    items?: PurchaseLine[];
 };
