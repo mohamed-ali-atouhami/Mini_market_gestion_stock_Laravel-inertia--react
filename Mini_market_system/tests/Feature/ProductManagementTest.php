@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -60,6 +61,29 @@ class ProductManagementTest extends TestCase
             'stock_quantity' => 0,
             'min_stock' => 12,
             'unit' => Product::UNIT_PIECE,
+        ]);
+    }
+
+    public function test_opening_stock_on_create_writes_a_movement(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $category = Category::factory()->create();
+
+        $this->actingAs($owner)
+            ->post(route('products.store'), $this->productPayload($category, [
+                'stock_quantity' => 12,
+            ]))
+            ->assertRedirect(route('products.index'));
+
+        $product = Product::query()->where('name', 'Test product')->firstOrFail();
+
+        $this->assertSame('12.000', $product->stock_quantity);
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $product->id,
+            'type' => StockMovement::TYPE_ADJUSTMENT,
+            'direction' => StockMovement::DIRECTION_IN,
+            'quantity' => '12.000',
+            'reason' => 'Opening stock',
         ]);
     }
 

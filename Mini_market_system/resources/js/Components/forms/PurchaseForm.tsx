@@ -1,6 +1,6 @@
 import BarcodeInput from '@/Components/forms/BarcodeInput';
 import FormModal from '@/Components/forms/FormModal';
-import { Button } from '@/Components/ui/button';
+import { Button, ButtonLink } from '@/Components/ui/button';
 import {
     Field,
     FieldError,
@@ -24,7 +24,7 @@ import {
     ShopPurchase,
 } from '@/types';
 import { formatInputNumber } from '@/lib/utils';
-import { Link, router, useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -197,7 +197,7 @@ export default function PurchaseForm({
                     </p>
                 </div>
 
-                <form className="space-y-6">
+                <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
                     <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
                         <FieldGroup>
                             <div className="grid gap-4 md:grid-cols-2">
@@ -414,15 +414,12 @@ export default function PurchaseForm({
                     </div>
 
                     <div className="flex flex-wrap items-center justify-end gap-2">
-                        <Button
-                            type="button"
+                        <ButtonLink
                             variant="ghost"
-                            render={
-                                <Link href={route('purchases.index')} />
-                            }
+                            href={route('purchases.index')}
                         >
                             Cancel
-                        </Button>
+                        </ButtonLink>
                         {purchase && (
                             <Button
                                 type="button"

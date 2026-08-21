@@ -105,7 +105,7 @@ export default function FormModal({
     return (
         <>
             {!isControlled && type === 'create' ? (
-                <Button onClick={() => setOpen(true)}>
+                <Button type="button" onClick={() => setOpen(true)}>
                     <Plus className="h-4 w-4" />
                     Create {name}
                 </Button>

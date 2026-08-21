@@ -1,10 +1,10 @@
 import InputError from '@/Components/InputError';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Button } from '@/Components/ui/button';
+import { Button, ButtonLink } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 type RoleOption = {
@@ -155,13 +155,12 @@ export default function Edit({
                         <InputError message={errors.is_active} />
 
                         <div className="flex items-center justify-end gap-3">
-                            <Button
-                                type="button"
+                            <ButtonLink
                                 variant="ghost"
-                                render={<Link href={route('users.index')} />}
+                                href={route('users.index')}
                             >
                                 Cancel
-                            </Button>
+                            </ButtonLink>
                             <Button type="submit" disabled={processing}>
                                 Save
                             </Button>

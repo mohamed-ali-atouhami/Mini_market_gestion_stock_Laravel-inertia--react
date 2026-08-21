@@ -1,6 +1,6 @@
 # Mini_market_system – Development Roadmap
 
-**Last updated:** 20 August 2026 (Milestone 5 done; next is Milestone 6)
+**Last updated:** 21 August 2026 (Milestone 6 done; next is Milestone 7)
 
 ---
 
@@ -14,11 +14,11 @@
 | **3 – Database tables** (products, purchases, sales, stock…) | ✅ Done |
 | **4 – Categories / suppliers / products + barcode** | ✅ Done |
 | **5 – Purchases (stock in)** | ✅ Done |
-| **6 – POS / caisse (stock out, cash only)** | ⬜ Not started |
+| **6 – POS / caisse (stock out, cash only)** | ✅ Done |
 | **7 – Dashboard, stock history, reports** | ⬜ Not started |
 | **8 – Shop PC install + live scanner test** | ⬜ Not started |
 
-### Done in the code (Milestone 0 + 1 + 2 + 3 + 4 + 5)
+### Done in the code (Milestone 0 + 1 + 2 + 3 + 4 + 5 + 6)
 
 - Spec files: `COMPLETE_SPEC.txt`, `docs/DATABASE_COLUMNS.md`, `docs/COMO_FUNCIONA_LA_APP.txt`
 - Laravel **12.66** in `Mini_market_system/` via Composer (`composer create-project`)
@@ -50,17 +50,22 @@
   - Purchases: list, new delivery (scan + qty + cost), draft / receive / cancel, unknown barcode → create product now
   - Cashier cannot receive deliveries
   - Deliverable: receive 12× Coca-Cola 1L, stock 0 → 12, movement recorded
+- **21 August 2026:**
+  - Cash sessions: open with opening amount, one open session per user, close with counted cash / expected / difference
+  - POS: scan-to-cart, cash pay, change, caisse must be open
+  - `SaleService` decreases stock through `StockService`
+  - Printable receipt; owner sales list
+  - Deliverable: 2× Coca-Cola 1L + 1× 2L = 29 MAD, pay 50, change 21, stock down
 
 ### Not done yet (the real shop)
 
-- Scanner receive / POS sell
 - Reports and shop-PC install
 
 ### Next step
 
-**Milestone 6 – Caisse & POS**
+**Milestone 7 – Dashboard, stock history & reports**
 
-Open/close cash session, scan-to-cart, cash payment, `SaleService` decreases stock through `StockService`.
+Today’s sales, low stock, movement history, settings.
 
 ---
 
@@ -111,11 +116,11 @@ Open/close cash session, scan-to-cart, cash payment, `SaleService` decreases sto
 - [x] Scan-to-fill barcode on product create/edit
 - [x] Purchases (receive delivery): scan + quantity + receive → stock UP
 - [x] Unknown barcode → create product now (barcode already filled)
-- [ ] Sales / POS: scan + cart + pay (cash only) → stock DOWN
-- [ ] Block sale if stock is not enough
+- [x] Sales / POS: scan + cart + pay (cash only) → stock DOWN
+- [x] Block sale if stock is not enough
 - [ ] Stock movements ledger (never deleted)
 - [ ] Manual stock adjustment (damage, loss, count correction) with reason
-- [ ] Cash session (open / close caisse)
+- [x] Cash session (open / close caisse)
 - [ ] Dashboard: today sales, ticket count, low stock, stock value
 - [ ] Reports: sales by period, purchases by supplier, movements, low stock, cash session
 - [ ] Settings: shop name, currency (MAD), ticket footer
@@ -348,8 +353,8 @@ Setup → Auth → Schema → Categories/Suppliers/Products
 
 ## 9. Next Actions
 
-1. **Start Milestone 6 – Caisse & POS** — cash session, scan-to-cart, pay cash, stock DOWN through `StockService`.
-2. Do not skip cash sessions: POS must refuse sales when the caisse is closed.
+1. **Start Milestone 7 – Dashboard, stock history & reports** — today’s sales, low stock, movements, settings.
+2. Manual adjustments (damage / count) also belong here, through `StockService` only.
 
 ---
 

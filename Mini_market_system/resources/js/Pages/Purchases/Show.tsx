@@ -1,4 +1,4 @@
-import { Button } from '@/Components/ui/button';
+import { Button, ButtonLink } from '@/Components/ui/button';
 import { Badge } from '@/Components/ui/badge';
 import {
     Table,
@@ -10,7 +10,6 @@ import {
 } from '@/Components/ui/table';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { ShopPurchase } from '@/types';
-import { Link } from '@inertiajs/react';
 
 function formatMoney(value: string | number): string {
     const amount = Number(value);
@@ -128,15 +127,12 @@ export default function Show({ purchase }: { purchase: ShopPurchase }) {
                     </div>
 
                     <div className="mt-4 flex items-center justify-between">
-                        <Button
-                            type="button"
+                        <ButtonLink
                             variant="ghost"
-                            render={
-                                <Link href={route('purchases.index')} />
-                            }
+                            href={route('purchases.index')}
                         >
                             Back
-                        </Button>
+                        </ButtonLink>
                         <div className="text-sm font-medium">
                             Total: {formatMoney(purchase.total)} MAD
                         </div>

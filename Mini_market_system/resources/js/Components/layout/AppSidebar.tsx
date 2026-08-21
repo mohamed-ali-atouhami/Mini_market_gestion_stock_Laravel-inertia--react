@@ -13,10 +13,13 @@ import {
 } from '@/Components/ui/sidebar';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
+    Landmark,
     LayoutDashboard,
     LogOut,
     Package,
     PackagePlus,
+    Receipt,
+    ScanLine,
     ShoppingBasket,
     Tags,
     Truck,
@@ -41,6 +44,20 @@ const navigation: NavigationItem[] = [
         href: 'dashboard',
         match: 'dashboard',
         icon: LayoutDashboard,
+        visible: ['owner', 'cashier'],
+    },
+    {
+        name: 'POS',
+        href: 'pos.index',
+        match: 'pos.*',
+        icon: ScanLine,
+        visible: ['owner', 'cashier'],
+    },
+    {
+        name: 'Caisse',
+        href: 'caisse.index',
+        match: 'caisse.*',
+        icon: Landmark,
         visible: ['owner', 'cashier'],
     },
     {
@@ -76,6 +93,13 @@ const navigation: NavigationItem[] = [
         href: 'purchases.index',
         match: 'purchases.*',
         icon: PackagePlus,
+        visible: ['owner'],
+    },
+    {
+        name: 'Sales',
+        href: 'sales.index',
+        match: 'sales.*',
+        icon: Receipt,
         visible: ['owner'],
     },
 ];

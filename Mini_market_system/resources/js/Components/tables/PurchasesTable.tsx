@@ -1,9 +1,8 @@
 import Table, { TableColumn } from '@/Components/tables/Table';
 import { Badge } from '@/Components/ui/badge';
-import { Button } from '@/Components/ui/button';
+import { ButtonLink } from '@/Components/ui/button';
 import { TableCell, TableRow } from '@/Components/ui/table';
 import { ShopPurchase } from '@/types';
-import { Link } from '@inertiajs/react';
 import { Eye, Pencil } from 'lucide-react';
 
 function formatMoney(value: string): string {
@@ -69,17 +68,17 @@ export function PurchasesTable({
                     </Badge>
                 </TableCell>
                 <TableCell>
-                    <Button
+                    <ButtonLink
                         variant="ghost"
                         size="icon-sm"
-                        render={<Link href={href} />}
+                        href={href}
                     >
                         {purchase.status === 'draft' ? (
                             <Pencil className="h-4 w-4" />
                         ) : (
                             <Eye className="h-4 w-4" />
                         )}
-                    </Button>
+                    </ButtonLink>
                 </TableCell>
             </TableRow>
         );

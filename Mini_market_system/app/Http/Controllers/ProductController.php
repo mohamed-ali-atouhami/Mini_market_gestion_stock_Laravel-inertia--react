@@ -6,6 +6,8 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\StockMovement;
+use App\Services\StockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,6 +16,10 @@ use Inertia\Response;
 class ProductController extends Controller
 {
     private const PER_PAGE = 10;
+
+    public function __construct(private StockService $stock)
+    {
+    }
 
     public function index(Request $request): Response
     {
@@ -85,14 +91,25 @@ class ProductController extends Controller
     {
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active', true);
-        $data['stock_quantity'] = $data['stock_quantity'] ?? 0;
+        $openingStock = (float) ($data['stock_quantity'] ?? 0);
+        $data['stock_quantity'] = 0;
         $data['unit'] = $data['unit'] ?? Product::UNIT_PIECE;
 
         if ($request->input('return_to') === 'purchases') {
-            $data['stock_quantity'] = 0;
+            $openingStock = 0;
         }
 
         $product = Product::query()->create($data);
+
+        if ($openingStock > 0) {
+            $this->stock->adjust(
+                $product,
+                $openingStock,
+                StockMovement::DIRECTION_IN,
+                $request->user(),
+                'Opening stock',
+            );
+        }
 
         $created = [
             'id' => $product->id,

@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\CashSession;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -52,10 +54,35 @@ class HandleInertiaRequests extends Middleware
                 'receivePurchases' => $user?->can('receive-purchases') ?? false,
                 'deleteProducts' => $user?->can('delete-products') ?? false,
             ],
+            'cashSession' => $this->openCashSession($user),
             'flash' => [
                 'status' => $request->session()->get('status'),
                 'created_product' => $request->session()->get('created_product'),
             ],
+        ];
+    }
+
+    /**
+     * @return array{id: int, opened_at: string|null}|null
+     */
+    private function openCashSession(?User $user): ?array
+    {
+        if ($user === null) {
+            return null;
+        }
+
+        $session = CashSession::query()
+            ->where('user_id', $user->id)
+            ->where('status', CashSession::STATUS_OPEN)
+            ->first();
+
+        if ($session === null) {
+            return null;
+        }
+
+        return [
+            'id' => $session->id,
+            'opened_at' => $session->opened_at?->format('Y-m-d H:i'),
         ];
     }
 }

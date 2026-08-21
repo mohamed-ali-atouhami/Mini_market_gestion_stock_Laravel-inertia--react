@@ -2,10 +2,9 @@ import Pagination from '@/Components/tables/Pagination';
 import { PurchasesTable } from '@/Components/tables/PurchasesTable';
 import TableSearch from '@/Components/tables/TableSearch';
 import { TableColumn } from '@/Components/tables/Table';
-import { Button } from '@/Components/ui/button';
+import { ButtonLink } from '@/Components/ui/button';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Paginated, ShopPurchase } from '@/types';
-import { Link } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 
 const getColumns = (): TableColumn[] => [
@@ -70,14 +69,10 @@ export default function Index({
                         </h2>
                         <div className="flex w-full flex-col items-center gap-4 md:w-auto md:flex-row">
                             <TableSearch placeholder="Search by reference, invoice, or supplier..." />
-                            <Button
-                                render={
-                                    <Link href={route('purchases.create')} />
-                                }
-                            >
+                            <ButtonLink href={route('purchases.create')}>
                                 <Plus className="h-4 w-4" />
                                 New delivery
-                            </Button>
+                            </ButtonLink>
                         </div>
                     </div>
                     <PurchasesTable

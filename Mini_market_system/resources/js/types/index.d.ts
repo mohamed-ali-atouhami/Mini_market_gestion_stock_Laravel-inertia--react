@@ -79,6 +79,10 @@ export type PageProps<
         status: string | null;
         created_product: ScannedProduct | null;
     };
+    cashSession: {
+        id: number;
+        opened_at: string | null;
+    } | null;
 };
 
 export type ScannedProduct = {
@@ -96,6 +100,49 @@ export type PurchaseLine = {
     barcode: string | null;
     quantity: string;
     unit_cost: string;
+};
+
+export type PosProduct = {
+    id: number;
+    name: string;
+    barcode: string | null;
+    sale_price: string;
+    stock_quantity: string;
+    unit: string;
+    is_active: boolean;
+};
+
+export type CartLine = {
+    product_id: number;
+    name: string;
+    barcode: string | null;
+    quantity: string;
+    unit_price: string;
+    stock_quantity?: string;
+};
+
+export type ShopSale = {
+    id: number;
+    reference: string;
+    cashier: string | null;
+    status: 'completed' | 'cancelled';
+    total: string;
+    amount_paid: string;
+    change_amount: string;
+    sold_at: string | null;
+    items?: CartLine[];
+};
+
+export type ShopCashSession = {
+    id: number;
+    status: 'open' | 'closed';
+    opened_at: string | null;
+    closed_at: string | null;
+    opening_amount: string;
+    closing_amount: string | null;
+    expected_amount: string | null;
+    difference: string | null;
+    sales_total?: string;
 };
 
 export type ShopPurchase = {

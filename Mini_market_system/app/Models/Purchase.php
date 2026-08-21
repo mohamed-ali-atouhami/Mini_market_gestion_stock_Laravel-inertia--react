@@ -21,6 +21,7 @@ class Purchase extends Model
         $last = static::query()
             ->where('reference', 'like', $prefix.'%')
             ->orderByDesc('id')
+            ->lockForUpdate()
             ->value('reference');
 
         $next = 1;

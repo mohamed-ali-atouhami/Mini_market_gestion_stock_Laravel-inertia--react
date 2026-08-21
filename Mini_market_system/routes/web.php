@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\CashSessionController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +25,16 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
+    Route::get('/pos/lookup-product', [PosController::class, 'lookupProduct'])->name('pos.lookup-product');
+    Route::post('/pos', [PosController::class, 'store'])->name('pos.store');
+
+    Route::get('/caisse', [CashSessionController::class, 'index'])->name('caisse.index');
+    Route::post('/caisse', [CashSessionController::class, 'store'])->name('caisse.open');
+    Route::post('/caisse/{cashSession}/close', [CashSessionController::class, 'close'])->name('caisse.close');
+
+    Route::get('/sales/{sale}/receipt', [SaleController::class, 'receipt'])->name('sales.receipt');
 
     Route::middleware('owner')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -51,6 +64,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::patch('/purchases/{purchase}', [PurchaseController::class, 'update'])->name('purchases.update');
         Route::post('/purchases/{purchase}/receive', [PurchaseController::class, 'receive'])->name('purchases.receive');
         Route::post('/purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->name('purchases.cancel');
+
+        Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
+        Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
     });
 });
 

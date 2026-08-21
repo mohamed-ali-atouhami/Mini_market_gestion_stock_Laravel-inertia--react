@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
+import { Link } from "@inertiajs/react"
 
 import { cn } from "@/lib/utils"
 
@@ -59,4 +60,26 @@ const Button = React.forwardRef<
 })
 Button.displayName = "Button"
 
-export { Button, buttonVariants }
+type ButtonLinkProps = Omit<
+  React.ComponentProps<typeof Link>,
+  "className" | "size" | "variant"
+> &
+  VariantProps<typeof buttonVariants> & {
+    className?: string
+  }
+
+function ButtonLink({
+  className,
+  variant,
+  size,
+  ...props
+}: ButtonLinkProps) {
+  return (
+    <Link
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Button, ButtonLink, buttonVariants }
