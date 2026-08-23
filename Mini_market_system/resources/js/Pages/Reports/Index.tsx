@@ -9,7 +9,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { formatMoney } from '@/lib/utils';
 import { PageProps, ShopCashSession, ShopStockMovement } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
@@ -55,7 +54,7 @@ export default function Index({
     });
 
     return (
-        <AuthenticatedLayout>
+        <>
             <div className="space-y-6">
                 <div>
                     <h1 className="text-3xl font-bold">Reports</h1>
@@ -183,7 +182,7 @@ export default function Index({
                     ])}
                 />
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }
 

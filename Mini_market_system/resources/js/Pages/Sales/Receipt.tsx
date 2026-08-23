@@ -1,5 +1,4 @@
 import { Button, ButtonLink } from '@/Components/ui/button';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { ShopSale } from '@/types';
 
 function formatMoney(value: string | number): string {
@@ -23,7 +22,7 @@ export default function Receipt({
     const items = sale.items ?? [];
 
     return (
-        <AuthenticatedLayout>
+        <>
             <div className="mx-auto max-w-md space-y-6 print:max-w-none">
                 <div className="rounded-md bg-card p-6 text-center ring-1 ring-foreground/10 print:ring-0">
                     <h1 className="text-xl font-bold">{shop.name}</h1>
@@ -92,6 +91,6 @@ export default function Receipt({
                     </Button>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }

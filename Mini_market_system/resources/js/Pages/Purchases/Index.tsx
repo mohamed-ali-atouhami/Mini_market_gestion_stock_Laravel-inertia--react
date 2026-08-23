@@ -3,7 +3,6 @@ import { PurchasesTable } from '@/Components/tables/PurchasesTable';
 import TableSearch from '@/Components/tables/TableSearch';
 import { TableColumn } from '@/Components/tables/Table';
 import { ButtonLink } from '@/Components/ui/button';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Paginated, ShopPurchase } from '@/types';
 import { Plus } from 'lucide-react';
 
@@ -56,7 +55,7 @@ export default function Index({
     purchases: Paginated<ShopPurchase>;
 }) {
     return (
-        <AuthenticatedLayout>
+        <>
             <div className="space-y-6">
                 <div>
                     <h1 className="text-3xl font-bold">Purchases</h1>
@@ -85,6 +84,6 @@ export default function Index({
                     />
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }

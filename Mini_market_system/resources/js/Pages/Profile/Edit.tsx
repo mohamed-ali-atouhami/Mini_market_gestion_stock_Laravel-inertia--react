@@ -1,11 +1,10 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 
 export default function Edit() {
     return (
-        <AuthenticatedLayout header="Profile">
+        <>
             <Head title="Profile" />
 
             <div className="space-y-6">
@@ -16,6 +15,6 @@ export default function Edit() {
                     <UpdatePasswordForm />
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }

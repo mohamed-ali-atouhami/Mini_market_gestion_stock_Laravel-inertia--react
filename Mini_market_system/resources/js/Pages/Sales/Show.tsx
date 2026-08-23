@@ -8,7 +8,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { ShopSale } from '@/types';
 
 function formatMoney(value: string | number): string {
@@ -21,7 +20,7 @@ export default function Show({ sale }: { sale: ShopSale }) {
     const items = sale.items ?? [];
 
     return (
-        <AuthenticatedLayout>
+        <>
             <div className="space-y-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -100,6 +99,6 @@ export default function Show({ sale }: { sale: ShopSale }) {
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }

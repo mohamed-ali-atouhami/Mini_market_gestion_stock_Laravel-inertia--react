@@ -16,7 +16,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import {
     CategoryOption,
     PurchaseLine,
@@ -187,7 +186,7 @@ export default function PurchaseForm({
         : 'New delivery';
 
     return (
-        <AuthenticatedLayout>
+        <>
             <div className="space-y-6">
                 <div>
                     <h1 className="text-3xl font-bold">{title}</h1>
@@ -477,6 +476,6 @@ export default function PurchaseForm({
                     }
                 }}
             />
-        </AuthenticatedLayout>
+        </>
     );
 }

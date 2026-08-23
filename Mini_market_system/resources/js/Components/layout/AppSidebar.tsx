@@ -128,6 +128,16 @@ const navigation: NavigationItem[] = [
     },
 ];
 
+export function currentPageTitle(): string | null {
+    if (route().current('profile.edit')) {
+        return 'Profile';
+    }
+
+    const item = navigation.find((entry) => route().current(entry.match));
+
+    return item ? item.name.split(' (')[0] : null;
+}
+
 export function AppSidebar() {
     const { auth, shop } = usePage<PageProps>().props;
     const user = auth.user;
@@ -211,8 +221,8 @@ export function AppSidebar() {
                             tooltip="Log out"
                             onClick={() => router.post(route('logout'))}
                         >
-                            <LogOut />
-                            <span>Log out</span>
+                            <LogOut className='text-red-500' />
+                            <span className='text-red-500'>Log out</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>

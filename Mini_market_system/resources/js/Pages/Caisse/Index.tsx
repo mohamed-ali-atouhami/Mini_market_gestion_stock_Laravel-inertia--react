@@ -15,7 +15,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { ShopCashSession } from '@/types';
 import { useForm } from '@inertiajs/react';
 
@@ -44,7 +43,7 @@ export default function Index({
     });
 
     return (
-        <AuthenticatedLayout>
+        <>
             <div className="space-y-6">
                 <div>
                     <h1 className="text-3xl font-bold">Caisse</h1>
@@ -234,6 +233,6 @@ export default function Index({
                     </div>
                 ) : null}
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }

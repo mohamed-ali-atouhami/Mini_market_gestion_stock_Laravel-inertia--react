@@ -1,5 +1,8 @@
 import FlashToasts from '@/Components/FlashToasts';
-import { AppSidebar } from '@/Components/layout/AppSidebar';
+import {
+    AppSidebar,
+    currentPageTitle,
+} from '@/Components/layout/AppSidebar';
 import {
     SidebarInset,
     SidebarProvider,
@@ -8,6 +11,7 @@ import {
 import { Separator } from '@/Components/ui/separator';
 import { PageProps } from '@/types';
 import { usePage } from '@inertiajs/react';
+import { TextAlignStart } from 'lucide-react';
 import { PropsWithChildren, ReactNode } from 'react';
 
 export default function AuthenticatedLayout({
@@ -15,6 +19,7 @@ export default function AuthenticatedLayout({
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const { auth } = usePage<PageProps>().props;
+    const pageTitle = header ?? currentPageTitle();
 
     if (!auth.user) {
         return null;
@@ -26,11 +31,13 @@ export default function AuthenticatedLayout({
             <AppSidebar />
             <SidebarInset>
                 <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
-                    <SidebarTrigger />
+                    <SidebarTrigger>
+                        <TextAlignStart className="size-4" />
+                    </SidebarTrigger>
                     <Separator orientation="vertical" className="h-4 self-auto" />
-                    {header ? (
+                    {pageTitle ? (
                         <div className="flex-1 text-sm font-medium">
-                            {header}
+                            {pageTitle}
                         </div>
                     ) : null}
                 </header>

@@ -1,5 +1,4 @@
 import InputError from '@/Components/InputError';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Button, ButtonLink } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Input } from '@/Components/ui/input';
@@ -45,13 +44,7 @@ export default function Edit({
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-foreground">
-                    Edit user
-                </h2>
-            }
-        >
+        <>
             <Head title="Edit user" />
 
             <div className="py-12">
@@ -168,6 +161,6 @@ export default function Edit({
                     </form>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }

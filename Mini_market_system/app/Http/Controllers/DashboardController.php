@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Setting;
@@ -68,6 +69,77 @@ class DashboardController extends Controller
             ])
             ->all();
 
+        $weekStart = now()->subDays(6)->toDateString();
+
+        $salesByDay = Sale::query()
+            ->selectRaw('DATE(created_at) as day, SUM(total) as total')
+            ->where('status', Sale::STATUS_COMPLETED)
+            ->whereDate('created_at', '>=', $weekStart)
+            ->whereDate('created_at', '<=', $today)
+            ->groupBy('day')
+            ->pluck('total', 'day');
+
+        $purchasesByDay = Purchase::query()
+            ->selectRaw('DATE(purchase_date) as day, SUM(total) as total')
+            ->where('status', Purchase::STATUS_RECEIVED)
+            ->whereDate('purchase_date', '>=', $weekStart)
+            ->whereDate('purchase_date', '<=', $today)
+            ->groupBy('day')
+            ->pluck('total', 'day');
+
+        $week = collect(range(0, 6))->map(function (int $offset) use ($salesByDay, $purchasesByDay) {
+            $date = now()->subDays(6 - $offset);
+            $day = $date->toDateString();
+
+            return [
+                'day' => $day,
+                'label' => $date->format('d/m'),
+                'sales' => (float) ($salesByDay[$day] ?? 0),
+                'purchases' => (float) ($purchasesByDay[$day] ?? 0),
+            ];
+        })->all();
+
+        $categoryRows = Product::query()
+            ->select([
+                'categories.id',
+                'categories.name',
+                DB::raw('SUM(products.stock_quantity) as quantity'),
+            ])
+            ->join('categories', 'categories.id', '=', 'products.category_id')
+            ->where('products.is_active', true)
+            ->groupBy('categories.id', 'categories.name')
+            ->havingRaw('SUM(products.stock_quantity) > 0')
+            ->orderByDesc('quantity')
+            ->get();
+
+        $categoryTotal = (float) $categoryRows->sum('quantity');
+
+        $stockByCategory = $categoryRows
+            ->map(fn ($row) => [
+                'id' => (int) $row->id,
+                'name' => $row->name,
+                'quantity' => Formats::decimal($row->quantity, 3),
+                'percent' => $categoryTotal > 0
+                    ? (int) round(((float) $row->quantity / $categoryTotal) * 100)
+                    : 0,
+            ])
+            ->all();
+
+        $recentPurchases = Purchase::query()
+            ->with('supplier')
+            ->where('status', Purchase::STATUS_RECEIVED)
+            ->latest('id')
+            ->limit(3)
+            ->get()
+            ->map(fn (Purchase $purchase) => [
+                'id' => $purchase->id,
+                'reference' => $purchase->reference,
+                'supplier' => $purchase->supplier?->name,
+                'purchase_date' => $purchase->purchase_date?->format('d/m/Y'),
+                'total' => Formats::money($purchase->total),
+            ])
+            ->all();
+
         return Inertia::render('Dashboard', [
             'today' => [
                 'sales_total' => Formats::money($salesTotal),
@@ -76,6 +148,9 @@ class DashboardController extends Controller
             'stock_value' => Formats::money($stockValue),
             'low_stock' => $lowStock,
             'top_selling' => $topSelling,
+            'week' => $week,
+            'stock_by_category' => $stockByCategory,
+            'recent_purchases' => $recentPurchases,
         ]);
     }
 }

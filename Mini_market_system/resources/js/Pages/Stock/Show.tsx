@@ -14,7 +14,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { cn } from '@/lib/utils';
 import { ShopStockMovement, ShopStockProduct } from '@/types';
 import { useForm } from '@inertiajs/react';
@@ -36,7 +35,7 @@ export default function Show({
     });
 
     return (
-        <AuthenticatedLayout>
+        <>
             <div className="space-y-6">
                 <div className="flex flex-wrap items-end justify-between gap-3">
                     <div>
@@ -194,6 +193,6 @@ export default function Show({
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }

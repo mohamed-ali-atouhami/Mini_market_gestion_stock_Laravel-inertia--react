@@ -3,7 +3,6 @@ import Pagination from '@/Components/tables/Pagination';
 import TableSearch from '@/Components/tables/TableSearch';
 import { TableColumn } from '@/Components/tables/Table';
 import { CategoriesTable } from '@/Components/tables/CategoriesTable';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Paginated, ShopCategory } from '@/types';
 
 const getColumns = (): TableColumn[] => [
@@ -38,7 +37,7 @@ export default function Index({
     categories: Paginated<ShopCategory>;
 }) {
     return (
-        <AuthenticatedLayout>
+        <>
             <div className="space-y-6">
                 <div>
                     <h1 className="text-3xl font-bold">Categories</h1>
@@ -64,6 +63,6 @@ export default function Index({
                     />
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }

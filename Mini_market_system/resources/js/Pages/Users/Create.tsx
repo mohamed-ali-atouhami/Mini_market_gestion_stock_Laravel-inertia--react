@@ -1,5 +1,4 @@
 import InputError from '@/Components/InputError';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Button, ButtonLink } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Input } from '@/Components/ui/input';
@@ -31,13 +30,7 @@ export default function Create({ roles }: { roles: RoleOption[] }) {
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-foreground">
-                    Add user
-                </h2>
-            }
-        >
+        <>
             <Head title="Add user" />
 
             <div className="py-12">
@@ -154,6 +147,6 @@ export default function Create({ roles }: { roles: RoleOption[] }) {
                     </form>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }

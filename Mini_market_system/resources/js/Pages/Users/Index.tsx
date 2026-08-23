@@ -3,7 +3,6 @@ import Pagination from '@/Components/tables/Pagination';
 import TableSearch from '@/Components/tables/TableSearch';
 import { TableColumn } from '@/Components/tables/Table';
 import { UsersTable } from '@/Components/tables/UsersTable';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Paginated, RoleOption, ShopUser } from '@/types';
 //import { Head } from '@inertiajs/react';
 
@@ -61,7 +60,7 @@ export default function Index({
     roles: RoleOption[];
 }) {
     return (
-        <AuthenticatedLayout>
+        <>
             <div className="space-y-6">
                 <div>
                     <h1 className="text-3xl font-bold">User Management</h1>
@@ -92,6 +91,6 @@ export default function Index({
                     />
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }

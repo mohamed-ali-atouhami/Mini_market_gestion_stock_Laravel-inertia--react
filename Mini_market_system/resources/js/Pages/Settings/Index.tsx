@@ -7,7 +7,6 @@ import {
     FieldLabel,
 } from '@/Components/ui/field';
 import { Input } from '@/Components/ui/input';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useForm } from '@inertiajs/react';
 
 export default function Index({
@@ -32,7 +31,7 @@ export default function Index({
     });
 
     return (
-        <AuthenticatedLayout>
+        <>
             <div className="space-y-6">
                 <div>
                     <h1 className="text-3xl font-bold">Settings</h1>
@@ -143,6 +142,6 @@ export default function Index({
                     </Button>
                 </form>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }
