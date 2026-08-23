@@ -3,8 +3,10 @@
 namespace App\Http\Middleware;
 
 use App\Models\CashSession;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -54,11 +56,36 @@ class HandleInertiaRequests extends Middleware
                 'receivePurchases' => $user?->can('receive-purchases') ?? false,
                 'deleteProducts' => $user?->can('delete-products') ?? false,
             ],
+            'shop' => $this->shop(),
             'cashSession' => $this->openCashSession($user),
             'flash' => [
                 'status' => $request->session()->get('status'),
                 'created_product' => $request->session()->get('created_product'),
             ],
+        ];
+    }
+
+    /**
+     * @return array{name: string, currency: string, low_stock_enabled: bool}
+     */
+    private function shop(): array
+    {
+        $defaults = [
+            'name' => 'Mini market',
+            'currency' => 'MAD',
+            'low_stock_enabled' => true,
+        ];
+
+        if (! Schema::hasTable('settings')) {
+            return $defaults;
+        }
+
+        $settings = Setting::query()->first();
+
+        return [
+            'name' => $settings?->shop_name ?? $defaults['name'],
+            'currency' => $settings?->currency ?? $defaults['currency'],
+            'low_stock_enabled' => $settings?->low_stock_enabled ?? true,
         ];
     }
 

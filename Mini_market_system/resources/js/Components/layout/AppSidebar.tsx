@@ -14,17 +14,20 @@ import {
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     Landmark,
+    ChartColumn,
     LayoutDashboard,
     LogOut,
     Package,
     PackagePlus,
     Receipt,
     ScanLine,
-    ShoppingBasket,
+    Settings,
+    ShoppingCart,
     Tags,
     Truck,
     UserRound,
     Users,
+    Warehouse,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -61,53 +64,75 @@ const navigation: NavigationItem[] = [
         visible: ['owner', 'cashier'],
     },
     {
-        name: 'Users',
-        href: 'users.index',
-        match: 'users.*',
-        icon: Users,
+        name: 'Tickets sales',
+        href: 'sales.index',
+        match: 'sales.*',
+        icon: Receipt,
         visible: ['owner'],
     },
     {
-        name: 'Categories',
-        href: 'categories.index',
-        match: 'categories.*',
-        icon: Tags,
-        visible: ['owner'],
-    },
-    {
-        name: 'Suppliers',
-        href: 'suppliers.index',
-        match: 'suppliers.*',
-        icon: Truck,
-        visible: ['owner'],
-    },
-    {
-        name: 'Products',
-        href: 'products.index',
-        match: 'products.*',
-        icon: Package,
-        visible: ['owner'],
-    },
-    {
-        name: 'Purchases',
+        name: 'Purchases ( المشتريات )',
         href: 'purchases.index',
         match: 'purchases.*',
         icon: PackagePlus,
         visible: ['owner'],
     },
     {
-        name: 'Sales',
-        href: 'sales.index',
-        match: 'sales.*',
-        icon: Receipt,
+        name: 'Stock ( المخزن )',
+        href: 'stock.index',
+        match: 'stock.*',
+        icon: Warehouse,
+        visible: ['owner'],
+    },
+    {
+        name: 'Products ( المنتجات )',
+        href: 'products.index',
+        match: 'products.*',
+        icon: Package,
+        visible: ['owner'],
+    },
+    {
+        name: 'Categories ( الفئات )',
+        href: 'categories.index',
+        match: 'categories.*',
+        icon: Tags,
+        visible: ['owner'],
+    },
+    {
+        name: 'Suppliers ( الموردين )',
+        href: 'suppliers.index',
+        match: 'suppliers.*',
+        icon: Truck,
+        visible: ['owner'],
+    },
+    {
+        name: 'Reports ( التقارير )',
+        href: 'reports.index',
+        match: 'reports.*',
+        icon: ChartColumn,
+        visible: ['owner'],
+    },
+    {
+        name: 'Settings ( الإعدادات )',
+        href: 'settings.edit',
+        match: 'settings.*',
+        icon: Settings,
+        visible: ['owner'],
+    },
+    {
+        name: 'Users ( المستخدمين )',
+        href: 'users.index',
+        match: 'users.*',
+        icon: Users,
         visible: ['owner'],
     },
 ];
 
 export function AppSidebar() {
-    const { auth } = usePage<PageProps>().props;
+    const { auth, shop } = usePage<PageProps>().props;
     const user = auth.user;
     const role = user?.role as RoleSlug | null | undefined;
+    const shopName = shop?.name || 'Mini market';
 
     const visibleItems = navigation.filter((item) => {
         if (!role) {
@@ -124,15 +149,15 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             size="lg"
-                            tooltip="Mini market"
+                            tooltip={shopName}
                             className="group-data-[collapsible=icon]:p-2!"
                             render={<Link href={route('dashboard')} />}
                         >
                             <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground group-data-[collapsible=icon]:size-4 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:text-current">
-                                <ShoppingBasket className="size-4" />
+                                <ShoppingCart className="size-4" />
                             </div>
                             <span className="truncate font-semibold group-data-[collapsible=icon]:hidden">
-                                Mini market
+                                {shopName}
                             </span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

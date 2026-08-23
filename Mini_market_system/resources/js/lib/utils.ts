@@ -15,3 +15,18 @@ export function formatInputNumber(value: string | number | null | undefined): st
 
     return Number.isNaN(amount) ? String(value) : String(amount);
 }
+
+export function formatMoney(
+    value: string | number | null | undefined,
+    currency = 'MAD',
+): string {
+    if (value === null || value === undefined || value === '') {
+        return '—';
+    }
+
+    const amount = Number(value);
+
+    return Number.isNaN(amount)
+        ? String(value)
+        : `${amount.toFixed(2)} ${currency}`;
+}

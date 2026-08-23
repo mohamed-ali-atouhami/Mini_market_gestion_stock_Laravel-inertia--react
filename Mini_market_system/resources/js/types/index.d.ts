@@ -75,6 +75,11 @@ export type PageProps<
         receivePurchases: boolean;
         deleteProducts: boolean;
     };
+    shop: {
+        name: string;
+        currency: string;
+        low_stock_enabled: boolean;
+    };
     flash: {
         status: string | null;
         created_product: ScannedProduct | null;
@@ -143,6 +148,28 @@ export type ShopCashSession = {
     expected_amount: string | null;
     difference: string | null;
     sales_total?: string;
+};
+
+export type ShopStockProduct = {
+    id: number;
+    name: string;
+    barcode: string | null;
+    stock_quantity: string;
+    min_stock: string;
+    is_low_stock: boolean;
+};
+
+export type ShopStockMovement = {
+    id: number;
+    product?: string | null;
+    type: string;
+    direction: string;
+    quantity: string;
+    quantity_before?: string;
+    quantity_after?: string;
+    reason: string;
+    user: string | null;
+    created_at: string | null;
 };
 
 export type ShopPurchase = {

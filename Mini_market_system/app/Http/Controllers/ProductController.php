@@ -6,6 +6,7 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\StockMovement;
 use App\Services\StockService;
 use Illuminate\Http\RedirectResponse;
@@ -62,6 +63,8 @@ class ProductController extends Controller
             ? $sort
             : 'name';
 
+        $lowStockEnabled = Setting::current()->low_stock_enabled;
+
         $products = $query
             ->orderBy($sortColumn, $order)
             ->paginate(self::PER_PAGE)
@@ -78,7 +81,7 @@ class ProductController extends Controller
                 'min_stock' => $this->formatDecimal($product->min_stock, 3),
                 'unit' => $product->unit,
                 'is_active' => $product->is_active,
-                'is_low_stock' => $product->isLowStock(),
+                'is_low_stock' => $lowStockEnabled && $product->isLowStock(),
             ]);
 
         return Inertia::render('Products/Index', [

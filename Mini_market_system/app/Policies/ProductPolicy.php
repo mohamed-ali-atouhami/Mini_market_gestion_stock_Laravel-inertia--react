@@ -21,4 +21,9 @@ class ProductPolicy
     {
         return $user->isOwner();
     }
+
+    public function adjust(User $user, Product $product): bool
+    {
+        return $user->isOwner();
+    }
 }

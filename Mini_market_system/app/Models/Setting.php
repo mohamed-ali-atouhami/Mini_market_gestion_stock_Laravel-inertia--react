@@ -30,6 +30,13 @@ class Setting extends Model
 
     public static function current(): self
     {
-        return static::query()->firstOrFail();
+        return static::query()->firstOrCreate(
+            ['id' => 1],
+            [
+                'shop_name' => 'Mini market',
+                'currency' => 'MAD',
+                'low_stock_enabled' => true,
+            ],
+        );
     }
 }

@@ -1,6 +1,6 @@
 # Mini_market_system – Development Roadmap
 
-**Last updated:** 21 August 2026 (Milestone 6 done; next is Milestone 7)
+**Last updated:** 22 August 2026 (Milestone 7 done; next is Milestone 8)
 
 ---
 
@@ -15,10 +15,10 @@
 | **4 – Categories / suppliers / products + barcode** | ✅ Done |
 | **5 – Purchases (stock in)** | ✅ Done |
 | **6 – POS / caisse (stock out, cash only)** | ✅ Done |
-| **7 – Dashboard, stock history, reports** | ⬜ Not started |
+| **7 – Dashboard, stock history, reports** | ✅ Done |
 | **8 – Shop PC install + live scanner test** | ⬜ Not started |
 
-### Done in the code (Milestone 0 + 1 + 2 + 3 + 4 + 5 + 6)
+### Done in the code (Milestone 0 + 1 + 2 + 3 + 4 + 5 + 6 + 7)
 
 - Spec files: `COMPLETE_SPEC.txt`, `docs/DATABASE_COLUMNS.md`, `docs/COMO_FUNCIONA_LA_APP.txt`
 - Laravel **12.66** in `Mini_market_system/` via Composer (`composer create-project`)
@@ -56,16 +56,21 @@
   - `SaleService` decreases stock through `StockService`
   - Printable receipt; owner sales list
   - Deliverable: 2× Coca-Cola 1L + 1× 2L = 29 MAD, pay 50, change 21, stock down
+- **22 August 2026:**
+  - Dashboard: today sales, ticket count, stock value, low stock, top selling
+  - Stock page + product movements + manual adjust (reason required, StockService)
+  - Reports: date range, sales by day, purchases by supplier, profit, caisse, movements
+  - Settings: shop name, phone, address, currency, ticket footer, low-stock toggle
 
 ### Not done yet (the real shop)
 
-- Reports and shop-PC install
+- Shop-PC install and live scanner test
 
 ### Next step
 
-**Milestone 7 – Dashboard, stock history & reports**
+**Milestone 8 – Permissions, shop install & live test**
 
-Today’s sales, low stock, movement history, settings.
+Harden cashier menu, production build, shop-PC copy notes, real USB scanner.
 
 ---
 
@@ -118,12 +123,12 @@ Today’s sales, low stock, movement history, settings.
 - [x] Unknown barcode → create product now (barcode already filled)
 - [x] Sales / POS: scan + cart + pay (cash only) → stock DOWN
 - [x] Block sale if stock is not enough
-- [ ] Stock movements ledger (never deleted)
-- [ ] Manual stock adjustment (damage, loss, count correction) with reason
+- [x] Stock movements ledger (never deleted)
+- [x] Manual stock adjustment (damage, loss, count correction) with reason
 - [x] Cash session (open / close caisse)
-- [ ] Dashboard: today sales, ticket count, low stock, stock value
-- [ ] Reports: sales by period, purchases by supplier, movements, low stock, cash session
-- [ ] Settings: shop name, currency (MAD), ticket footer
+- [x] Dashboard: today sales, ticket count, low stock, stock value
+- [x] Reports: sales by period, purchases by supplier, movements, low stock, cash session
+- [x] Settings: shop name, currency (MAD), ticket footer
 - [ ] Shop PC install notes (Laragon + shortcut + daily SQLite backup)
 
 ### Out of Scope for MVP (Deferred)
@@ -243,7 +248,7 @@ Today’s sales, low stock, movement history, settings.
 - Sale list + detail for owner.
 - **Deliverables:** Scan 2× 1L + 1× 2L, pay 50 DH, change 23, stock drops, ticket saved.
 
-### Milestone 7 – Dashboard, Stock History & Reports (Weeks 9–10)
+### Milestone 7 – Dashboard, Stock History & Reports (Weeks 9–10) ✅ *Done*
 
 - **Stock page:** current qty, barcode, min stock, red row if low. Click → movements.
 - **Adjustments:** damage / loss / count correction. Reason required. Through StockService only.
@@ -353,8 +358,7 @@ Setup → Auth → Schema → Categories/Suppliers/Products
 
 ## 9. Next Actions
 
-1. **Start Milestone 7 – Dashboard, stock history & reports** — today’s sales, low stock, movements, settings.
-2. Manual adjustments (damage / count) also belong here, through `StockService` only.
+1. **Start Milestone 8 – Shop install & live test** — production build, Laragon shortcut, daily SQLite backup note, real scanner if available.
 
 ---
 

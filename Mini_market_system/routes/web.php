@@ -2,15 +2,18 @@
 
 use App\Http\Controllers\CashSessionController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', function () {
     return auth()->check()
@@ -19,9 +22,7 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth', 'active'])->group(function () {
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -67,6 +68,15 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
         Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
+
+        Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
+        Route::get('/stock/{product}', [StockController::class, 'show'])->name('stock.show');
+        Route::post('/stock/{product}/adjust', [StockController::class, 'adjust'])->name('stock.adjust');
+
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+        Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
+        Route::patch('/settings', [SettingController::class, 'update'])->name('settings.update');
     });
 });
 
