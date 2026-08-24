@@ -186,6 +186,7 @@ class PurchaseController extends Controller
                 'cost_price' => $this->formatDecimal($product->cost_price, 2),
                 'unit' => $product->unit,
                 'is_active' => $product->is_active,
+                'image_url' => $product->imageUrl(),
             ],
         ]);
     }
@@ -276,8 +277,9 @@ class PurchaseController extends Controller
             'total' => $purchase->total,
             'items' => $purchase->items->map(fn ($item) => [
                 'product_id' => $item->product_id,
-                'name' => $item->product?->name,
+                'name' => $item->product?->name ?? 'Product',
                 'barcode' => $item->product?->barcode,
+                'image_url' => $item->product?->imageUrl(),
                 'quantity' => $this->formatDecimal($item->quantity, 3),
                 'unit_cost' => $this->formatDecimal($item->unit_cost, 2),
             ])->all(),

@@ -44,6 +44,7 @@ export type ShopProduct = {
     unit: string;
     is_active: boolean;
     is_low_stock: boolean;
+    image_url: string | null;
 };
 
 export type ShopUser = {
@@ -97,6 +98,7 @@ export type ScannedProduct = {
     cost_price: string;
     unit: string;
     is_active: boolean;
+    image_url?: string | null;
 };
 
 export type PurchaseLine = {
@@ -105,6 +107,7 @@ export type PurchaseLine = {
     barcode: string | null;
     quantity: string;
     unit_cost: string;
+    image_url?: string | null;
 };
 
 export type PosProduct = {
@@ -115,6 +118,7 @@ export type PosProduct = {
     stock_quantity: string;
     unit: string;
     is_active: boolean;
+    image_url: string | null;
 };
 
 export type CartLine = {
@@ -124,6 +128,7 @@ export type CartLine = {
     quantity: string;
     unit_price: string;
     stock_quantity?: string;
+    image_url?: string | null;
 };
 
 export type ShopSale = {
@@ -157,11 +162,13 @@ export type ShopStockProduct = {
     stock_quantity: string;
     min_stock: string;
     is_low_stock: boolean;
+    image_url: string | null;
 };
 
 export type ShopStockMovement = {
     id: number;
     product?: string | null;
+    image_url?: string | null;
     type: string;
     direction: string;
     quantity: string;

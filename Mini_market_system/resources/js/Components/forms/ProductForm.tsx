@@ -1,4 +1,5 @@
 import BarcodeInput from '@/Components/forms/BarcodeInput';
+import { ProductThumb } from '@/Components/ProductThumb';
 import { Button } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
 import {
@@ -11,7 +12,7 @@ import { Input } from '@/Components/ui/input';
 import { CategoryOption, PageProps, ScannedProduct, ShopProduct } from '@/types';
 import { formatInputNumber } from '@/lib/utils';
 import { useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useEffect, useState } from 'react';
 
 const selectClassName =
     'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
@@ -34,6 +35,18 @@ export default function ProductForm({
     onCreated?: (product: ScannedProduct) => void;
 }) {
     const fromPurchases = returnTo === 'purchases';
+    const [preview, setPreview] = useState<string | null>(
+        data?.image_url ?? null,
+    );
+
+    useEffect(() => {
+        return () => {
+            if (preview?.startsWith('blob:')) {
+                URL.revokeObjectURL(preview);
+            }
+        };
+    }, [preview]);
+
     const form = useForm({
         name: data?.name ?? '',
         category_id: data?.category_id ?? categories[0]?.id ?? 0,
@@ -44,14 +57,39 @@ export default function ProductForm({
         min_stock: formatInputNumber(data?.min_stock) || '0',
         unit: data?.unit ?? 'piece',
         is_active: data?.is_active ?? true,
+        image: null as File | null,
+        remove_image: false,
         return_to: returnTo ?? '',
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
+        form.transform((values) => {
+            const payload: Record<string, unknown> = { ...values };
+
+            if (!(payload.image instanceof File)) {
+                delete payload.image;
+            }
+
+            payload.is_active = values.is_active ? 1 : 0;
+
+            if (values.remove_image) {
+                payload.remove_image = 1;
+            } else {
+                delete payload.remove_image;
+            }
+
+            if (type === 'edit') {
+                payload._method = 'patch';
+            }
+
+            return payload;
+        });
+
         if (type === 'create') {
             form.post(route('products.store'), {
+                forceFormData: true,
                 preserveScroll: true,
                 preserveState: fromPurchases,
                 onSuccess: (page) => {
@@ -70,7 +108,8 @@ export default function ProductForm({
             return;
         }
 
-        form.patch(route('products.update', data.id), {
+        form.post(route('products.update', data.id), {
+            forceFormData: true,
             preserveScroll: true,
             onSuccess: () => setOpen(false),
         });
@@ -124,6 +163,56 @@ export default function ProductForm({
                         or type it by hand.
                     </p>
                     <FieldError>{form.errors.barcode}</FieldError>
+                </Field>
+                <Field>
+                    <FieldLabel htmlFor="image">Photo</FieldLabel>
+                    <div className="flex items-center gap-3">
+                        <ProductThumb
+                            src={preview}
+                            name={form.data.name || 'Product'}
+                            className="size-16"
+                        />
+                        <Input
+                            id="image"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0] ?? null;
+                                form.setData('image', file);
+                                form.setData('remove_image', false);
+                                setPreview(
+                                    file
+                                        ? URL.createObjectURL(file)
+                                        : (data?.image_url ?? null),
+                                );
+                            }}
+                        />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        Optional. JPEG, PNG or WebP, up to 2 MB.
+                    </p>
+                    {type === 'edit' &&
+                    data?.image_url &&
+                    form.data.image === null ? (
+                        <Field orientation="horizontal">
+                            <Checkbox
+                                id="remove_image"
+                                checked={form.data.remove_image}
+                                onCheckedChange={(checked) => {
+                                    const remove = checked === true;
+                                    form.setData('remove_image', remove);
+                                    setPreview(remove ? null : data.image_url);
+                                }}
+                            />
+                            <FieldLabel
+                                htmlFor="remove_image"
+                                className="font-normal"
+                            >
+                                Remove photo
+                            </FieldLabel>
+                        </Field>
+                    ) : null}
+                    <FieldError>{form.errors.image}</FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="cost_price">Cost price (MAD)</FieldLabel>

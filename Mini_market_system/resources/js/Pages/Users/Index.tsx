@@ -4,7 +4,6 @@ import TableSearch from '@/Components/tables/TableSearch';
 import { TableColumn } from '@/Components/tables/Table';
 import { UsersTable } from '@/Components/tables/UsersTable';
 import { Paginated, RoleOption, ShopUser } from '@/types';
-//import { Head } from '@inertiajs/react';
 
 const getColumns = (): TableColumn[] => [
     {

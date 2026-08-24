@@ -33,13 +33,13 @@ export default function Index({
     return (
         <>
             <div className="space-y-6">
-                <div>
+                {/* <div>
                     <h1 className="text-3xl font-bold">Settings</h1>
                     <p className="mt-1 text-muted-foreground">
                         Shop name on the receipt and sidebar. Low stock turns
                         the red warning on or off.
                     </p>
-                </div>
+                </div> */}
 
                 <form
                     className="max-w-xl space-y-4 rounded-md bg-card p-4 ring-1 ring-foreground/10"

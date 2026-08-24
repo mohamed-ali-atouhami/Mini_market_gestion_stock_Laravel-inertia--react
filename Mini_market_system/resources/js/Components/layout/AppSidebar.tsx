@@ -21,11 +21,9 @@ import {
     PackagePlus,
     Receipt,
     ScanLine,
-    Settings,
     ShoppingCart,
     Tags,
     Truck,
-    UserRound,
     Users,
     Warehouse,
     type LucideIcon,
@@ -113,13 +111,6 @@ const navigation: NavigationItem[] = [
         visible: ['owner'],
     },
     {
-        name: 'Settings ( الإعدادات )',
-        href: 'settings.edit',
-        match: 'settings.*',
-        icon: Settings,
-        visible: ['owner'],
-    },
-    {
         name: 'Users ( المستخدمين )',
         href: 'users.index',
         match: 'users.*',
@@ -131,6 +122,14 @@ const navigation: NavigationItem[] = [
 export function currentPageTitle(): string | null {
     if (route().current('profile.edit')) {
         return 'Profile';
+    }
+
+    if (route().current('settings.*')) {
+        return 'Settings';
+    }
+
+    if (route().current('sales.receipt')) {
+        return 'Receipt';
     }
 
     const item = navigation.find((entry) => route().current(entry.match));
@@ -208,21 +207,11 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton
-                            isActive={route().current('profile.edit')}
-                            tooltip="Profile"
-                            render={<Link href={route('profile.edit')} />}
-                        >
-                            <UserRound />
-                            <span>{user?.name ?? 'Profile'}</span>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
                             tooltip="Log out"
                             onClick={() => router.post(route('logout'))}
                         >
-                            <LogOut className='text-red-500' />
-                            <span className='text-red-500'>Log out</span>
+                            <LogOut className="text-red-500" />
+                            <span className="text-red-500">Log out</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>

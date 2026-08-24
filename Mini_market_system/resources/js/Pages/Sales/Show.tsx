@@ -1,3 +1,4 @@
+import { ProductNameCell } from '@/Components/ProductThumb';
 import { ButtonLink } from '@/Components/ui/button';
 import { Badge } from '@/Components/ui/badge';
 import {
@@ -46,8 +47,11 @@ export default function Show({ sale }: { sale: ShopSale }) {
                             <TableBody>
                                 {items.map((item) => (
                                     <TableRow key={item.product_id}>
-                                        <TableCell className="font-medium">
-                                            {item.name}
+                                        <TableCell>
+                                            <ProductNameCell
+                                                src={item.image_url}
+                                                name={item.name}
+                                            />
                                         </TableCell>
                                         <TableCell>{item.quantity}</TableCell>
                                         <TableCell>

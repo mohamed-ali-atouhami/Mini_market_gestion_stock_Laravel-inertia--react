@@ -3,6 +3,7 @@ import {
     AppSidebar,
     currentPageTitle,
 } from '@/Components/layout/AppSidebar';
+import { HeaderUserMenu } from '@/Components/layout/HeaderUserMenu';
 import {
     SidebarInset,
     SidebarProvider,
@@ -10,7 +11,7 @@ import {
 } from '@/Components/ui/sidebar';
 import { Separator } from '@/Components/ui/separator';
 import { PageProps } from '@/types';
-import { usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { TextAlignStart } from 'lucide-react';
 import { PropsWithChildren, ReactNode } from 'react';
 
@@ -27,6 +28,7 @@ export default function AuthenticatedLayout({
 
     return (
         <SidebarProvider>
+            {typeof pageTitle === 'string' ? <Head title={pageTitle} /> : null}
             <FlashToasts />
             <AppSidebar />
             <SidebarInset>
@@ -39,7 +41,10 @@ export default function AuthenticatedLayout({
                         <div className="flex-1 text-sm font-medium">
                             {pageTitle}
                         </div>
-                    ) : null}
+                    ) : (
+                        <div className="flex-1" />
+                    )}
+                    <HeaderUserMenu user={auth.user} />
                 </header>
                 <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
                     {children}

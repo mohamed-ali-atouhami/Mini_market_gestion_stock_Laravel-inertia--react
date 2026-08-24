@@ -1,5 +1,6 @@
 import BarcodeInput from '@/Components/forms/BarcodeInput';
 import FormModal from '@/Components/forms/FormModal';
+import { ProductNameCell } from '@/Components/ProductThumb';
 import { Button, ButtonLink } from '@/Components/ui/button';
 import {
     Field,
@@ -111,6 +112,7 @@ export default function PurchaseForm({
                 barcode: product.barcode,
                 quantity: '1',
                 unit_cost: formatInputNumber(product.cost_price) || '0',
+                image_url: product.image_url ?? null,
             },
         ]);
     };
@@ -340,8 +342,11 @@ export default function PurchaseForm({
                                     ) : (
                                         form.data.items.map((item) => (
                                             <TableRow key={item.product_id}>
-                                                <TableCell className="font-medium">
-                                                    {item.name}
+                                                <TableCell>
+                                                    <ProductNameCell
+                                                        src={item.image_url}
+                                                        name={item.name}
+                                                    />
                                                 </TableCell>
                                                 <TableCell className="hidden md:table-cell">
                                                     {item.barcode ?? '—'}

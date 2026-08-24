@@ -117,6 +117,7 @@ class ReportController extends Controller
             ->map(fn (StockMovement $movement) => [
                 'id' => $movement->id,
                 'product' => $movement->product?->name,
+                'image_url' => $movement->product?->imageUrl(),
                 'type' => $movement->type,
                 'direction' => $movement->direction,
                 'quantity' => Formats::decimal($movement->quantity, 3),

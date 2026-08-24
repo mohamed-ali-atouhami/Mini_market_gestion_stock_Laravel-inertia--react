@@ -64,6 +64,7 @@ class StockController extends Controller
                 'stock_quantity' => Formats::decimal($product->stock_quantity, 3),
                 'min_stock' => Formats::decimal($product->min_stock, 3),
                 'is_low_stock' => $lowStockEnabled && $product->isLowStock(),
+                'image_url' => $product->imageUrl(),
             ]);
 
         return Inertia::render('Stock/Index', [
@@ -90,6 +91,7 @@ class StockController extends Controller
                 'stock_quantity' => Formats::decimal($product->stock_quantity, 3),
                 'min_stock' => Formats::decimal($product->min_stock, 3),
                 'is_low_stock' => Setting::current()->low_stock_enabled && $product->isLowStock(),
+                'image_url' => $product->imageUrl(),
             ],
             'movements' => $movements,
         ]);

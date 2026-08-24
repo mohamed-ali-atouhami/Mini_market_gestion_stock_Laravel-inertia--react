@@ -82,6 +82,7 @@ class ProductController extends Controller
                 'unit' => $product->unit,
                 'is_active' => $product->is_active,
                 'is_low_stock' => $lowStockEnabled && $product->isLowStock(),
+                'image_url' => $product->imageUrl(),
             ]);
 
         return Inertia::render('Products/Index', [
@@ -92,7 +93,7 @@ class ProductController extends Controller
 
     public function store(StoreProductRequest $request): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $request->safe()->except(['image', 'remove_image']);
         $data['is_active'] = $request->boolean('is_active', true);
         $openingStock = (float) ($data['stock_quantity'] ?? 0);
         $data['stock_quantity'] = 0;
@@ -103,6 +104,7 @@ class ProductController extends Controller
         }
 
         $product = Product::query()->create($data);
+        $product->syncImage($request->file('image'));
 
         if ($openingStock > 0) {
             $this->stock->adjust(
@@ -121,6 +123,7 @@ class ProductController extends Controller
             'cost_price' => $this->formatDecimal($product->cost_price, 2),
             'unit' => $product->unit,
             'is_active' => $product->is_active,
+            'image_url' => $product->imageUrl(),
         ];
 
         if ($request->input('return_to') === 'purchases') {
@@ -136,10 +139,11 @@ class ProductController extends Controller
 
     public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
-        $data = $request->safe()->except(['stock_quantity']);
+        $data = $request->safe()->except(['stock_quantity', 'image', 'remove_image']);
         $data['is_active'] = $request->boolean('is_active');
 
         $product->update($data);
+        $product->syncImage($request->file('image'), $request->boolean('remove_image'));
 
         return redirect()
             ->route('products.index')

@@ -1,3 +1,4 @@
+import { ProductThumb } from '@/Components/ProductThumb';
 import { Button, ButtonLink } from '@/Components/ui/button';
 import {
     Field,
@@ -38,8 +39,14 @@ export default function Show({
         <>
             <div className="space-y-6">
                 <div className="flex flex-wrap items-end justify-between gap-3">
-                    <div>
-                        <h1 className="text-3xl font-bold">{product.name}</h1>
+                    <div className="flex items-center gap-3">
+                        <ProductThumb
+                            src={product.image_url}
+                            name={product.name}
+                            className="size-14"
+                        />
+                        <div>
+                            <h1 className="text-3xl font-bold">{product.name}</h1>
                         <p className="mt-1 text-muted-foreground">
                             {product.barcode ?? 'No barcode'} · Stock{' '}
                             <span
@@ -52,6 +59,7 @@ export default function Show({
                             </span>{' '}
                             / min {product.min_stock}
                         </p>
+                        </div>
                     </div>
                     <ButtonLink variant="ghost" href={route('stock.index')}>
                         Back

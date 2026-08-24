@@ -1,4 +1,5 @@
 import BarcodeInput from '@/Components/forms/BarcodeInput';
+import { ProductNameCell } from '@/Components/ProductThumb';
 import { Button } from '@/Components/ui/button';
 import {
     Field,
@@ -85,6 +86,7 @@ export default function Index({
                 quantity: '1',
                 unit_price: formatInputNumber(product.sale_price) || '0',
                 stock_quantity: formatInputNumber(product.stock_quantity) || '0',
+                image_url: product.image_url,
             },
         ]);
     };
@@ -208,8 +210,12 @@ export default function Index({
                                     ) : (
                                         form.data.items.map((item) => (
                                             <TableRow key={item.product_id}>
-                                                <TableCell className="font-medium">
-                                                    {item.name}
+                                                <TableCell>
+                                                    <ProductNameCell
+                                                        src={item.image_url}
+                                                        name={item.name}
+                                                        thumbClassName="size-8"
+                                                    />
                                                 </TableCell>
                                                 <TableCell>
                                                     <Input

@@ -18,7 +18,7 @@ type InertiaPageModule = {
 };
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => (title ? `${title} - ${appName}` : appName),
     resolve: async (name) => {
         const page = (await resolvePageComponent(
             `./Pages/${name}.tsx`,

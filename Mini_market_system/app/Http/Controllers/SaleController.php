@@ -100,8 +100,9 @@ class SaleController extends Controller
             'sold_at' => $sale->created_at?->format('Y-m-d H:i'),
             'items' => $sale->items->map(fn ($item) => [
                 'product_id' => $item->product_id,
-                'name' => $item->product?->name,
+                'name' => $item->product?->name ?? 'Product',
                 'barcode' => $item->product?->barcode,
+                'image_url' => $item->product?->imageUrl(),
                 'quantity' => $this->formatDecimal($item->quantity, 3),
                 'unit_price' => $this->formatDecimal($item->unit_price, 2),
             ])->all(),

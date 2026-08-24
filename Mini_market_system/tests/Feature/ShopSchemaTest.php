@@ -33,6 +33,8 @@ class ShopSchemaTest extends TestCase
         ] as $table) {
             $this->assertTrue(Schema::hasTable($table), "Missing table: {$table}");
         }
+
+        $this->assertTrue(Schema::hasColumn('products', 'image_path'));
     }
 
     public function test_seed_creates_demo_shop_data(): void

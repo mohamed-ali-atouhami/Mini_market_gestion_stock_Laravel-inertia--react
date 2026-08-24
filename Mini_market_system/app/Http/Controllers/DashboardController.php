@@ -44,13 +44,16 @@ class DashboardController extends Controller
                     'name' => $product->name,
                     'stock_quantity' => Formats::decimal($product->stock_quantity, 3),
                     'min_stock' => Formats::decimal($product->min_stock, 3),
+                    'image_url' => $product->imageUrl(),
                 ])
                 ->all();
         }
 
         $topSelling = SaleItem::query()
             ->select([
+                'sale_items.product_id',
                 'products.name',
+                'products.image_path',
                 DB::raw('SUM(sale_items.quantity) as quantity'),
                 DB::raw('SUM(sale_items.quantity * sale_items.unit_price) as total'),
             ])
@@ -58,14 +61,16 @@ class DashboardController extends Controller
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->where('sales.status', Sale::STATUS_COMPLETED)
             ->whereDate('sales.created_at', $today)
-            ->groupBy('sale_items.product_id', 'products.name')
+            ->groupBy('sale_items.product_id', 'products.name', 'products.image_path')
             ->orderByDesc('quantity')
             ->limit(5)
             ->get()
             ->map(fn ($row) => [
+                'id' => (int) $row->product_id,
                 'name' => $row->name,
                 'quantity' => Formats::decimal($row->quantity, 3),
                 'total' => Formats::money($row->total),
+                'image_url' => Product::storedImageUrl($row->image_path),
             ])
             ->all();
 

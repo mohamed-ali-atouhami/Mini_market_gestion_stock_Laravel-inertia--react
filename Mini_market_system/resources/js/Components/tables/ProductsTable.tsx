@@ -1,3 +1,4 @@
+import { ProductNameCell } from '@/Components/ProductThumb';
 import Table, { TableColumn } from '@/Components/tables/Table';
 import { RowActions } from '@/Components/tables/RowActions';
 import { Badge } from '@/Components/ui/badge';
@@ -41,7 +42,10 @@ export function ProductsTable({
                 className={cn(product.is_low_stock && 'bg-destructive/10')}
             >
                 <TableCell>
-                    <div className="font-medium">{product.name}</div>
+                    <ProductNameCell
+                        src={product.image_url}
+                        name={product.name}
+                    />
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                     {product.barcode ?? '—'}

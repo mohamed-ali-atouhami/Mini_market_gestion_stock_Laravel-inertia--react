@@ -49,9 +49,9 @@ export default function Index({
     return (
         <>
             <div className="space-y-6">
-                <div>
+                {/* <div>
                     <h1 className="text-3xl font-bold">Suppliers</h1>
-                </div>
+                </div> */}
 
                 <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
                     <div className="mb-4 flex flex-col items-center justify-between gap-4 md:flex-row">

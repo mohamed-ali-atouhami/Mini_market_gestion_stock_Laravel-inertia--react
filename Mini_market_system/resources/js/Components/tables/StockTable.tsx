@@ -1,8 +1,10 @@
+import { ProductNameCell } from '@/Components/ProductThumb';
 import Table, { TableColumn } from '@/Components/tables/Table';
 import { ButtonLink } from '@/Components/ui/button';
 import { TableCell, TableRow } from '@/Components/ui/table';
 import { ShopStockProduct } from '@/types';
 import { cn } from '@/lib/utils';
+import {HistoryIcon} from 'lucide-react';
 
 function formatQty(value: string): string {
     const amount = Number(value);
@@ -24,7 +26,10 @@ export function StockTable({
                 className={cn(product.is_low_stock && 'bg-destructive/10')}
             >
                 <TableCell>
-                    <div className="font-medium">{product.name}</div>
+                    <ProductNameCell
+                        src={product.image_url}
+                        name={product.name}
+                    />
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                     {product.barcode ?? '—'}
@@ -42,10 +47,12 @@ export function StockTable({
                 <TableCell>{formatQty(product.min_stock)}</TableCell>
                 <TableCell>
                     <ButtonLink
-                        variant="ghost"
+                        variant="outline"
                         href={route('stock.show', product.id)}
+                        className="text-xs font-normal hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground"
                     >
-                        History
+                        <HistoryIcon size={10} />
+                        <span className="ml-2 text-xs">History</span>
                     </ButtonLink>
                 </TableCell>
             </TableRow>

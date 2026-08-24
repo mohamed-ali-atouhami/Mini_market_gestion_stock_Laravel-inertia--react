@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
@@ -21,6 +23,7 @@ class Product extends Model
         'category_id',
         'name',
         'barcode',
+        'image_path',
         'cost_price',
         'sale_price',
         'stock_quantity',
@@ -78,5 +81,43 @@ class Product extends Model
     public function isLowStock(): bool
     {
         return (float) $this->stock_quantity <= (float) $this->min_stock;
+    }
+
+    public function imageUrl(): ?string
+    {
+        return self::storedImageUrl($this->image_path);
+    }
+
+    public static function storedImageUrl(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        return '/storage/'.ltrim($path, '/');
+    }
+
+    public function syncImage(?UploadedFile $file, bool $remove = false): void
+    {
+        if ($file instanceof UploadedFile) {
+            $this->clearStoredImage();
+            $this->update([
+                'image_path' => $file->store('products', 'public'),
+            ]);
+
+            return;
+        }
+
+        if ($remove) {
+            $this->clearStoredImage();
+            $this->update(['image_path' => null]);
+        }
+    }
+
+    private function clearStoredImage(): void
+    {
+        if ($this->image_path !== null) {
+            Storage::disk('public')->delete($this->image_path);
+        }
     }
 }

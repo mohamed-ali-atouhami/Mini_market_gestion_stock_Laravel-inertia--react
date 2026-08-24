@@ -1,3 +1,4 @@
+import { ProductNameCell, ProductThumb } from '@/Components/ProductThumb';
 import { ButtonLink } from '@/Components/ui/button';
 import {
     Card,
@@ -69,12 +70,15 @@ type LowStockRow = {
     name: string;
     stock_quantity: string;
     min_stock: string;
+    image_url: string | null;
 };
 
 type TopSellingRow = {
+    id: number;
     name: string;
     quantity: string;
     total: string;
+    image_url: string | null;
 };
 
 export default function Dashboard({
@@ -103,12 +107,12 @@ export default function Dashboard({
             <Head title="Dashboard" />
 
             <div className="space-y-6">
-                <div>
+                {/* <div>
                     <h1 className="text-2xl font-bold">Welcome back {auth.user?.name ?? 'User'}</h1>
-                    {/* <p className="mt-1 text-muted-foreground">
+                     <p className="mt-1 text-muted-foreground">
                         Today at {shop?.name ?? 'the shop'}.
-                    </p> */}
-                </div>
+                    </p>
+                </div> */}
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <StatCard
@@ -145,13 +149,18 @@ export default function Dashboard({
                                 <ul className="space-y-3">
                                     {top_selling.map((row, index) => (
                                         <li
-                                            key={row.name}
+                                            key={row.id}
                                             className="flex items-center justify-between gap-3"
                                         >
                                             <div className="flex min-w-0 items-center gap-3">
                                                 <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
                                                     {index + 1}
                                                 </span>
+                                                <ProductThumb
+                                                    src={row.image_url}
+                                                    name={row.name}
+                                                    className="size-8"
+                                                />
                                                 <div className="min-w-0">
                                                     <p className="truncate font-medium">
                                                         {row.name}
@@ -323,8 +332,11 @@ export default function Dashboard({
                                         <TableBody>
                                             {low_stock.map((row) => (
                                                 <TableRow key={row.id}>
-                                                    <TableCell className="font-medium">
-                                                        {row.name}
+                                                    <TableCell>
+                                                        <ProductNameCell
+                                                            src={row.image_url}
+                                                            name={row.name}
+                                                        />
                                                     </TableCell>
                                                     <TableCell className="font-semibold text-destructive">
                                                         {row.stock_quantity}

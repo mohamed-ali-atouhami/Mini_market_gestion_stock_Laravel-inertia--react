@@ -7,6 +7,8 @@ use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProductManagementTest extends TestCase
@@ -185,6 +187,113 @@ class ProductManagementTest extends TestCase
                 ->where('products.data.0.sale_price', '8')
                 ->where('products.data.0.stock_quantity', '12')
                 ->where('products.data.0.min_stock', '12'));
+    }
+
+    public function test_owner_can_upload_and_replace_a_product_image(): void
+    {
+        Storage::fake('public');
+
+        $owner = User::factory()->owner()->create();
+        $category = Category::factory()->create();
+        $image = UploadedFile::fake()->image('cola.jpg', 80, 80);
+
+        $this->actingAs($owner)
+            ->post(route('products.store'), $this->productPayload($category, [
+                'name' => 'Coca-Cola 1L',
+                'image' => $image,
+            ]))
+            ->assertRedirect(route('products.index'));
+
+        $product = Product::query()->where('name', 'Coca-Cola 1L')->firstOrFail();
+
+        $this->assertNotNull($product->image_path);
+        Storage::disk('public')->assertExists($product->image_path);
+
+        $this->actingAs($owner)
+            ->get(route('products.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Products/Index')
+                ->where('products.data.0.image_url', $product->imageUrl()));
+
+        $oldPath = $product->image_path;
+        $replacement = UploadedFile::fake()->image('cola-new.png', 80, 80);
+
+        $this->actingAs($owner)
+            ->patch(route('products.update', $product), [
+                'name' => $product->name,
+                'category_id' => $product->category_id,
+                'barcode' => $product->barcode,
+                'cost_price' => $product->cost_price,
+                'sale_price' => $product->sale_price,
+                'min_stock' => $product->min_stock,
+                'unit' => $product->unit,
+                'is_active' => 1,
+                'image' => $replacement,
+            ])
+            ->assertRedirect(route('products.index'));
+
+        $product->refresh();
+        $this->assertNotSame($oldPath, $product->image_path);
+        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('public')->assertExists($product->image_path);
+    }
+
+    public function test_owner_can_remove_a_product_image(): void
+    {
+        Storage::fake('public');
+
+        $owner = User::factory()->owner()->create();
+        $product = Product::factory()->create();
+        $path = UploadedFile::fake()->image('cola.jpg', 80, 80)->store('products', 'public');
+        $product->update(['image_path' => $path]);
+
+        $this->actingAs($owner)
+            ->patch(route('products.update', $product), [
+                'name' => $product->name,
+                'category_id' => $product->category_id,
+                'barcode' => $product->barcode,
+                'cost_price' => $product->cost_price,
+                'sale_price' => $product->sale_price,
+                'min_stock' => $product->min_stock,
+                'unit' => $product->unit,
+                'is_active' => 1,
+                'remove_image' => 1,
+            ])
+            ->assertRedirect(route('products.index'));
+
+        $product->refresh();
+        $this->assertNull($product->image_path);
+        Storage::disk('public')->assertMissing($path);
+    }
+
+    public function test_owner_can_add_an_image_to_a_product_that_has_none(): void
+    {
+        Storage::fake('public');
+
+        $owner = User::factory()->owner()->create();
+        $product = Product::factory()->create(['image_path' => null]);
+        $image = UploadedFile::fake()->image('fanta.jpg', 80, 80);
+
+        $this->actingAs($owner)
+            ->post(route('products.update', $product), [
+                '_method' => 'patch',
+                'name' => $product->name,
+                'category_id' => $product->category_id,
+                'barcode' => $product->barcode,
+                'cost_price' => $product->cost_price,
+                'sale_price' => $product->sale_price,
+                'min_stock' => $product->min_stock,
+                'unit' => $product->unit,
+                'is_active' => 1,
+                'image' => $image,
+            ])
+            ->assertRedirect(route('products.index'));
+
+        $product->refresh();
+        $this->assertNotNull($product->image_path);
+        Storage::disk('public')->assertExists($product->image_path);
+        $this->assertSame('/storage/'.$product->image_path, $product->imageUrl());
     }
 
     /**

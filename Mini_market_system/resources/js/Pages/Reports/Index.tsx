@@ -1,3 +1,4 @@
+import { ProductNameCell } from '@/Components/ProductThumb';
 import { Button } from '@/Components/ui/button';
 import { Field, FieldLabel } from '@/Components/ui/field';
 import { Input } from '@/Components/ui/input';
@@ -12,6 +13,7 @@ import {
 import { formatMoney } from '@/lib/utils';
 import { PageProps, ShopCashSession, ShopStockMovement } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
+import { ReactNode } from 'react';
 
 export default function Index({
     filters,
@@ -57,9 +59,9 @@ export default function Index({
         <>
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl font-bold">Reports</h1>
-                    <p className="mt-1 text-muted-foreground">
-                        Sales, purchases, profit, caisse, and movements.
+                    {/* <h1 className="text-3xl font-bold">Reports</h1> */}
+                    <p className="text-muted-foreground">
+                        Here you can generate reports for the shop.
                     </p>
                 </div>
 
@@ -174,7 +176,11 @@ export default function Index({
                     ]}
                     rows={movements.map((row) => [
                         row.created_at ?? '—',
-                        row.product ?? '—',
+                        <ProductNameCell
+                            key={row.id}
+                            src={row.image_url}
+                            name={row.product ?? '—'}
+                        />,
                         `${row.type} / ${row.direction}`,
                         row.quantity,
                         row.reason,
@@ -204,7 +210,7 @@ function ReportTable({
     title: string;
     empty: string;
     headers: string[];
-    rows: string[][];
+    rows: ReactNode[][];
 }) {
     return (
         <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">

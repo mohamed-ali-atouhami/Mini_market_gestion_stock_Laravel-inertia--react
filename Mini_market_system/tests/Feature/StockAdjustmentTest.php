@@ -23,7 +23,9 @@ class StockAdjustmentTest extends TestCase
         $this->actingAs($owner)
             ->get(route('stock.index'))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('Stock/Index'));
+            ->assertInertia(fn ($page) => $page
+                ->component('Stock/Index')
+                ->where('products.data.0.image_url', null));
 
         $this->actingAs($owner)
             ->from(route('stock.show', $product))

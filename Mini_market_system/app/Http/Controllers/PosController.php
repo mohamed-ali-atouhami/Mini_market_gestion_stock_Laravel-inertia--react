@@ -70,6 +70,7 @@ class PosController extends Controller
                 'stock_quantity' => $this->formatDecimal($product->stock_quantity, 3),
                 'unit' => $product->unit,
                 'is_active' => $product->is_active,
+                'image_url' => $product->imageUrl(),
             ],
         ]);
     }
