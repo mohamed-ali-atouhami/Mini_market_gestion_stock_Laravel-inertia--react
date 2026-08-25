@@ -169,11 +169,12 @@ export default function PurchaseForm({
     };
 
     const submit = (receive: boolean) => {
-        form.transform((data) => ({ ...data, receive }));
-
         const options = {
             preserveScroll: true,
+            onFinish: () => form.transform((data) => data),
         };
+
+        form.transform((data) => ({ ...data, receive }));
 
         if (purchase) {
             form.patch(route('purchases.update', purchase.id), options);

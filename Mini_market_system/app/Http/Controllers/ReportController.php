@@ -34,11 +34,10 @@ class ReportController extends Controller
 
         $profit = (float) SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
-            ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->where('sales.status', Sale::STATUS_COMPLETED)
             ->whereDate('sales.created_at', '>=', $from)
             ->whereDate('sales.created_at', '<=', $to)
-            ->selectRaw('COALESCE(SUM((sale_items.unit_price - products.cost_price) * sale_items.quantity), 0) as profit')
+            ->selectRaw('COALESCE(SUM((sale_items.unit_price - sale_items.unit_cost) * sale_items.quantity), 0) as profit')
             ->value('profit');
 
         $purchasesTotal = (float) Purchase::query()

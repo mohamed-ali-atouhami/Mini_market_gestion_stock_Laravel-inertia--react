@@ -219,6 +219,79 @@ class PurchaseManagementTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_inactive_product_is_not_found_on_purchase_lookup(): void
+    {
+        $owner = User::factory()->owner()->create();
+        Product::factory()->create([
+            'barcode' => '5449000000888',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('purchases.lookup-product', ['barcode' => '5449000000888']))
+            ->assertNotFound();
+    }
+
+    public function test_receiving_a_delivery_updates_weighted_average_cost(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->create([
+            'stock_quantity' => 10,
+            'cost_price' => 5,
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('purchases.store'), $this->deliveryPayload($supplier, $product, 10, 7, receive: true))
+            ->assertRedirect(route('purchases.index'));
+
+        $this->assertSame('20.000', $product->refresh()->stock_quantity);
+        $this->assertSame('6.00', $product->cost_price);
+    }
+
+    public function test_receiving_a_disabled_product_is_refused(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->create([
+            'is_active' => false,
+            'stock_quantity' => 0,
+        ]);
+
+        $this->actingAs($owner)
+            ->from(route('purchases.create'))
+            ->post(route('purchases.store'), $this->deliveryPayload($supplier, $product, 12, 5.50, receive: true))
+            ->assertRedirect(route('purchases.create'))
+            ->assertSessionHasErrors('items');
+
+        $this->assertSame('0.000', $product->refresh()->stock_quantity);
+        $this->assertSame(0, Purchase::query()->count());
+    }
+
+    public function test_receiving_a_draft_with_a_disabled_product_is_refused(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->create([
+            'stock_quantity' => 0,
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('purchases.store'), $this->deliveryPayload($supplier, $product));
+
+        $purchase = Purchase::query()->firstOrFail();
+        $product->update(['is_active' => false]);
+
+        $this->actingAs($owner)
+            ->from(route('purchases.edit', $purchase))
+            ->post(route('purchases.receive', $purchase))
+            ->assertRedirect(route('purchases.edit', $purchase))
+            ->assertSessionHasErrors('items');
+
+        $this->assertSame(Purchase::STATUS_DRAFT, $purchase->refresh()->status);
+        $this->assertSame('0.000', $product->refresh()->stock_quantity);
+    }
+
     public function test_creating_a_product_from_purchases_does_not_set_starting_stock(): void
     {
         $owner = User::factory()->owner()->create();

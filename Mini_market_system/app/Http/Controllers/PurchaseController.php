@@ -172,7 +172,10 @@ class PurchaseController extends Controller
             return response()->json(['product' => null], 404);
         }
 
-        $product = Product::query()->where('barcode', $barcode)->first();
+        $product = Product::query()
+            ->where('is_active', true)
+            ->where('barcode', $barcode)
+            ->first();
 
         if ($product === null) {
             return response()->json(['product' => null], 404);

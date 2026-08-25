@@ -43,11 +43,25 @@ class SaleService
                 ]);
             }
 
+            $merged = [];
+
+            foreach ($items as $item) {
+                $productId = (int) $item['product_id'];
+                $quantity = round((float) $item['quantity'], 3);
+                $merged[$productId] = ($merged[$productId] ?? 0) + $quantity;
+            }
+
             $lines = [];
             $total = 0.0;
 
-            foreach ($items as $item) {
-                $product = Product::query()->lockForUpdate()->findOrFail($item['product_id']);
+            foreach ($merged as $productId => $quantity) {
+                if ($quantity <= 0) {
+                    throw ValidationException::withMessages([
+                        'items' => 'Quantity must be greater than zero.',
+                    ]);
+                }
+
+                $product = Product::query()->lockForUpdate()->findOrFail($productId);
 
                 if (! $product->is_active) {
                     throw ValidationException::withMessages([
@@ -55,13 +69,14 @@ class SaleService
                     ]);
                 }
 
-                $quantity = round((float) $item['quantity'], 3);
                 $unitPrice = (float) $product->sale_price;
+                $unitCost = (float) $product->cost_price;
                 $total += $quantity * $unitPrice;
                 $lines[] = [
                     'product' => $product,
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
+                    'unit_cost' => $unitCost,
                 ];
             }
 
@@ -117,6 +132,7 @@ class SaleService
                     'product_id' => $line['product']->id,
                     'quantity' => $line['quantity'],
                     'unit_price' => $line['unit_price'],
+                    'unit_cost' => $line['unit_cost'],
                 ]);
 
                 try {

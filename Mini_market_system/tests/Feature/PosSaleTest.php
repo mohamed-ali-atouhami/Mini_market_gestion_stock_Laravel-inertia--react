@@ -278,4 +278,32 @@ class PosSaleTest extends TestCase
             ->get(route('sales.index'))
             ->assertOk();
     }
+
+    public function test_duplicate_pos_lines_for_the_same_product_are_merged(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $product = Product::factory()->create([
+            'sale_price' => 8,
+            'stock_quantity' => 10,
+        ]);
+
+        $this->actingAs($cashier)
+            ->post(route('caisse.open'), ['opening_amount' => 0]);
+
+        $this->actingAs($cashier)
+            ->post(route('pos.store'), [
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                    ['product_id' => $product->id, 'quantity' => 2],
+                ],
+                'amount_paid' => 24,
+            ])
+            ->assertRedirect();
+
+        $sale = Sale::query()->firstOrFail();
+        $this->assertSame('24.00', $sale->total);
+        $this->assertSame(1, $sale->items()->count());
+        $this->assertSame('3.000', $sale->items()->first()?->quantity);
+        $this->assertSame('7.000', $product->refresh()->stock_quantity);
+    }
 }

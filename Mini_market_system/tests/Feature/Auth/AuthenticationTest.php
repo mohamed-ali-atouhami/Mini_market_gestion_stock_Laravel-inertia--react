@@ -96,7 +96,7 @@ class AuthenticationTest extends TestCase
         $this->seed();
 
         $this->post('/login', [
-            'username' => 'owner',
+            'username' => 'younes',
             'password' => 'password',
         ]);
 

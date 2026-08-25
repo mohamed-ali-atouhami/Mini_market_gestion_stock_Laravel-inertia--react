@@ -1,6 +1,6 @@
 # Mini_market_system – Development Roadmap
 
-**Last updated:** 22 August 2026 (Milestone 7 done; next is Milestone 8)
+**Last updated:** 25 August 2026 (shop is usable end-to-end; next is Milestone 8 — shop PC install)
 
 ---
 
@@ -14,53 +14,39 @@
 | **3 – Database tables** (products, purchases, sales, stock…) | ✅ Done |
 | **4 – Categories / suppliers / products + barcode** | ✅ Done |
 | **5 – Purchases (stock in)** | ✅ Done |
-| **6 – POS / caisse (stock out, cash only)** | ✅ Done |
+| **6 – POS / caisse (stock out, cash + credit)** | ✅ Done |
 | **7 – Dashboard, stock history, reports** | ✅ Done |
 | **8 – Shop PC install + live scanner test** | ⬜ Not started |
 
-### Done in the code (Milestone 0 + 1 + 2 + 3 + 4 + 5 + 6 + 7)
+### Done in the code (through 25 August 2026)
 
 - Spec files: `COMPLETE_SPEC.txt`, `docs/DATABASE_COLUMNS.md`, `docs/COMO_FUNCIONA_LA_APP.txt`
-- Laravel **12.66** in `Mini_market_system/` via Composer (`composer create-project`)
-- SQLite + `.env` (`APP_NAME=Mini_market_system`)
-- Breeze + **Inertia React**, then converted to **TypeScript** (`.tsx`)
-- **shadcn/ui** (button, input, label, checkbox, card, dialog, dropdown-menu)
-- Login / logout / profile / dashboard (shadcn, not Breeze widgets)
-- Public **Welcome** page removed (`/` → login or dashboard)
-- Public **Register** removed
-- Login is **username + password** (no email)
-- Roles `owner` / `cashier`; seeded owner (`owner` / `password`)
-- Owner **Users** screen: create user, pick role, disable account
-- Gates: cashier cannot manage users, change prices, receive purchases, or delete products
-- Shop tables: categories, suppliers, products, purchases, sales, stock movements, cash sessions, settings
-- Demo seed: Drinks / Food / Cleaning, one supplier, Coca-Cola 1L + 2L
-- Payments will be **cash only**
+- Laravel **12** in `Mini_market_system/` — SQLite, Breeze + **Inertia React + TypeScript**, **shadcn/ui**
+- Login is **username + password**. No public register / Welcome page. Roles `owner` / `cashier`
+- Owner **Users** screen: create, role, disable. Gates: cashier cannot manage users, change prices, receive purchases, or delete products
+- Shop tables: categories, suppliers, products, purchases, sales, stock movements, cash sessions, settings, customers, credit payments
 - App runs with `php artisan serve` + `npm run dev`
-- **19 August 2026:**
-  - shadcn **sidebar** using TMS navigation logic (`AppSidebar`: Dashboard + owner-only Users)
-  - Authenticated layout: page content sits in `SidebarInset` (no longer under the sidebar)
-  - Reusable Users table: search, sort, filters, pagination, create/edit modal
-  - Fixed sort / ⋮ Edit / search (`Button` + `Input` forward refs; edit dialog outside the dropdown; `@/Components/ui/input` in `TableSearch`)
-  - First git commit + GitHub remote: [Mini_market_gestion_stock_Laravel-inertia--react](https://github.com/mohamed-ali-atouhami/Mini_market_gestion_stock_Laravel-inertia--react)
-  - Bugbot review of the initial commit: no bugs
-  - Categories / suppliers / products screens (search, sort, filters, Active/Disabled, barcode scan-to-fill)
-  - Sonner toasts for flash messages (`FlashToasts`)
-- **20 August 2026:**
-  - `StockService` is the only place that changes `products.stock_quantity` (increase / decrease / adjust + `stock_movements`)
-  - Purchases: list, new delivery (scan + qty + cost), draft / receive / cancel, unknown barcode → create product now
-  - Cashier cannot receive deliveries
-  - Deliverable: receive 12× Coca-Cola 1L, stock 0 → 12, movement recorded
-- **21 August 2026:**
-  - Cash sessions: open with opening amount, one open session per user, close with counted cash / expected / difference
-  - POS: scan-to-cart, cash pay, change, caisse must be open
-  - `SaleService` decreases stock through `StockService`
-  - Printable receipt; owner sales list
-  - Deliverable: 2× Coca-Cola 1L + 1× 2L = 29 MAD, pay 50, change 21, stock down
-- **22 August 2026:**
-  - Dashboard: today sales, ticket count, stock value, low stock, top selling
-  - Stock page + product movements + manual adjust (reason required, StockService)
-  - Reports: date range, sales by day, purchases by supplier, profit, caisse, movements
-  - Settings: shop name, phone, address, currency, ticket footer, low-stock toggle
+- GitHub: [Mini_market_gestion_stock_Laravel-inertia--react](https://github.com/mohamed-ali-atouhami/Mini_market_gestion_stock_Laravel-inertia--react)
+- **19 August 2026:** sidebar, Users table, Categories / suppliers / products, barcode scan-to-fill, Sonner toasts
+- **20 August 2026:** `StockService` only writer of stock; Purchases draft / receive / cancel; unknown barcode → create product
+- **21 August 2026:** Caisse open/close; POS scan + cash pay; receipt; owner sales list
+- **22 August 2026:** Dashboard, stock page + adjust, reports, settings
+- **25 August 2026 — customer credit:**
+  - Owner and cashier can sell on credit (goods leave now, pay 0 or a part, rest by a promised date)
+  - Shared notebook: both see unpaid credits; either can collect (needs **their** open caisse)
+  - Unpaid remainder does **not** inflate the till; caisse expected cash = cash sales + amount paid at sale + later collections
+  - WhatsApp button opens `wa.me` with a pre-filled Arabic reminder (not Cloud API)
+  - Dashboard “Credits due soon” only if due today/tomorrow; card hidden when empty
+- **25 August 2026 — money / stock correctness:**
+  - POS refreshes live price and stock before Pay; stops if the total changed or stock is short
+  - Duplicate product lines on one ticket are merged (no double bill / double stock out)
+  - `sale_items.unit_cost` snapshots cost **at sale**; reports profit uses that, not today’s catalog cost
+  - Receiving a delivery updates product cost with a **weighted average**
+  - Purchase barcode lookup and receive refuse disabled products
+- **25 August 2026 — demo catalog seed:**
+  - Users: `younes` (owner), `rabie` (cashier), `ahmed` (cashier, disabled). Password: `password`
+  - 10 categories, 4 suppliers, 100 Morocco hanout products, stock 0 (fill stock by receiving a delivery)
+  - Rebuild shop DB: `php artisan migrate:fresh --seed` (wipes sales, purchases, caisse, credits)
 
 ### Not done yet (the real shop)
 
@@ -121,13 +107,14 @@ Harden cashier menu, production build, shop-PC copy notes, real USB scanner.
 - [x] Scan-to-fill barcode on product create/edit
 - [x] Purchases (receive delivery): scan + quantity + receive → stock UP
 - [x] Unknown barcode → create product now (barcode already filled)
-- [x] Sales / POS: scan + cart + pay (cash only) → stock DOWN
+- [x] Sales / POS: scan + cart + pay (cash or credit) → stock DOWN
 - [x] Block sale if stock is not enough
 - [x] Stock movements ledger (never deleted)
 - [x] Manual stock adjustment (damage, loss, count correction) with reason
 - [x] Cash session (open / close caisse)
 - [x] Dashboard: today sales, ticket count, low stock, stock value
-- [x] Reports: sales by period, purchases by supplier, movements, low stock, cash session
+- [x] Customer credit at POS (pay later, collect, WhatsApp reminder)
+- [x] Reports: sales by period, purchases by supplier, movements, profit from sale-time cost, cash session
 - [x] Settings: shop name, currency (MAD), ticket footer
 - [ ] Shop PC install notes (Laragon + shortcut + daily SQLite backup)
 
@@ -141,8 +128,8 @@ Harden cashier menu, production build, shop-PC copy notes, real USB scanner.
 - ⏸️ Expiry dates / batches (pharmacy)
 - ⏸️ Size/color variants (clothing)
 - ⏸️ Recipes (restaurant)
-- ⏸️ Supplier credit / unpaid invoices
-- ⏸️ Customer accounts
+- ⏸️ Supplier credit / unpaid invoices (buying from a supplier now, paying later)
+- ⏸️ Full customer accounts / statements (V1 has simple POS credit only)
 - ⏸️ Public self-registration (owner creates every user)
 - ⏸️ Laravel marketing Welcome page
 
@@ -196,7 +183,7 @@ Harden cashier menu, production build, shop-PC copy notes, real USB scanner.
   - `cash_sessions`
   - `settings`
 - Eloquent models + relationships.
-- Seed: sample categories, one supplier, Coca-Cola 1L / 2L (demo barcodes).
+- Seed: 10 categories, 4 suppliers, 100 Morocco hanout products, users `younes` / `rabie` / `ahmed`.
 - **Deliverables:** Schema ready. `php artisan migrate:fresh --seed` works. ✅
 
 ### Milestone 4 – Master Data (Weeks 3–4) ✅ *Done*
@@ -214,7 +201,7 @@ Harden cashier menu, production build, shop-PC copy notes, real USB scanner.
 - **No hard delete in V1.** Hide with Active / Disabled. If the owner later creates many unused mistakes, add **safe delete** (see §6) — not Laravel SoftDeletes.
 - **Deliverables:** Owner can create Coca-Cola 1L by scanning once and saving prices.
 
-### Milestone 5 – Stock Engine & Purchases (Weeks 5–6)
+### Milestone 5 – Stock Engine & Purchases (Weeks 5–6) ✅ *Done*
 
 - **StockService** (only place that changes `products.stock_quantity`):
   - `increase()` / `decrease()` / `adjust()`
@@ -231,7 +218,7 @@ Harden cashier menu, production build, shop-PC copy notes, real USB scanner.
   - Purchase list + detail
 - **Deliverables:** Receive 12× Coca-Cola 1L. Stock goes 0 → 12. Movement recorded. Rollback if anything fails.
 
-### Milestone 6 – Caisse & POS (Weeks 7–8)
+### Milestone 6 – Caisse & POS (Weeks 7–8) ✅ *Done*
 
 - **Cash sessions:**
   - Open caisse (opening amount)
@@ -242,8 +229,8 @@ Harden cashier menu, production build, shop-PC copy notes, real USB scanner.
   - Always-focused barcode box
   - Scan adds +1 to cart (or edit qty)
   - Live total, discount optional (simple)
-  - Pay: cash only, amount paid, change
-  - `SaleService` in one transaction: check stock, save sale + items, StockService decrease, movements
+  - Pay: cash, or credit (part/zero now, rest later)
+  - `SaleService` in one transaction: check stock, save sale + items (price + cost snapshot), StockService decrease, movements
   - Printable receipt page (browser print). No thermal printer yet.
 - Sale list + detail for owner.
 - **Deliverables:** Scan 2× 1L + 1× 2L, pay 50 DH, change 23, stock drops, ticket saved.
@@ -260,7 +247,7 @@ Harden cashier menu, production build, shop-PC copy notes, real USB scanner.
 - **Reports:**
   - Sales by day / period
   - Purchases by supplier
-  - Profit estimate (sale − cost) × qty sold
+  - Profit from cost stored on the ticket at sale (`sale_items.unit_cost`), not today’s product card
   - Stock movements filter
   - Cash session report
 - **Settings:** shop name, address, phone, currency MAD, ticket footer, low-stock toggle.
@@ -284,7 +271,7 @@ Harden cashier menu, production build, shop-PC copy notes, real USB scanner.
 - **Milestone 10:** Receipt printer + cash drawer.
 - **Milestone 11:** PostgreSQL + optional online hosting (check stock from a phone).
 - **Milestone 12:** Pack barcode (scan carton = +6) and units of measure extras.
-- **Milestone 13:** Supplier credit (buy now, pay later) and simple customer credit.
+- **Milestone 13:** Supplier credit (buy now, pay later). Simple **customer credit at POS is already in V1**.
 - **Milestone 14:** ERP extras per business: expiry/batches, variants, recipes.
 
 ---
@@ -359,6 +346,7 @@ Setup → Auth → Schema → Categories/Suppliers/Products
 ## 9. Next Actions
 
 1. **Start Milestone 8 – Shop install & live test** — production build, Laragon shortcut, daily SQLite backup note, real scanner if available.
+2. After a wipe: `php artisan migrate:fresh --seed`, then open caisse and **receive a delivery** so POS has stock.
 
 ---
 

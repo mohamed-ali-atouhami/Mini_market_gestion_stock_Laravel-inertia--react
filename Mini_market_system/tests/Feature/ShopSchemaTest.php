@@ -41,6 +41,11 @@ class ShopSchemaTest extends TestCase
     {
         $this->seed();
 
+        $this->assertDatabaseHas('users', ['username' => 'younes', 'is_active' => true]);
+        $this->assertDatabaseHas('users', ['username' => 'rabie', 'is_active' => true]);
+        $this->assertDatabaseHas('users', ['username' => 'ahmed', 'is_active' => false]);
+        $this->assertSame(10, Category::query()->count());
+        $this->assertSame(100, Product::query()->count());
         $this->assertDatabaseHas('categories', ['name' => 'Drinks']);
         $this->assertDatabaseHas('suppliers', ['name' => 'Coca-Cola Distribution']);
         $this->assertDatabaseHas('products', [

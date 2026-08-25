@@ -86,4 +86,34 @@ class ReportTest extends TestCase
                 ->where('movements.0.direction', 'out')
                 ->where('movements.1.type', 'sale'));
     }
+
+    public function test_profit_uses_cost_at_sale_not_current_product_cost(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $product = Product::factory()->create([
+            'sale_price' => 8,
+            'cost_price' => 5,
+            'stock_quantity' => 10,
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('caisse.open'), ['opening_amount' => 0]);
+
+        $this->actingAs($owner)
+            ->post(route('pos.store'), [
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                ],
+                'amount_paid' => 8,
+            ]);
+
+        $product->update(['cost_price' => 1]);
+
+        $this->actingAs($owner)
+            ->get(route('reports.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Reports/Index')
+                ->where('summary.profit', '3.00'));
+    }
 }

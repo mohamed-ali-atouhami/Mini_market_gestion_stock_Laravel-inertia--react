@@ -183,23 +183,102 @@ export default function Index({
         );
     };
 
-    const pay = () => {
-        form.post(route('pos.store'), {
-            preserveScroll: true,
-            onError: (errors) => {
-                const message =
-                    errors.cash_session ??
-                    errors.items ??
-                    errors.amount_paid ??
-                    errors.customer_name ??
-                    errors.customer_phone ??
-                    errors.due_date;
+    const pay = async () => {
+        if (form.processing || scanning || form.data.items.length === 0) {
+            return;
+        }
 
-                if (typeof message === 'string' && message !== '') {
-                    toast.error(message);
+        setScanning(true);
+
+        try {
+            const nextItems: CartLine[] = [];
+
+            for (const item of form.data.items) {
+                const response = await window.axios.get<{ product: PosProduct }>(
+                    route('pos.lookup-product'),
+                    { params: { product_id: item.product_id } },
+                );
+                const product = response.data.product;
+                const qty = Number(item.quantity);
+
+                if (qty > Number(product.stock_quantity)) {
+                    toast.error('Not enough stock for ' + product.name + '.');
+                    form.setData(
+                        'items',
+                        form.data.items.map((line) =>
+                            line.product_id === item.product_id
+                                ? {
+                                      ...line,
+                                      unit_price:
+                                          formatInputNumber(product.sale_price) ||
+                                          '0',
+                                      stock_quantity:
+                                          formatInputNumber(
+                                              product.stock_quantity,
+                                          ) || '0',
+                                  }
+                                : line,
+                        ),
+                    );
+                    setScanning(false);
+                    return;
                 }
-            },
-        });
+
+                nextItems.push({
+                    ...item,
+                    name: product.name,
+                    barcode: product.barcode,
+                    unit_price: formatInputNumber(product.sale_price) || '0',
+                    stock_quantity:
+                        formatInputNumber(product.stock_quantity) || '0',
+                    image_url: product.image_url,
+                });
+            }
+
+            const oldTotal = form.data.items.reduce((sum, item) => {
+                return sum + Number(item.quantity) * Number(item.unit_price);
+            }, 0);
+            const newTotal = nextItems.reduce((sum, item) => {
+                return sum + Number(item.quantity) * Number(item.unit_price);
+            }, 0);
+
+            form.setData('items', nextItems);
+
+            if (Math.abs(oldTotal - newTotal) >= 0.01) {
+                toast.error('Prices changed. Check the total, then pay again.');
+                setScanning(false);
+                return;
+            }
+
+            form.transform((data) => ({ ...data, items: nextItems }));
+            form.post(route('pos.store'), {
+                preserveScroll: true,
+                onFinish: () => {
+                    form.transform((data) => data);
+                    setScanning(false);
+                },
+                onError: (errors) => {
+                    const message =
+                        errors.cash_session ??
+                        errors.items ??
+                        errors.amount_paid ??
+                        errors.customer_name ??
+                        errors.customer_phone ??
+                        errors.due_date;
+
+                    if (typeof message === 'string' && message !== '') {
+                        toast.error(message);
+                    }
+                },
+            });
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
+                toast.error('A product in the cart is no longer available.');
+            } else {
+                toast.error('Could not refresh product prices.');
+            }
+            setScanning(false);
+        }
     };
 
     return (
@@ -438,16 +517,14 @@ export default function Index({
                                                                 e.target.value,
                                                         );
 
-                                                    if (!customer) {
-                                                        return;
-                                                    }
-
                                                     form.setData({
                                                         ...form.data,
                                                         customer_name:
-                                                            customer.name,
+                                                            customer?.name ??
+                                                            '',
                                                         customer_phone:
-                                                            customer.phone,
+                                                            customer?.phone ??
+                                                            '',
                                                     });
                                                 }}
                                             >
@@ -574,7 +651,7 @@ export default function Index({
                         <div className="mt-4 flex justify-end">
                             <Button
                                 type="button"
-                                disabled={form.processing}
+                                disabled={form.processing || scanning}
                                 onClick={pay}
                             >
                                 {isCredit ? 'Sell on credit' : 'Pay'}

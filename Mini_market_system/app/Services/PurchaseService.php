@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\StockMovement;
@@ -33,7 +34,7 @@ class PurchaseService
                 ]);
             }
 
-            $items = $data['items'];
+            $items = $this->mergeItems($data['items']);
             $total = $this->total($items);
 
             if ($purchase === null) {
@@ -109,12 +110,27 @@ class PurchaseService
             }
 
             foreach ($locked->items as $item) {
-                $this->stock->increase(
-                    $item->product,
+                $product = $item->product;
+
+                if ($product === null || ! $product->is_active) {
+                    throw ValidationException::withMessages([
+                        'items' => ($product?->name ?? 'A product').' is disabled and cannot be received.',
+                    ]);
+                }
+
+                $movement = $this->stock->increase(
+                    $product,
                     $item->quantity,
                     $user,
                     StockMovement::TYPE_PURCHASE,
                     $locked,
+                );
+
+                $this->updateProductCost(
+                    $product,
+                    (float) $movement->quantity_before,
+                    (float) $movement->quantity,
+                    (float) $item->unit_cost,
                 );
             }
 
@@ -140,6 +156,63 @@ class PurchaseService
         ]);
 
         return $purchase->refresh();
+    }
+
+    /**
+     * @param  list<array{product_id: int, quantity: float|int|string, unit_cost: float|int|string}>  $items
+     * @return list<array{product_id: int, quantity: float, unit_cost: float}>
+     */
+    private function mergeItems(array $items): array
+    {
+        $merged = [];
+
+        foreach ($items as $item) {
+            $productId = (int) $item['product_id'];
+            $quantity = round((float) $item['quantity'], 3);
+            $unitCost = round((float) $item['unit_cost'], 2);
+
+            if (! isset($merged[$productId])) {
+                $merged[$productId] = [
+                    'product_id' => $productId,
+                    'quantity' => $quantity,
+                    'unit_cost' => $unitCost,
+                ];
+
+                continue;
+            }
+
+            $previousQty = $merged[$productId]['quantity'];
+            $previousCost = $merged[$productId]['unit_cost'];
+            $nextQty = round($previousQty + $quantity, 3);
+            $merged[$productId]['quantity'] = $nextQty;
+            $merged[$productId]['unit_cost'] = $nextQty > 0
+                ? round((($previousQty * $previousCost) + ($quantity * $unitCost)) / $nextQty, 2)
+                : $unitCost;
+        }
+
+        return array_values($merged);
+    }
+
+    private function updateProductCost(
+        Product $product,
+        float $quantityBefore,
+        float $incomingQuantity,
+        float $incomingCost,
+    ): void {
+        $locked = Product::query()->lockForUpdate()->findOrFail($product->id);
+        $after = $quantityBefore + $incomingQuantity;
+
+        if ($after <= 0) {
+            return;
+        }
+
+        $average = $quantityBefore <= 0
+            ? $incomingCost
+            : (($quantityBefore * (float) $locked->cost_price) + ($incomingQuantity * $incomingCost)) / $after;
+
+        $locked->update([
+            'cost_price' => round($average, 2),
+        ]);
     }
 
     /**
