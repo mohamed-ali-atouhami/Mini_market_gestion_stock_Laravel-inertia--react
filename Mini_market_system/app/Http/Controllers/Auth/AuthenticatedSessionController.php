@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\CashSessionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,14 +32,24 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $home = route($request->user()->homeRouteName(), absolute: false);
+
+        return redirect()->intended($home);
     }
 
     /**
      * Destroy an authenticated session.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request, CashSessionService $sessions): RedirectResponse
     {
+        $user = $request->user();
+
+        if ($user && $sessions->currentOpen($user) !== null) {
+            return redirect()
+                ->route('caisse.index')
+                ->with('error', 'Close the caisse before signing out.');
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

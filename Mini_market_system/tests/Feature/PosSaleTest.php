@@ -129,6 +129,85 @@ class PosSaleTest extends TestCase
         $this->assertDatabaseCount('sales', 0);
     }
 
+    public function test_pos_lists_active_products_without_a_barcode(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $flour = Product::factory()->create([
+            'name' => 'Farine',
+            'barcode' => null,
+            'sale_price' => 8,
+            'stock_quantity' => 10,
+            'unit' => Product::UNIT_KG,
+        ]);
+        Product::factory()->create([
+            'name' => 'Bonbon hidden',
+            'barcode' => null,
+            'is_active' => false,
+        ]);
+        Product::factory()->create([
+            'name' => 'Coca-Cola 1L',
+            'barcode' => '6110000000017',
+        ]);
+
+        $this->actingAs($cashier)
+            ->post(route('caisse.open'), ['opening_amount' => 0]);
+
+        $this->actingAs($cashier)
+            ->get(route('pos.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Pos/Index')
+                ->has('no_barcode_products', 1)
+                ->where('no_barcode_products.0.id', $flour->id)
+                ->where('no_barcode_products.0.name', 'Farine')
+                ->where('no_barcode_products.0.barcode', null)
+                ->where('no_barcode_products.0.unit', Product::UNIT_KG));
+    }
+
+    public function test_pos_lookup_by_product_id_returns_live_stock(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $flour = Product::factory()->create([
+            'name' => 'Farine',
+            'barcode' => null,
+            'sale_price' => 5,
+            'stock_quantity' => 10,
+        ]);
+
+        $this->actingAs($cashier)
+            ->post(route('caisse.open'), ['opening_amount' => 0]);
+
+        $this->actingAs($cashier)
+            ->get(route('pos.lookup-product', ['product_id' => $flour->id]))
+            ->assertOk()
+            ->assertJsonPath('product.id', $flour->id)
+            ->assertJsonPath('product.name', 'Farine')
+            ->assertJsonPath('product.stock_quantity', '10');
+
+        $flour->update(['stock_quantity' => 2]);
+
+        $this->actingAs($cashier)
+            ->get(route('pos.lookup-product', ['product_id' => $flour->id]))
+            ->assertOk()
+            ->assertJsonPath('product.stock_quantity', '2');
+    }
+
+    public function test_inactive_product_is_not_found_on_pos_id_lookup(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $product = Product::factory()->create([
+            'barcode' => null,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($cashier)
+            ->post(route('caisse.open'), ['opening_amount' => 0]);
+
+        $this->actingAs($cashier)
+            ->get(route('pos.lookup-product', ['product_id' => $product->id]))
+            ->assertNotFound();
+    }
+
     public function test_inactive_product_is_not_found_on_pos_lookup(): void
     {
         $cashier = User::factory()->cashier()->create();

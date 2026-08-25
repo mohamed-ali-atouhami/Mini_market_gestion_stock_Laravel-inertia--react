@@ -1,5 +1,5 @@
 import BarcodeInput from '@/Components/forms/BarcodeInput';
-import { ProductNameCell } from '@/Components/ProductThumb';
+import { ProductNameCell, ProductThumb } from '@/Components/ProductThumb';
 import { Button } from '@/Components/ui/button';
 import {
     Field,
@@ -16,7 +16,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
-import { formatInputNumber } from '@/lib/utils';
+import { cn, formatInputNumber } from '@/lib/utils';
 import { CartLine, PosProduct } from '@/types';
 import { useForm } from '@inertiajs/react';
 import axios from 'axios';
@@ -32,8 +32,10 @@ function formatMoney(value: string | number): string {
 
 export default function Index({
     session,
+    no_barcode_products = [],
 }: {
     session: { id: number; opened_at: string | null; opening_amount: string };
+    no_barcode_products?: PosProduct[];
 }) {
     const barcodeRef = useRef<HTMLInputElement>(null);
     const [barcode, setBarcode] = useState('');
@@ -91,8 +93,15 @@ export default function Index({
         ]);
     };
 
-    const lookup = async (code: string) => {
-        if (code === '' || scanning) {
+    const lookup = async (input: { barcode?: string; productId?: number }) => {
+        if (scanning) {
+            return;
+        }
+
+        const barcode = input.barcode?.trim() ?? '';
+        const productId = input.productId;
+
+        if (productId === undefined && barcode === '') {
             return;
         }
 
@@ -101,15 +110,27 @@ export default function Index({
         try {
             const response = await window.axios.get<{ product: PosProduct }>(
                 route('pos.lookup-product'),
-                { params: { barcode: code } },
+                {
+                    params:
+                        productId !== undefined
+                            ? { product_id: productId }
+                            : { barcode },
+                },
             );
             addProduct(response.data.product);
-            setBarcode('');
+
+            if (productId === undefined) {
+                setBarcode('');
+            }
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 404) {
                 toast.error('Product not found.');
             } else {
-                toast.error('Could not look up this barcode.');
+                toast.error(
+                    productId !== undefined
+                        ? 'Could not load this product.'
+                        : 'Could not look up this barcode.',
+                );
             }
         } finally {
             setScanning(false);
@@ -159,8 +180,8 @@ export default function Index({
                 <div>
                     <h1 className="text-3xl font-bold">POS</h1>
                     <p className="mt-1 text-muted-foreground">
-                        Caisse open since {session.opened_at ?? 'now'}. Scan,
-                        then take cash.
+                        Caisse open since {session.opened_at ?? 'now'}. Scan, or
+                        tap a product with no barcode.
                     </p>
                 </div>
 
@@ -176,7 +197,9 @@ export default function Index({
                                 autoFocus
                                 value={barcode}
                                 onChange={setBarcode}
-                                onScan={lookup}
+                                onScan={(code) => {
+                                    void lookup({ barcode: code });
+                                }}
                                 disabled={scanning}
                             />
                             <p className="text-xs text-muted-foreground">
@@ -185,6 +208,58 @@ export default function Index({
                             <FieldError>{form.errors.items}</FieldError>
                             <FieldError>{cashSessionError}</FieldError>
                         </Field>
+
+                        {no_barcode_products.length > 0 ? (
+                            <div className="mt-4 space-y-2">
+                                <p className="text-sm font-medium">
+                                    No barcode
+                                </p>
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                                    {no_barcode_products.map((product) => {
+                                        const outOfStock =
+                                            Number(product.stock_quantity) <= 0;
+
+                                        return (
+                                            <button
+                                                key={product.id}
+                                                type="button"
+                                                disabled={scanning}
+                                                onClick={() => {
+                                                    void lookup({
+                                                        productId: product.id,
+                                                    });
+                                                }}
+                                                className={cn(
+                                                    'flex flex-col items-start gap-2 rounded-lg border bg-background p-3 text-left outline-none hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50',
+                                                    outOfStock && 'opacity-60',
+                                                )}
+                                            >
+                                                <ProductThumb
+                                                    src={product.image_url}
+                                                    name={product.name}
+                                                    className="size-12"
+                                                />
+                                                <span className="w-full truncate text-sm font-medium">
+                                                    {product.name}
+                                                </span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {formatMoney(
+                                                        product.sale_price,
+                                                    )}{' '}
+                                                    MAD
+                                                    {product.unit === 'kg'
+                                                        ? ' / kg'
+                                                        : ''}
+                                                    {outOfStock
+                                                        ? ' · out of stock'
+                                                        : ''}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ) : null}
 
                         <div className="mt-4 rounded-md border">
                             <Table>
@@ -204,7 +279,8 @@ export default function Index({
                                                 colSpan={5}
                                                 className="h-20 text-center text-muted-foreground"
                                             >
-                                                Scan a product to add it.
+                                                Scan a product, or tap one with
+                                                no barcode.
                                             </TableCell>
                                         </TableRow>
                                     ) : (

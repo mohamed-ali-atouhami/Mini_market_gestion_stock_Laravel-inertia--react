@@ -90,12 +90,61 @@ class DashboardTest extends TestCase
                 ->where('stock_by_category.0.quantity', '12'));
     }
 
-    public function test_cashier_can_view_dashboard(): void
+    public function test_cashier_dashboard_shows_only_their_sales_and_low_stock(): void
     {
+        $owner = User::factory()->owner()->create();
         $cashier = User::factory()->cashier()->create();
+        $product = Product::factory()->create([
+            'name' => 'Coca-Cola 1L',
+            'sale_price' => 8,
+            'cost_price' => 5.5,
+            'stock_quantity' => 12,
+            'min_stock' => 12,
+        ]);
+        $flour = Product::factory()->create([
+            'name' => 'Farine',
+            'sale_price' => 5,
+            'stock_quantity' => 20,
+            'min_stock' => 5,
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('caisse.open'), ['opening_amount' => 0]);
+
+        $this->actingAs($owner)
+            ->post(route('pos.store'), [
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 2],
+                ],
+                'amount_paid' => 20,
+            ]);
+
+        $this->actingAs($cashier)
+            ->post(route('caisse.open'), ['opening_amount' => 0]);
+
+        $this->actingAs($cashier)
+            ->post(route('pos.store'), [
+                'items' => [
+                    ['product_id' => $flour->id, 'quantity' => 1],
+                ],
+                'amount_paid' => 10,
+            ]);
 
         $this->actingAs($cashier)
             ->get(route('dashboard'))
-            ->assertOk();
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Dashboard')
+                ->where('today.sales_total', '5.00')
+                ->where('today.ticket_count', 1)
+                ->where('stock_value', null)
+                ->has('week', 0)
+                ->has('stock_by_category', 0)
+                ->has('recent_purchases', 0)
+                ->has('low_stock', 1)
+                ->where('low_stock.0.name', 'Coca-Cola 1L')
+                ->has('top_selling', 1)
+                ->where('top_selling.0.id', $flour->id)
+                ->where('top_selling.0.name', 'Farine'));
     }
 }

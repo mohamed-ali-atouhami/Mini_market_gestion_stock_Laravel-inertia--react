@@ -68,6 +68,13 @@ class User extends Authenticatable
         return $this->role?->slug === Role::CASHIER;
     }
 
+    public function homeRouteName(): string
+    {
+        $this->loadMissing('role');
+
+        return $this->isOwner() ? 'dashboard' : 'caisse.index';
+    }
+
     /**
      * @return HasMany<Purchase, $this>
      */

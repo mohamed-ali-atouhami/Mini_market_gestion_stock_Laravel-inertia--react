@@ -60,6 +60,7 @@ class HandleInertiaRequests extends Middleware
             'cashSession' => $this->openCashSession($user),
             'flash' => [
                 'status' => $request->session()->get('status'),
+                'error' => $request->session()->get('error'),
                 'created_product' => $request->session()->get('created_product'),
             ],
         ];

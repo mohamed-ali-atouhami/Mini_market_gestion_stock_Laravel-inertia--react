@@ -91,7 +91,7 @@ export default function Dashboard({
     recent_purchases,
 }: {
     today: { sales_total: string; ticket_count: number };
-    stock_value: string;
+    stock_value: string | null;
     low_stock: LowStockRow[];
     top_selling: TopSellingRow[];
     week: WeekDay[];
@@ -107,148 +107,97 @@ export default function Dashboard({
             <Head title="Dashboard" />
 
             <div className="space-y-6">
-                {/* <div>
-                    <h1 className="text-2xl font-bold">Welcome back {auth.user?.name ?? 'User'}</h1>
-                     <p className="mt-1 text-muted-foreground">
-                        Today at {shop?.name ?? 'the shop'}.
-                    </p>
-                </div> */}
+                {isOwner ? (
+                    <div className="grid gap-4 lg:grid-cols-2">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <StatCard
+                                label="Today sales"
+                                value={formatMoney(today.sales_total, currency)}
+                                icon={Banknote}
+                                iconClass="bg-orange-500/10 text-orange-600"
+                            />
+                            <StatCard
+                                label="Tickets today"
+                                value={String(today.ticket_count)}
+                                icon={Receipt}
+                                iconClass="bg-violet-500/10 text-violet-600"
+                            />
+                        </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <StatCard
-                        label="Today sales"
-                        value={formatMoney(today.sales_total, currency)}
-                        icon={Banknote}
-                        iconClass="bg-orange-500/10 text-orange-600"
-                    />
-                    <StatCard
-                        label="Tickets today"
-                        value={String(today.ticket_count)}
-                        icon={Receipt}
-                        iconClass="bg-violet-500/10 text-violet-600"
-                    />
-                    <StatCard
-                        label="Stock value"
-                        value={formatMoney(stock_value, currency)}
-                        icon={Package}
-                        iconClass="bg-blue-500/10 text-blue-600"
-                    />
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Top selling today</CardTitle>
-                            <CardDescription>
-                                What left the shelf today
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {top_selling.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">
-                                    No sales yet today.
-                                </p>
-                            ) : (
-                                <ul className="space-y-3">
-                                    {top_selling.map((row, index) => (
-                                        <li
-                                            key={row.id}
-                                            className="flex items-center justify-between gap-3"
-                                        >
-                                            <div className="flex min-w-0 items-center gap-3">
-                                                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-                                                    {index + 1}
-                                                </span>
-                                                <ProductThumb
-                                                    src={row.image_url}
-                                                    name={row.name}
-                                                    className="size-8"
-                                                />
-                                                <div className="min-w-0">
-                                                    <p className="truncate font-medium">
-                                                        {row.name}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Qty {row.quantity}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <p className="shrink-0 text-sm font-medium">
-                                                {formatMoney(
-                                                    row.total,
-                                                    currency,
-                                                )}
-                                            </p>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <StatCard
+                                label="Stock value"
+                                value={formatMoney(stock_value, currency)}
+                                icon={Package}
+                                iconClass="bg-blue-500/10 text-blue-600"
+                            />
+                            <TopSellingCard
+                                rows={top_selling}
+                                currency={currency}
+                            />
+                        </div>
 
-                <div className="grid gap-4 lg:grid-cols-5">
-                    <Card className="lg:col-span-3">
-                        <CardHeader>
-                            <CardTitle>Purchases vs sales</CardTitle>
-                            <CardDescription>Last 7 days</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <ChartContainer
-                                config={weekConfig}
-                                className="aspect-auto h-[260px] w-full"
-                            >
-                                <AreaChart
-                                    accessibilityLayer
-                                    data={week}
-                                    margin={{ left: 12, right: 12 }}
+                        <Card className="h-full">
+                            <CardHeader>
+                                <CardTitle>Purchases vs sales</CardTitle>
+                                <CardDescription>Last 7 days</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <ChartContainer
+                                    config={weekConfig}
+                                    className="aspect-auto h-[260px] w-full"
                                 >
-                                    <CartesianGrid vertical={false} />
-                                    <XAxis
-                                        dataKey="label"
-                                        tickLine={false}
-                                        axisLine={false}
-                                        tickMargin={8}
-                                        interval={0}
-                                    />
-                                    <ChartTooltip
-                                        cursor={false}
-                                        content={
-                                            <ChartTooltipContent indicator="dot" />
-                                        }
-                                    />
-                                    <ChartLegend
-                                        content={<ChartLegendContent />}
-                                    />
-                                    <Area
-                                        dataKey="purchases"
-                                        type="natural"
-                                        fill="var(--color-purchases)"
-                                        fillOpacity={0.25}
-                                        stroke="var(--color-purchases)"
-                                        strokeWidth={2}
-                                    />
-                                    <Area
-                                        dataKey="sales"
-                                        type="natural"
-                                        fill="var(--color-sales)"
-                                        fillOpacity={0.25}
-                                        stroke="var(--color-sales)"
-                                        strokeWidth={2}
-                                    />
-                                </AreaChart>
-                            </ChartContainer>
-                        </CardContent>
-                    </Card>
+                                    <AreaChart
+                                        accessibilityLayer
+                                        data={week}
+                                        margin={{ left: 12, right: 12 }}
+                                    >
+                                        <CartesianGrid vertical={false} />
+                                        <XAxis
+                                            dataKey="label"
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickMargin={8}
+                                            interval={0}
+                                        />
+                                        <ChartTooltip
+                                            cursor={false}
+                                            content={
+                                                <ChartTooltipContent indicator="dot" />
+                                            }
+                                        />
+                                        <ChartLegend
+                                            content={<ChartLegendContent />}
+                                        />
+                                        <Area
+                                            dataKey="purchases"
+                                            type="natural"
+                                            fill="var(--color-purchases)"
+                                            fillOpacity={0.25}
+                                            stroke="var(--color-purchases)"
+                                            strokeWidth={2}
+                                        />
+                                        <Area
+                                            dataKey="sales"
+                                            type="natural"
+                                            fill="var(--color-sales)"
+                                            fillOpacity={0.25}
+                                            stroke="var(--color-sales)"
+                                            strokeWidth={2}
+                                        />
+                                    </AreaChart>
+                                </ChartContainer>
+                            </CardContent>
+                        </Card>
 
-                    <CategoryDonut
-                        rows={stock_by_category}
-                        className="lg:col-span-2"
-                    />
-                </div>
+                        <CategoryDonut
+                            rows={stock_by_category}
+                            className="h-full"
+                        />
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Recent purchases</CardTitle>
-                            {isOwner ? (
+                        <Card className="h-full">
+                            <CardHeader>
+                                <CardTitle>Recent purchases</CardTitle>
                                 <CardAction>
                                     <ButtonLink
                                         variant="ghost"
@@ -257,104 +206,200 @@ export default function Dashboard({
                                         View all
                                     </ButtonLink>
                                 </CardAction>
-                            ) : null}
-                        </CardHeader>
-                        <CardContent>
-                            {recent_purchases.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">
-                                    No deliveries received yet.
-                                </p>
-                            ) : (
-                                <div className="rounded-md border">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Reference</TableHead>
-                                                <TableHead>Supplier</TableHead>
-                                                <TableHead>Total</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {recent_purchases.map((row) => (
-                                                <TableRow key={row.id}>
-                                                    <TableCell className="font-medium">
-                                                        {row.reference}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {row.supplier ?? '—'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {formatMoney(
-                                                            row.total,
-                                                            currency,
-                                                        )}
-                                                    </TableCell>
+                            </CardHeader>
+                            <CardContent>
+                                {recent_purchases.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        No deliveries received yet.
+                                    </p>
+                                ) : (
+                                    <div className="rounded-md border">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>
+                                                        Reference
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Supplier
+                                                    </TableHead>
+                                                    <TableHead>Total</TableHead>
                                                 </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {recent_purchases.map((row) => (
+                                                    <TableRow key={row.id}>
+                                                        <TableCell className="font-medium">
+                                                            {row.reference}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {row.supplier ??
+                                                                '—'}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {formatMoney(
+                                                                row.total,
+                                                                currency,
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Low stock</CardTitle>
-                            {isOwner ? (
-                                <CardAction>
-                                    <ButtonLink
-                                        variant="ghost"
-                                        href={route('stock.index', {
-                                            stock: 'LOW',
-                                        })}
-                                    >
-                                        View all
-                                    </ButtonLink>
-                                </CardAction>
-                            ) : null}
-                        </CardHeader>
-                        <CardContent>
-                            {low_stock.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">
-                                    Nothing to reorder right now.
-                                </p>
-                            ) : (
-                                <div className="rounded-md border">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Product</TableHead>
-                                                <TableHead>Stock</TableHead>
-                                                <TableHead>Min</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {low_stock.map((row) => (
-                                                <TableRow key={row.id}>
-                                                    <TableCell>
-                                                        <ProductNameCell
-                                                            src={row.image_url}
-                                                            name={row.name}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell className="font-semibold text-destructive">
-                                                        {row.stock_quantity}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {row.min_stock}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                        <LowStockCard rows={low_stock} showViewAll />
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <div className="grid gap-4 lg:grid-cols-3">
+                            <StatCard
+                                label="Today sales"
+                                value={formatMoney(today.sales_total, currency)}
+                                icon={Banknote}
+                                iconClass="bg-orange-500/10 text-orange-600"
+                            />
+                            <StatCard
+                                label="Tickets today"
+                                value={String(today.ticket_count)}
+                                icon={Receipt}
+                                iconClass="bg-violet-500/10 text-violet-600"
+                            />
+                            <TopSellingCard
+                                rows={top_selling}
+                                currency={currency}
+                            />
+                        </div>
+                        <LowStockCard rows={low_stock} />
+                    </div>
+                )}
             </div>
         </>
+    );
+}
+
+function TopSellingCard({
+    rows,
+    currency,
+}: {
+    rows: TopSellingRow[];
+    currency: string;
+}) {
+    return (
+        <Card className="h-full">
+            <CardHeader>
+                <CardTitle>Top selling today</CardTitle>
+                <CardDescription>What left the shelf today</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {rows.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                        No sales yet today.
+                    </p>
+                ) : (
+                    <ul className="space-y-3">
+                        {rows.map((row, index) => (
+                            <li
+                                key={row.id}
+                                className="flex items-center justify-between gap-3"
+                            >
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                                        {index + 1}
+                                    </span>
+                                    <ProductThumb
+                                        src={row.image_url}
+                                        name={row.name}
+                                        className="size-8"
+                                    />
+                                    <div className="min-w-0">
+                                        <p className="truncate font-medium">
+                                            {row.name}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Qty {row.quantity}
+                                        </p>
+                                    </div>
+                                </div>
+                                <p className="shrink-0 text-sm font-medium">
+                                    {formatMoney(row.total, currency)}
+                                </p>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function LowStockCard({
+    rows,
+    showViewAll = false,
+}: {
+    rows: LowStockRow[];
+    showViewAll?: boolean;
+}) {
+    return (
+        <Card className="h-full">
+            <CardHeader>
+                <CardTitle>Low stock</CardTitle>
+                {showViewAll ? (
+                    <CardAction>
+                        <ButtonLink
+                            variant="ghost"
+                            href={route('stock.index', {
+                                stock: 'LOW',
+                            })}
+                        >
+                            View all
+                        </ButtonLink>
+                    </CardAction>
+                ) : (
+                    <CardDescription>
+                        Tell the owner if something needs restocking.
+                    </CardDescription>
+                )}
+            </CardHeader>
+            <CardContent>
+                {rows.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                        Nothing to reorder right now.
+                    </p>
+                ) : (
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Product</TableHead>
+                                    <TableHead>Stock</TableHead>
+                                    <TableHead>Min</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {rows.map((row) => (
+                                    <TableRow key={row.id}>
+                                        <TableCell>
+                                            <ProductNameCell
+                                                src={row.image_url}
+                                                name={row.name}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="font-semibold text-destructive">
+                                            {row.stock_quantity}
+                                        </TableCell>
+                                        <TableCell>{row.min_stock}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }
 

@@ -18,6 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        $middleware->redirectUsersTo(function () {
+            $user = auth()->user();
+
+            return $user
+                ? route($user->homeRouteName())
+                : route('dashboard');
+        });
+
         $middleware->alias([
             'owner' => \App\Http\Middleware\EnsureUserIsOwner::class,
             'active' => \App\Http\Middleware\EnsureUserIsActive::class,

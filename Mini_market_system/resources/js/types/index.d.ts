@@ -83,6 +83,7 @@ export type PageProps<
     };
     flash: {
         status: string | null;
+        error: string | null;
         created_product: ScannedProduct | null;
     };
     cashSession: {

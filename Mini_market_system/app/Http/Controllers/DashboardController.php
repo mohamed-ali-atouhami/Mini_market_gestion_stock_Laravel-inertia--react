@@ -7,15 +7,20 @@ use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Setting;
+use App\Models\User;
 use App\Support\Formats;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $user = $request->user();
+        $user?->loadMissing('role');
+        $isOwner = $user?->isOwner() ?? false;
         $today = now()->toDateString();
         $settings = Setting::current();
 
@@ -23,12 +28,14 @@ class DashboardController extends Controller
             ->where('status', Sale::STATUS_COMPLETED)
             ->whereDate('created_at', $today);
 
+        if (! $isOwner && $user instanceof User) {
+            $sales->where('user_id', $user->id);
+        }
+
         $salesTotal = (float) (clone $sales)->sum('total');
         $ticketCount = (clone $sales)->count();
 
-        $stockValue = (float) Product::query()
-            ->selectRaw('COALESCE(SUM(stock_quantity * cost_price), 0) as value')
-            ->value('value');
+        $topSelling = $this->topSellingToday($today, $isOwner ? null : $user?->id);
 
         $lowStock = [];
 
@@ -49,7 +56,45 @@ class DashboardController extends Controller
                 ->all();
         }
 
-        $topSelling = SaleItem::query()
+        if (! $isOwner) {
+            return Inertia::render('Dashboard', [
+                'today' => [
+                    'sales_total' => Formats::money($salesTotal),
+                    'ticket_count' => $ticketCount,
+                ],
+                'stock_value' => null,
+                'low_stock' => $lowStock,
+                'top_selling' => $topSelling,
+                'week' => [],
+                'stock_by_category' => [],
+                'recent_purchases' => [],
+            ]);
+        }
+
+        $stockValue = (float) Product::query()
+            ->selectRaw('COALESCE(SUM(stock_quantity * cost_price), 0) as value')
+            ->value('value');
+
+        return Inertia::render('Dashboard', [
+            'today' => [
+                'sales_total' => Formats::money($salesTotal),
+                'ticket_count' => $ticketCount,
+            ],
+            'stock_value' => Formats::money($stockValue),
+            'low_stock' => $lowStock,
+            'top_selling' => $topSelling,
+            'week' => $this->weekTotals($today),
+            'stock_by_category' => $this->stockByCategory(),
+            'recent_purchases' => $this->recentPurchases(),
+        ]);
+    }
+
+    /**
+     * @return list<array{id: int, name: string, quantity: string, total: string, image_url: string|null}>
+     */
+    private function topSellingToday(string $today, ?int $cashierId): array
+    {
+        $query = SaleItem::query()
             ->select([
                 'sale_items.product_id',
                 'products.name',
@@ -63,7 +108,13 @@ class DashboardController extends Controller
             ->whereDate('sales.created_at', $today)
             ->groupBy('sale_items.product_id', 'products.name', 'products.image_path')
             ->orderByDesc('quantity')
-            ->limit(5)
+            ->limit(5);
+
+        if ($cashierId !== null) {
+            $query->where('sales.user_id', $cashierId);
+        }
+
+        return $query
             ->get()
             ->map(fn ($row) => [
                 'id' => (int) $row->product_id,
@@ -73,7 +124,13 @@ class DashboardController extends Controller
                 'image_url' => Product::storedImageUrl($row->image_path),
             ])
             ->all();
+    }
 
+    /**
+     * @return list<array{day: string, label: string, sales: float, purchases: float}>
+     */
+    private function weekTotals(string $today): array
+    {
         $weekStart = now()->subDays(6)->toDateString();
 
         $salesByDay = Sale::query()
@@ -92,7 +149,7 @@ class DashboardController extends Controller
             ->groupBy('day')
             ->pluck('total', 'day');
 
-        $week = collect(range(0, 6))->map(function (int $offset) use ($salesByDay, $purchasesByDay) {
+        return collect(range(0, 6))->map(function (int $offset) use ($salesByDay, $purchasesByDay) {
             $date = now()->subDays(6 - $offset);
             $day = $date->toDateString();
 
@@ -103,7 +160,13 @@ class DashboardController extends Controller
                 'purchases' => (float) ($purchasesByDay[$day] ?? 0),
             ];
         })->all();
+    }
 
+    /**
+     * @return list<array{id: int, name: string, quantity: string, percent: int}>
+     */
+    private function stockByCategory(): array
+    {
         $categoryRows = Product::query()
             ->select([
                 'categories.id',
@@ -119,7 +182,7 @@ class DashboardController extends Controller
 
         $categoryTotal = (float) $categoryRows->sum('quantity');
 
-        $stockByCategory = $categoryRows
+        return $categoryRows
             ->map(fn ($row) => [
                 'id' => (int) $row->id,
                 'name' => $row->name,
@@ -129,8 +192,14 @@ class DashboardController extends Controller
                     : 0,
             ])
             ->all();
+    }
 
-        $recentPurchases = Purchase::query()
+    /**
+     * @return list<array{id: int, reference: string, supplier: string|null, purchase_date: string|null, total: string}>
+     */
+    private function recentPurchases(): array
+    {
+        return Purchase::query()
             ->with('supplier')
             ->where('status', Purchase::STATUS_RECEIVED)
             ->latest('id')
@@ -144,18 +213,5 @@ class DashboardController extends Controller
                 'total' => Formats::money($purchase->total),
             ])
             ->all();
-
-        return Inertia::render('Dashboard', [
-            'today' => [
-                'sales_total' => Formats::money($salesTotal),
-                'ticket_count' => $ticketCount,
-            ],
-            'stock_value' => Formats::money($stockValue),
-            'low_stock' => $lowStock,
-            'top_selling' => $topSelling,
-            'week' => $week,
-            'stock_by_category' => $stockByCategory,
-            'recent_purchases' => $recentPurchases,
-        ]);
     }
 }

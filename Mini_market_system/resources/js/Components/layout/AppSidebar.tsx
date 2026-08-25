@@ -1,5 +1,15 @@
 import { PageProps } from '@/types';
 import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogMedia,
+    AlertDialogTitle,
+} from '@/Components/ui/alert-dialog';
+import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
@@ -10,6 +20,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/Components/ui/sidebar';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
@@ -28,6 +39,7 @@ import {
     Warehouse,
     type LucideIcon,
 } from 'lucide-react';
+import { useState } from 'react';
 
 type RoleSlug = 'owner' | 'cashier';
 
@@ -138,10 +150,12 @@ export function currentPageTitle(): string | null {
 }
 
 export function AppSidebar() {
-    const { auth, shop } = usePage<PageProps>().props;
+    const { auth, shop, cashSession } = usePage<PageProps>().props;
     const user = auth.user;
     const role = user?.role as RoleSlug | null | undefined;
     const shopName = shop?.name || 'Mini market';
+    const [closeCaisseOpen, setCloseCaisseOpen] = useState(false);
+    const { setOpenMobile } = useSidebar();
 
     const visibleItems = navigation.filter((item) => {
         if (!role) {
@@ -151,7 +165,26 @@ export function AppSidebar() {
         return item.visible.includes(role);
     });
 
+    const requestLogout = () => {
+        if (cashSession) {
+            setOpenMobile(false);
+            setCloseCaisseOpen(true);
+            return;
+        }
+
+        router.post(route('logout'));
+    };
+
+    const goCloseCaisse = () => {
+        setCloseCaisseOpen(false);
+
+        if (!route().current('caisse.*')) {
+            router.visit(route('caisse.index'));
+        }
+    };
+
     return (
+        <>
         <Sidebar collapsible="icon">
             <SidebarHeader>
                 <SidebarMenu>
@@ -208,7 +241,7 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             tooltip="Log out"
-                            onClick={() => router.post(route('logout'))}
+                            onClick={requestLogout}
                         >
                             <LogOut className="text-red-500" />
                             <span className="text-red-500">Log out</span>
@@ -217,5 +250,34 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarFooter>
         </Sidebar>
+            <AlertDialog
+                open={closeCaisseOpen}
+                onOpenChange={setCloseCaisseOpen}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogMedia className="bg-orange-500/10 text-orange-600">
+                            <Landmark />
+                        </AlertDialogMedia>
+                        <AlertDialogTitle>Close the caisse first</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Your till is still open. Count the cash and close it
+                            before you sign out.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Stay</AlertDialogCancel>
+                        <AlertDialogCancel
+                            variant="default"
+                            onClick={goCloseCaisse}
+                        >
+                            {route().current('caisse.*')
+                                ? 'OK'
+                                : 'Go to caisse'}
+                        </AlertDialogCancel>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }

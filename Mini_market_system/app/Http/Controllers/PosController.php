@@ -39,6 +39,7 @@ class PosController extends Controller
                 'opened_at' => $session->opened_at?->format('Y-m-d H:i'),
                 'opening_amount' => $session->opening_amount,
             ],
+            'no_barcode_products' => $this->noBarcodeProducts(),
         ]);
     }
 
@@ -46,33 +47,59 @@ class PosController extends Controller
     {
         $this->authorize('create', Sale::class);
 
+        $productId = $request->integer('product_id');
         $barcode = trim($request->string('barcode')->toString());
 
-        if ($barcode === '') {
+        $query = Product::query()->where('is_active', true);
+
+        if ($productId > 0) {
+            $product = $query->find($productId);
+        } elseif ($barcode !== '') {
+            $product = $query->where('barcode', $barcode)->first();
+        } else {
             return response()->json(['product' => null], 404);
         }
-
-        $product = Product::query()
-            ->where('barcode', $barcode)
-            ->where('is_active', true)
-            ->first();
 
         if ($product === null) {
             return response()->json(['product' => null], 404);
         }
 
         return response()->json([
-            'product' => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'barcode' => $product->barcode,
-                'sale_price' => $this->formatDecimal($product->sale_price, 2),
-                'stock_quantity' => $this->formatDecimal($product->stock_quantity, 3),
-                'unit' => $product->unit,
-                'is_active' => $product->is_active,
-                'image_url' => $product->imageUrl(),
-            ],
+            'product' => $this->productPayload($product),
         ]);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function noBarcodeProducts(): array
+    {
+        return Product::query()
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('barcode')->orWhere('barcode', '');
+            })
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Product $product) => $this->productPayload($product))
+            ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function productPayload(Product $product): array
+    {
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'barcode' => $product->barcode,
+            'sale_price' => $this->formatDecimal($product->sale_price, 2),
+            'stock_quantity' => $this->formatDecimal($product->stock_quantity, 3),
+            'unit' => $product->unit,
+            'is_active' => $product->is_active,
+            'image_url' => $product->imageUrl(),
+        ];
     }
 
     public function store(StoreSaleRequest $request): RedirectResponse
