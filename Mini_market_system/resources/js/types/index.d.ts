@@ -132,6 +132,27 @@ export type CartLine = {
     image_url?: string | null;
 };
 
+export type PosCustomer = {
+    id: number;
+    name: string;
+    phone: string;
+};
+
+export type ShopCredit = {
+    id: number;
+    reference: string;
+    customer: string;
+    phone: string | null;
+    cashier: string | null;
+    total: string;
+    paid_at_sale: string;
+    remaining: string;
+    due_date: string | null;
+    due_date_iso: string | null;
+    is_overdue: boolean;
+    whatsapp_url: string | null;
+};
+
 export type ShopSale = {
     id: number;
     reference: string;
@@ -141,6 +162,12 @@ export type ShopSale = {
     amount_paid: string;
     change_amount: string;
     sold_at: string | null;
+    payment_method?: 'cash' | 'credit';
+    customer?: string | null;
+    customer_phone?: string | null;
+    due_date?: string | null;
+    remaining?: string;
+    paid_so_far?: string;
     items?: CartLine[];
 };
 

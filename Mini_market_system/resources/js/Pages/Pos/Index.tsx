@@ -1,6 +1,7 @@
 import BarcodeInput from '@/Components/forms/BarcodeInput';
 import { ProductNameCell, ProductThumb } from '@/Components/ProductThumb';
 import { Button } from '@/Components/ui/button';
+import { Checkbox } from '@/Components/ui/checkbox';
 import {
     Field,
     FieldError,
@@ -17,12 +18,26 @@ import {
     TableRow,
 } from '@/Components/ui/table';
 import { cn, formatInputNumber } from '@/lib/utils';
-import { CartLine, PosProduct } from '@/types';
+import { CartLine, PosCustomer, PosProduct } from '@/types';
 import { useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+
+const selectClassName =
+    'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
+
+function localIsoDate(offsetDays = 0): string {
+    const date = new Date();
+    date.setDate(date.getDate() + offsetDays);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
 
 function formatMoney(value: string | number): string {
     const amount = Number(value);
@@ -33,9 +48,11 @@ function formatMoney(value: string | number): string {
 export default function Index({
     session,
     no_barcode_products = [],
+    customers = [],
 }: {
     session: { id: number; opened_at: string | null; opening_amount: string };
     no_barcode_products?: PosProduct[];
+    customers?: PosCustomer[];
 }) {
     const barcodeRef = useRef<HTMLInputElement>(null);
     const [barcode, setBarcode] = useState('');
@@ -44,13 +61,19 @@ export default function Index({
     const form = useForm({
         items: [] as CartLine[],
         amount_paid: '',
+        payment_method: 'cash' as 'cash' | 'credit',
+        customer_name: '',
+        customer_phone: '',
+        due_date: localIsoDate(1),
     });
 
+    const isCredit = form.data.payment_method === 'credit';
     const total = form.data.items.reduce((sum, item) => {
         return sum + Number(item.quantity) * Number(item.unit_price);
     }, 0);
-    const paid = Number(form.data.amount_paid);
-    const change = Number.isNaN(paid) ? 0 : paid - total;
+    const paid = Number(form.data.amount_paid) || 0;
+    const change = paid - total;
+    const remaining = Math.max(0, total - paid);
     const cashSessionError = (
         form.errors as typeof form.errors & { cash_session?: string }
     ).cash_session;
@@ -165,7 +188,12 @@ export default function Index({
             preserveScroll: true,
             onError: (errors) => {
                 const message =
-                    errors.cash_session ?? errors.items ?? errors.amount_paid;
+                    errors.cash_session ??
+                    errors.items ??
+                    errors.amount_paid ??
+                    errors.customer_name ??
+                    errors.customer_phone ??
+                    errors.due_date;
 
                 if (typeof message === 'string' && message !== '') {
                     toast.error(message);
@@ -348,19 +376,171 @@ export default function Index({
 
                     <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
                         <FieldGroup>
+                            <Field orientation="horizontal">
+                                <Checkbox
+                                    id="payment_credit"
+                                    checked={isCredit}
+                                    onCheckedChange={(checked) => {
+                                        const credit = checked === true;
+                                        const paidNow = Number(
+                                            form.data.amount_paid,
+                                        );
+                                        const nextPaid =
+                                            credit &&
+                                            form.data.amount_paid !== '' &&
+                                            !Number.isNaN(paidNow) &&
+                                            paidNow >= total
+                                                ? ''
+                                                : form.data.amount_paid;
+
+                                        form.setData({
+                                            ...form.data,
+                                            payment_method: credit
+                                                ? 'credit'
+                                                : 'cash',
+                                            amount_paid: nextPaid,
+                                        });
+                                    }}
+                                />
+                                <FieldLabel
+                                    htmlFor="payment_credit"
+                                    className="font-normal"
+                                >
+                                    Sell on credit (pay later)
+                                </FieldLabel>
+                            </Field>
+                            {isCredit ? (
+                                <p className="-mt-3 text-xs text-muted-foreground">
+                                    Stock leaves now. They can pay nothing
+                                    today, or a part, then the rest by the date
+                                    they say.
+                                </p>
+                            ) : null}
+
+                            {isCredit ? (
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    {customers.length > 0 ? (
+                                        <Field className="md:col-span-2">
+                                            <FieldLabel htmlFor="known_customer">
+                                                Known customer
+                                            </FieldLabel>
+                                            <select
+                                                id="known_customer"
+                                                className={selectClassName}
+                                                defaultValue=""
+                                                onChange={(e) => {
+                                                    const customer =
+                                                        customers.find(
+                                                            (row) =>
+                                                                String(
+                                                                    row.id,
+                                                                ) ===
+                                                                e.target.value,
+                                                        );
+
+                                                    if (!customer) {
+                                                        return;
+                                                    }
+
+                                                    form.setData({
+                                                        ...form.data,
+                                                        customer_name:
+                                                            customer.name,
+                                                        customer_phone:
+                                                            customer.phone,
+                                                    });
+                                                }}
+                                            >
+                                                <option value="">
+                                                    New customer
+                                                </option>
+                                                {customers.map((customer) => (
+                                                    <option
+                                                        key={customer.id}
+                                                        value={customer.id}
+                                                    >
+                                                        {customer.name} ·{' '}
+                                                        {customer.phone}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </Field>
+                                    ) : null}
+                                    <Field>
+                                        <FieldLabel htmlFor="customer_name">
+                                            Customer name
+                                        </FieldLabel>
+                                        <Input
+                                            id="customer_name"
+                                            value={form.data.customer_name}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    'customer_name',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        <FieldError>
+                                            {form.errors.customer_name}
+                                        </FieldError>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel htmlFor="customer_phone">
+                                            Phone (WhatsApp)
+                                        </FieldLabel>
+                                        <Input
+                                            id="customer_phone"
+                                            value={form.data.customer_phone}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    'customer_phone',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        <FieldError>
+                                            {form.errors.customer_phone}
+                                        </FieldError>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel htmlFor="due_date">
+                                            Pay by
+                                        </FieldLabel>
+                                        <Input
+                                            id="due_date"
+                                            type="date"
+                                            min={localIsoDate()}
+                                            value={form.data.due_date}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    'due_date',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        <FieldError>
+                                            {form.errors.due_date}
+                                        </FieldError>
+                                    </Field>
+                                </div>
+                            ) : null}
+
                             <div className="grid gap-4 md:grid-cols-3">
                                 <div className="text-sm font-medium">
                                     Total: {formatMoney(total)} MAD
                                 </div>
                                 <Field>
                                     <FieldLabel htmlFor="amount_paid">
-                                        Amount paid
+                                        {isCredit
+                                            ? 'Paid now (optional)'
+                                            : 'Amount paid'}
                                     </FieldLabel>
                                     <Input
                                         id="amount_paid"
                                         type="number"
                                         min="0"
                                         step="0.01"
+                                        placeholder={isCredit ? '0' : ''}
                                         value={form.data.amount_paid}
                                         onChange={(e) =>
                                             form.setData(
@@ -374,9 +554,20 @@ export default function Index({
                                     </FieldError>
                                 </Field>
                                 <div className="text-sm font-medium">
-                                    Change:{' '}
-                                    {change >= 0 ? formatMoney(change) : '0.00'}{' '}
-                                    MAD
+                                    {isCredit ? (
+                                        <>
+                                            Remaining:{' '}
+                                            {formatMoney(remaining)} MAD
+                                        </>
+                                    ) : (
+                                        <>
+                                            Change:{' '}
+                                            {change >= 0
+                                                ? formatMoney(change)
+                                                : '0.00'}{' '}
+                                            MAD
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </FieldGroup>
@@ -386,7 +577,7 @@ export default function Index({
                                 disabled={form.processing}
                                 onClick={pay}
                             >
-                                Pay
+                                {isCredit ? 'Sell on credit' : 'Pay'}
                             </Button>
                         </div>
                     </div>

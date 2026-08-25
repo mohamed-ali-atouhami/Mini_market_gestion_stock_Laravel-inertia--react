@@ -14,7 +14,21 @@ class SalePolicy
 
     public function view(User $user, Sale $sale): bool
     {
-        return $user->isOwner() || $sale->user_id === $user->id;
+        if ($user->isOwner() || $sale->user_id === $user->id) {
+            return true;
+        }
+
+        return $user->isCashier() && $sale->isCredit();
+    }
+
+    public function collectCredit(User $user, Sale $sale): bool
+    {
+        return ($user->isOwner() || $user->isCashier()) && $sale->isCredit();
+    }
+
+    public function viewCredits(User $user): bool
+    {
+        return $user->isOwner() || $user->isCashier();
     }
 
     public function create(User $user): bool

@@ -1,5 +1,6 @@
 import { ProductNameCell, ProductThumb } from '@/Components/ProductThumb';
-import { ButtonLink } from '@/Components/ui/button';
+import { Badge } from '@/Components/ui/badge';
+import { ButtonLink, buttonVariants } from '@/Components/ui/button';
 import {
     Card,
     CardAction,
@@ -25,10 +26,11 @@ import {
     TableRow,
 } from '@/Components/ui/table';
 import { cn, formatMoney } from '@/lib/utils';
-import { PageProps } from '@/types';
+import { PageProps, ShopCredit } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
-import { Banknote, Package, Receipt } from 'lucide-react';
+import { Banknote, HandCoins, Package, Receipt } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, Label, Pie, PieChart, XAxis } from 'recharts';
+import { SendIcon } from 'lucide-react';
 
 const weekConfig = {
     purchases: {
@@ -85,6 +87,7 @@ export default function Dashboard({
     today,
     stock_value,
     low_stock,
+    due_credits = [],
     top_selling,
     week,
     stock_by_category,
@@ -93,6 +96,7 @@ export default function Dashboard({
     today: { sales_total: string; ticket_count: number };
     stock_value: string | null;
     low_stock: LowStockRow[];
+    due_credits?: ShopCredit[];
     top_selling: TopSellingRow[];
     week: WeekDay[];
     stock_by_category: CategoryStock[];
@@ -109,6 +113,11 @@ export default function Dashboard({
             <div className="space-y-6">
                 {isOwner ? (
                     <div className="grid gap-4 lg:grid-cols-2">
+                        <DueCreditsCard
+                            rows={due_credits}
+                            currency={currency}
+                            className="lg:col-span-2"
+                        />
                         <div className="grid gap-4 sm:grid-cols-2">
                             <StatCard
                                 label="Today sales"
@@ -255,6 +264,10 @@ export default function Dashboard({
                     </div>
                 ) : (
                     <div className="space-y-4">
+                        <DueCreditsCard
+                            rows={due_credits}
+                            currency={currency}
+                        />
                         <div className="grid gap-4 lg:grid-cols-3">
                             <StatCard
                                 label="Today sales"
@@ -278,6 +291,86 @@ export default function Dashboard({
                 )}
             </div>
         </>
+    );
+}
+
+function DueCreditsCard({
+    rows,
+    currency,
+    className,
+}: {
+    rows: ShopCredit[];
+    currency: string;
+    className?: string;
+}) {
+    if (rows.length === 0) {
+        return null;
+    }
+
+    return (
+        <Card className={cn('h-full', className)}>
+            <CardHeader>
+                <div className="mb-2 flex size-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+                    <HandCoins className="size-4" />
+                </div>
+                <CardTitle>Credits due soon</CardTitle>
+                <CardAction>
+                    <ButtonLink variant="ghost" href={route('credits.index')}>
+                        All credit
+                    </ButtonLink>
+                </CardAction>
+            </CardHeader>
+            <CardContent>
+                <ul className="space-y-3">
+                        {rows.map((row) => (
+                            <li
+                                key={row.id}
+                                className="flex items-start justify-between gap-3"
+                            >
+                                <div className="min-w-0">
+                                    <p className="truncate font-medium">
+                                        {row.customer}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {row.due_date ?? '—'}
+                                        {row.is_overdue ? ' · overdue' : ''}
+                                    </p>
+                                    {row.whatsapp_url ? (
+                                        <a
+                                            href={row.whatsapp_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={cn(
+                                                buttonVariants({
+                                                    variant: 'link',
+                                                    className:'text-green-500 hover:text-green-600 text-xs'
+                                                }),
+                                                'h-auto px-0',
+                                            )}
+                                        >
+                                            WhatsApp
+                                            <SendIcon className="size-3" />
+                                        </a>
+                                    ) : null}
+                                </div>
+                                <div className="shrink-0 text-right">
+                                    <p className="text-sm font-medium">
+                                        {formatMoney(row.remaining, currency)}
+                                    </p>
+                                    {row.is_overdue ? (
+                                        <Badge
+                                            variant="destructive"
+                                            className="mt-1"
+                                        >
+                                            Overdue
+                                        </Badge>
+                                    ) : null}
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+            </CardContent>
+        </Card>
     );
 }
 

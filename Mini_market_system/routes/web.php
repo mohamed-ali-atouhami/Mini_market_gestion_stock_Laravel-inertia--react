@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CashSessionController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CreditController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
@@ -38,6 +39,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/caisse', [CashSessionController::class, 'index'])->name('caisse.index');
     Route::post('/caisse', [CashSessionController::class, 'store'])->name('caisse.open');
     Route::post('/caisse/{cashSession}/close', [CashSessionController::class, 'close'])->name('caisse.close');
+
+    Route::get('/credits', [CreditController::class, 'index'])->name('credits.index');
+    Route::post('/credits/{sale}/pay', [CreditController::class, 'storePayment'])->name('credits.pay');
 
     Route::get('/sales/{sale}/receipt', [SaleController::class, 'receipt'])->name('sales.receipt');
 

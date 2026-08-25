@@ -77,7 +77,7 @@ class StockController extends Controller
         $this->authorize('viewAny', Product::class);
 
         $movements = $product->stockMovements()
-            ->with('user')
+            ->with(['user', 'reference'])
             ->orderByDesc('id')
             ->limit(50)
             ->get()
@@ -125,7 +125,7 @@ class StockController extends Controller
     {
         return [
             'id' => $movement->id,
-            'type' => $movement->type,
+            'type' => $movement->typeLabel(),
             'direction' => $movement->direction,
             'quantity' => Formats::decimal($movement->quantity, 3),
             'quantity_before' => Formats::decimal($movement->quantity_before, 3),

@@ -26,9 +26,7 @@ class CashSessionController extends Controller
         $salesTotal = 0.0;
 
         if ($open !== null) {
-            $salesTotal = (float) $open->sales()
-                ->where('status', Sale::STATUS_COMPLETED)
-                ->sum('total');
+            $salesTotal = $open->cashInDrawer();
         }
 
         $history = CashSession::query()

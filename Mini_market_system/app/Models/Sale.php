@@ -12,6 +12,10 @@ class Sale extends Model
 
     public const STATUS_CANCELLED = 'cancelled';
 
+    public const PAYMENT_CASH = 'cash';
+
+    public const PAYMENT_CREDIT = 'credit';
+
     public static function nextReference(): string
     {
         $year = now()->year;
@@ -35,9 +39,13 @@ class Sale extends Model
         'user_id',
         'cash_session_id',
         'status',
+        'payment_method',
+        'customer_id',
+        'due_date',
         'total',
         'amount_paid',
         'change_amount',
+        'remaining_amount',
     ];
 
     /**
@@ -46,9 +54,11 @@ class Sale extends Model
     protected function casts(): array
     {
         return [
+            'due_date' => 'date',
             'total' => 'decimal:2',
             'amount_paid' => 'decimal:2',
             'change_amount' => 'decimal:2',
+            'remaining_amount' => 'decimal:2',
         ];
     }
 
@@ -69,10 +79,49 @@ class Sale extends Model
     }
 
     /**
+     * @return BelongsTo<Customer, $this>
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    /**
      * @return HasMany<SaleItem, $this>
      */
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    /**
+     * @return HasMany<CreditPayment, $this>
+     */
+    public function creditPayments(): HasMany
+    {
+        return $this->hasMany(CreditPayment::class);
+    }
+
+    public function isCredit(): bool
+    {
+        return $this->payment_method === self::PAYMENT_CREDIT;
+    }
+
+    public function paidSoFar(): float
+    {
+        if ($this->isCredit()) {
+            return round((float) $this->total - (float) $this->remaining_amount, 2);
+        }
+
+        return round((float) $this->amount_paid, 2);
+    }
+
+    public function drawerAmount(): float
+    {
+        if ($this->isCredit()) {
+            return round((float) $this->amount_paid, 2);
+        }
+
+        return round((float) $this->total, 2);
     }
 }

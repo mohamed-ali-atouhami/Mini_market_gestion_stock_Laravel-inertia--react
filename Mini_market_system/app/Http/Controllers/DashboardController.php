@@ -56,6 +56,8 @@ class DashboardController extends Controller
                 ->all();
         }
 
+        $dueCredits = $this->dueCredits($settings->shop_name ?? 'Mini market');
+
         if (! $isOwner) {
             return Inertia::render('Dashboard', [
                 'today' => [
@@ -64,6 +66,7 @@ class DashboardController extends Controller
                 ],
                 'stock_value' => null,
                 'low_stock' => $lowStock,
+                'due_credits' => $dueCredits,
                 'top_selling' => $topSelling,
                 'week' => [],
                 'stock_by_category' => [],
@@ -82,6 +85,7 @@ class DashboardController extends Controller
             ],
             'stock_value' => Formats::money($stockValue),
             'low_stock' => $lowStock,
+            'due_credits' => $dueCredits,
             'top_selling' => $topSelling,
             'week' => $this->weekTotals($today),
             'stock_by_category' => $this->stockByCategory(),
@@ -212,6 +216,26 @@ class DashboardController extends Controller
                 'purchase_date' => $purchase->purchase_date?->format('d/m/Y'),
                 'total' => Formats::money($purchase->total),
             ])
+            ->all();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function dueCredits(string $shopName): array
+    {
+        $tomorrow = now()->addDay()->toDateString();
+
+        return Sale::query()
+            ->with(['customer', 'user'])
+            ->where('status', Sale::STATUS_COMPLETED)
+            ->where('payment_method', Sale::PAYMENT_CREDIT)
+            ->where('remaining_amount', '>', 0)
+            ->whereDate('due_date', '<=', $tomorrow)
+            ->orderBy('due_date')
+            ->limit(8)
+            ->get()
+            ->map(fn (Sale $sale) => CreditController::payload($sale, $shopName))
             ->all();
     }
 }

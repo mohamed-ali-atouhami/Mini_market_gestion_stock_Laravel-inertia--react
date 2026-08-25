@@ -72,7 +72,7 @@ export default function Index({
                                 </div>
                                 <div>
                                     <dt className="text-muted-foreground">
-                                        Sales
+                                        Cash taken
                                     </dt>
                                     <dd className="font-medium">
                                         {formatMoney(session.sales_total)} MAD

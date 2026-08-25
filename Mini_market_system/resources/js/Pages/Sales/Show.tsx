@@ -77,17 +77,62 @@ export default function Show({ sale }: { sale: ShopSale }) {
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-muted-foreground">Paid</dt>
+                            <dt className="text-muted-foreground">
+                                {sale.payment_method === 'credit'
+                                    ? 'Paid so far'
+                                    : 'Paid'}
+                            </dt>
                             <dd className="font-medium">
-                                {formatMoney(sale.amount_paid)} MAD
+                                {formatMoney(
+                                    sale.payment_method === 'credit'
+                                        ? (sale.paid_so_far ?? sale.amount_paid)
+                                        : sale.amount_paid,
+                                )}{' '}
+                                MAD
                             </dd>
                         </div>
-                        <div>
-                            <dt className="text-muted-foreground">Change</dt>
-                            <dd className="font-medium">
-                                {formatMoney(sale.change_amount)} MAD
-                            </dd>
-                        </div>
+                        {sale.payment_method === 'credit' ? (
+                            <>
+                                <div>
+                                    <dt className="text-muted-foreground">
+                                        Remaining
+                                    </dt>
+                                    <dd className="font-medium">
+                                        {Number(sale.remaining) > 0
+                                            ? formatMoney(sale.remaining ?? 0) +
+                                              ' MAD'
+                                            : 'Settled'}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt className="text-muted-foreground">
+                                        Customer
+                                    </dt>
+                                    <dd className="font-medium">
+                                        {sale.customer ?? '—'}
+                                    </dd>
+                                </div>
+                                {Number(sale.remaining) > 0 ? (
+                                    <div>
+                                        <dt className="text-muted-foreground">
+                                            Due
+                                        </dt>
+                                        <dd className="font-medium">
+                                            {sale.due_date ?? '—'}
+                                        </dd>
+                                    </div>
+                                ) : null}
+                            </>
+                        ) : (
+                            <div>
+                                <dt className="text-muted-foreground">
+                                    Change
+                                </dt>
+                                <dd className="font-medium">
+                                    {formatMoney(sale.change_amount)} MAD
+                                </dd>
+                            </div>
+                        )}
                     </dl>
 
                     <div className="mt-4 flex justify-end gap-2">

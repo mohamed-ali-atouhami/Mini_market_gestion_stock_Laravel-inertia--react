@@ -69,4 +69,17 @@ class StockMovement extends Model
     {
         return $this->morphTo();
     }
+
+    public function typeLabel(): string
+    {
+        $this->loadMissing('reference');
+
+        if ($this->type === self::TYPE_SALE
+            && $this->reference instanceof Sale
+            && $this->reference->isCredit()) {
+            return 'sale (credit)';
+        }
+
+        return $this->type;
+    }
 }

@@ -24,6 +24,7 @@ import {
 } from '@/Components/ui/sidebar';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
+    HandCoins,
     Landmark,
     ChartColumn,
     LayoutDashboard,
@@ -71,6 +72,13 @@ const navigation: NavigationItem[] = [
         href: 'caisse.index',
         match: 'caisse.*',
         icon: Landmark,
+        visible: ['owner', 'cashier'],
+    },
+    {
+        name: 'Credit',
+        href: 'credits.index',
+        match: 'credits.*',
+        icon: HandCoins,
         visible: ['owner', 'cashier'],
     },
     {

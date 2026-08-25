@@ -66,13 +66,61 @@ export default function Receipt({
                             <span>{formatMoney(sale.total)} MAD</span>
                         </div>
                         <div className="flex justify-between">
-                            <span>Paid</span>
-                            <span>{formatMoney(sale.amount_paid)} MAD</span>
+                            <span>
+                                {sale.payment_method === 'credit'
+                                    ? 'Paid so far'
+                                    : 'Paid'}
+                            </span>
+                            <span>
+                                {formatMoney(
+                                    sale.payment_method === 'credit'
+                                        ? (sale.paid_so_far ?? sale.amount_paid)
+                                        : sale.amount_paid,
+                                )}{' '}
+                                MAD
+                            </span>
                         </div>
-                        <div className="flex justify-between">
-                            <span>Change</span>
-                            <span>{formatMoney(sale.change_amount)} MAD</span>
-                        </div>
+                        {sale.payment_method === 'credit' ? (
+                            <>
+                                {Number(sale.remaining) > 0 ? (
+                                    <>
+                                        <div className="flex justify-between">
+                                            <span>Remaining</span>
+                                            <span>
+                                                {formatMoney(
+                                                    sale.remaining ?? 0,
+                                                )}{' '}
+                                                MAD
+                                            </span>
+                                        </div>
+                                        {sale.due_date ? (
+                                            <div className="flex justify-between">
+                                                <span>Pay by</span>
+                                                <span>{sale.due_date}</span>
+                                            </div>
+                                        ) : null}
+                                    </>
+                                ) : (
+                                    <div className="flex justify-between">
+                                        <span>Credit</span>
+                                        <span>Settled</span>
+                                    </div>
+                                )}
+                                {sale.customer ? (
+                                    <div className="flex justify-between">
+                                        <span>Customer</span>
+                                        <span>{sale.customer}</span>
+                                    </div>
+                                ) : null}
+                            </>
+                        ) : (
+                            <div className="flex justify-between">
+                                <span>Change</span>
+                                <span>
+                                    {formatMoney(sale.change_amount)} MAD
+                                </span>
+                            </div>
+                        )}
                     </div>
 
                     {shop.footer ? (

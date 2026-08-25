@@ -108,7 +108,7 @@ class ReportController extends Controller
             ->all();
 
         $movements = StockMovement::query()
-            ->with(['product', 'user'])
+            ->with(['product', 'user', 'reference'])
             ->whereDate('created_at', '>=', $from)
             ->whereDate('created_at', '<=', $to)
             ->orderByDesc('id')
@@ -118,7 +118,7 @@ class ReportController extends Controller
                 'id' => $movement->id,
                 'product' => $movement->product?->name,
                 'image_url' => $movement->product?->imageUrl(),
-                'type' => $movement->type,
+                'type' => $movement->typeLabel(),
                 'direction' => $movement->direction,
                 'quantity' => Formats::decimal($movement->quantity, 3),
                 'reason' => $movement->reason,

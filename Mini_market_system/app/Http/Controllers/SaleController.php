@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Sale;
 use App\Models\Setting;
+use App\Support\Formats;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -59,7 +60,7 @@ class SaleController extends Controller
     {
         $this->authorize('view', $sale);
 
-        $sale->load(['items.product', 'user']);
+        $sale->load(['items.product', 'user', 'customer']);
 
         return Inertia::render('Sales/Show', [
             'sale' => $this->detailPayload($sale),
@@ -70,7 +71,7 @@ class SaleController extends Controller
     {
         $this->authorize('view', $sale);
 
-        $sale->load(['items.product', 'user']);
+        $sale->load(['items.product', 'user', 'customer']);
         $shop = Setting::query()->first();
 
         return Inertia::render('Sales/Receipt', [
@@ -98,6 +99,12 @@ class SaleController extends Controller
             'amount_paid' => $sale->amount_paid,
             'change_amount' => $sale->change_amount,
             'sold_at' => $sale->created_at?->format('Y-m-d H:i'),
+            'payment_method' => $sale->payment_method ?? Sale::PAYMENT_CASH,
+            'customer' => $sale->customer?->name,
+            'customer_phone' => $sale->customer?->phone,
+            'due_date' => $sale->due_date?->format('d/m/Y'),
+            'remaining' => Formats::money($sale->remaining_amount ?? 0),
+            'paid_so_far' => Formats::money($sale->paidSoFar()),
             'items' => $sale->items->map(fn ($item) => [
                 'product_id' => $item->product_id,
                 'name' => $item->product?->name ?? 'Product',

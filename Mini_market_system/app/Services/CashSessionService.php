@@ -59,10 +59,7 @@ class CashSessionService
 
         return DB::transaction(function () use ($session, $closingAmount) {
             $locked = CashSession::query()->lockForUpdate()->findOrFail($session->id);
-            $salesTotal = (float) $locked->sales()
-                ->where('status', Sale::STATUS_COMPLETED)
-                ->sum('total');
-            $expected = round((float) $locked->opening_amount + $salesTotal, 2);
+            $expected = round((float) $locked->opening_amount + $locked->cashInDrawer(), 2);
             $counted = round((float) $closingAmount, 2);
 
             $locked->update([

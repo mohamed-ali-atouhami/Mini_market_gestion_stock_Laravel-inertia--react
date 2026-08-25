@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSaleRequest;
+use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Services\CashSessionService;
@@ -40,6 +41,7 @@ class PosController extends Controller
                 'opening_amount' => $session->opening_amount,
             ],
             'no_barcode_products' => $this->noBarcodeProducts(),
+            'customers' => $this->customers(),
         ]);
     }
 
@@ -86,6 +88,23 @@ class PosController extends Controller
     }
 
     /**
+     * @return list<array{id: int, name: string, phone: string}>
+     */
+    private function customers(): array
+    {
+        return Customer::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Customer $customer) => [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'phone' => $customer->phone,
+            ])
+            ->all();
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function productPayload(Product $product): array
@@ -104,17 +123,27 @@ class PosController extends Controller
 
     public function store(StoreSaleRequest $request): RedirectResponse
     {
-        $items = collect($request->validated('items'))
+        $data = $request->validated();
+        $items = collect($data['items'])
             ->map(fn (array $item) => [
                 'product_id' => (int) $item['product_id'],
                 'quantity' => $item['quantity'],
             ])
             ->all();
 
+        $credit = ($data['payment_method'] ?? Sale::PAYMENT_CASH) === Sale::PAYMENT_CREDIT
+            ? [
+                'name' => $data['customer_name'],
+                'phone' => $data['customer_phone'],
+                'due_date' => $data['due_date'],
+            ]
+            : null;
+
         $sale = $this->sales->checkout(
             $request->user(),
             $items,
-            $request->validated('amount_paid'),
+            $data['amount_paid'],
+            $credit,
         );
 
         return redirect()
