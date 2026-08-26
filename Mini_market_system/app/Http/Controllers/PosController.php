@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSaleRequest;
+use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\Setting;
 use App\Services\CashSessionService;
 use App\Services\SaleService;
 use Illuminate\Http\JsonResponse;
@@ -40,7 +42,8 @@ class PosController extends Controller
                 'opened_at' => $session->opened_at?->format('Y-m-d H:i'),
                 'opening_amount' => $session->opening_amount,
             ],
-            'no_barcode_products' => $this->noBarcodeProducts(),
+            'products' => $this->posProducts(),
+            'categories' => $this->categories(),
             'customers' => $this->customers(),
         ]);
     }
@@ -67,23 +70,45 @@ class PosController extends Controller
         }
 
         return response()->json([
-            'product' => $this->productPayload($product),
+            'product' => $this->productPayload($product, Setting::current()->low_stock_enabled),
         ]);
     }
 
     /**
      * @return list<array<string, mixed>>
      */
-    private function noBarcodeProducts(): array
+    private function posProducts(): array
     {
+        $lowStockEnabled = Setting::current()->low_stock_enabled;
+
         return Product::query()
+            ->with('category')
             ->where('is_active', true)
-            ->where(function ($query) {
-                $query->whereNull('barcode')->orWhere('barcode', '');
-            })
             ->orderBy('name')
             ->get()
-            ->map(fn (Product $product) => $this->productPayload($product))
+            ->sortBy(fn (Product $product) => ((float) $product->stock_quantity > 0 ? '0' : '1')
+                .'-'.mb_strtolower($product->name))
+            ->values()
+            ->map(fn (Product $product) => $this->productPayload($product, $lowStockEnabled))
+            ->all();
+    }
+
+    /**
+     * @return list<array{id: int, name: string}>
+     */
+    private function categories(): array
+    {
+        return Category::query()
+            ->where('is_active', true)
+            ->whereHas('products', function ($query) {
+                $query->where('is_active', true);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn (Category $category) => [
+                'id' => $category->id,
+                'name' => $category->name,
+            ])
             ->all();
     }
 
@@ -107,16 +132,19 @@ class PosController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function productPayload(Product $product): array
+    private function productPayload(Product $product, bool $lowStockEnabled = false): array
     {
         return [
             'id' => $product->id,
             'name' => $product->name,
             'barcode' => $product->barcode,
+            'category_id' => $product->category_id,
             'sale_price' => $this->formatDecimal($product->sale_price, 2),
             'stock_quantity' => $this->formatDecimal($product->stock_quantity, 3),
+            'min_stock' => $this->formatDecimal($product->min_stock, 3),
             'unit' => $product->unit,
             'is_active' => $product->is_active,
+            'is_low_stock' => $lowStockEnabled && $product->isLowStock(),
             'image_url' => $product->imageUrl(),
         ];
     }

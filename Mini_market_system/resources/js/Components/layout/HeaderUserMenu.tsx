@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from '@/Components/ui/avatar';
+import { Avatar } from '@/Components/ui/avatar';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -7,17 +7,7 @@ import {
 } from '@/Components/ui/dropdown-menu';
 import { User } from '@/types';
 import { router } from '@inertiajs/react';
-import { ChevronDown, Settings, UserRound } from 'lucide-react';
-
-function initials(name: string): string {
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-
-    if (parts.length >= 2) {
-        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    }
-
-    return name.slice(0, 2).toUpperCase();
-}
+import { ChevronDown, Settings, UserIcon, UserRound } from 'lucide-react';
 
 export function HeaderUserMenu({ user }: { user: User }) {
     const roleLabel =
@@ -38,10 +28,10 @@ export function HeaderUserMenu({ user }: { user: User }) {
                         {user.username} / {roleLabel}
                     </span>
                 </div>
-                <Avatar className="rounded-full after:rounded-full">
-                    <AvatarFallback className="rounded-full bg-primary text-xs text-primary-foreground">
-                        {initials(user.name)}
-                    </AvatarFallback>
+                <Avatar className="overflow-hidden rounded-full bg-gray-200 after:rounded-full">
+                    <span className="flex size-full items-center justify-center">
+                        <UserIcon className="size-4 translate-y-px text-gray-500" />
+                    </span>
                 </Avatar>
                 <ChevronDown className="hidden size-4 shrink-0 text-muted-foreground sm:block" />
             </DropdownMenuTrigger>

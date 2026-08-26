@@ -115,10 +115,13 @@ export type PosProduct = {
     id: number;
     name: string;
     barcode: string | null;
+    category_id: number;
     sale_price: string;
     stock_quantity: string;
+    min_stock: string;
     unit: string;
     is_active: boolean;
+    is_low_stock: boolean;
     image_url: string | null;
 };
 
@@ -128,6 +131,7 @@ export type CartLine = {
     barcode: string | null;
     quantity: string;
     unit_price: string;
+    unit?: string;
     stock_quantity?: string;
     image_url?: string | null;
 };

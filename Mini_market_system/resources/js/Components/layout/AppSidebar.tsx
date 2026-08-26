@@ -157,7 +157,11 @@ export function currentPageTitle(): string | null {
     return item ? item.name.split(' (')[0] : null;
 }
 
-export function AppSidebar() {
+export function AppSidebar({
+    collapsible = 'icon',
+}: {
+    collapsible?: 'offcanvas' | 'icon' | 'none';
+}) {
     const { auth, shop, cashSession } = usePage<PageProps>().props;
     const user = auth.user;
     const role = user?.role as RoleSlug | null | undefined;
@@ -193,7 +197,7 @@ export function AppSidebar() {
 
     return (
         <>
-        <Sidebar collapsible="icon">
+        <Sidebar collapsible={collapsible}>
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
