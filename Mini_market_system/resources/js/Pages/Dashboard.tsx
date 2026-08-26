@@ -28,9 +28,8 @@ import {
 import { cn, formatMoney } from '@/lib/utils';
 import { PageProps, ShopCredit } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
-import { Banknote, HandCoins, Package, Receipt } from 'lucide-react';
+import { Banknote, HandCoins, Package, Receipt, SendIcon } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, Label, Pie, PieChart, XAxis } from 'recharts';
-import { SendIcon } from 'lucide-react';
 
 const weekConfig = {
     purchases: {

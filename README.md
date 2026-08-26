@@ -1,10 +1,22 @@
 # Mini market stock system
 
-Laravel 12 + Inertia React + TypeScript + Tailwind app for a cash-only mini market in Morocco.
+Laravel 12 + Inertia React + TypeScript + Tailwind app for a mini market in Morocco (cash + simple credit).
 
 The runnable app lives in `Mini_market_system/`. Specs and the roadmap are in `docs/`.
 
-## Run locally
+## Open like a shop (no developer terminals)
+
+```bat
+cd Mini_market_system
+npm run build
+powershell -ExecutionPolicy Bypass -File shop\create-desktop-shortcut.ps1
+```
+
+Then double-click **Mini market** on the desktop. Details: `docs/SHOP_PC.md`.
+
+Login: `younes` / `password` (owner). Cashiers: `rabie` / `password`. `ahmed` is disabled.
+
+## Develop (hot reload)
 
 ```bash
 cd Mini_market_system
@@ -17,5 +29,3 @@ npm run dev
 ```
 
 In another terminal: `php artisan serve`.
-
-Login: `owner` / `password`.

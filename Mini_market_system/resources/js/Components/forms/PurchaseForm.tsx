@@ -79,6 +79,9 @@ export default function PurchaseForm({
         })),
         receive: false as boolean,
     });
+    const extraErrors = form.errors as typeof form.errors & {
+        status?: string;
+    };
 
     const total = form.data.items.reduce((sum, item) => {
         return sum + Number(item.quantity) * Number(item.unit_cost);
@@ -313,7 +316,9 @@ export default function PurchaseForm({
                                 Scanner types the code and Enter. Same product
                                 scanned again adds +1.
                             </p>
-                            <FieldError>{form.errors.items}</FieldError>
+                            <FieldError>
+                                {extraErrors.items ?? extraErrors.status}
+                            </FieldError>
                         </Field>
 
                         <div className="mt-4 rounded-md border">

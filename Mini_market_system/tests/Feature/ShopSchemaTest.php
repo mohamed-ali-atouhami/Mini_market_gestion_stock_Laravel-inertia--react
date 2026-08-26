@@ -37,6 +37,12 @@ class ShopSchemaTest extends TestCase
         $this->assertTrue(Schema::hasColumn('products', 'image_path'));
     }
 
+    public function test_app_clock_is_morocco(): void
+    {
+        $this->assertSame('Africa/Casablanca', config('app.timezone'));
+        $this->assertSame('Africa/Casablanca', now()->timezoneName);
+    }
+
     public function test_seed_creates_demo_shop_data(): void
     {
         $this->seed();

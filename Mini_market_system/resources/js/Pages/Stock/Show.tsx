@@ -102,6 +102,9 @@ export default function Show({
                                             In (found extra, count up)
                                         </option>
                                     </select>
+                                    <FieldError>
+                                        {form.errors.direction}
+                                    </FieldError>
                                 </Field>
                                 <Field>
                                     <FieldLabel htmlFor="quantity">

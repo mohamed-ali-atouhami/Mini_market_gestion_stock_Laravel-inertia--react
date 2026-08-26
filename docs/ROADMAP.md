@@ -1,6 +1,6 @@
 # Mini_market_system – Development Roadmap
 
-**Last updated:** 25 August 2026 (shop is usable end-to-end; next is Milestone 8 — shop PC install)
+**Last updated:** 26 August 2026 (M8 shortcut on the developer PC; copy to the shop PC when Younes is ready)
 
 ---
 
@@ -16,16 +16,16 @@
 | **5 – Purchases (stock in)** | ✅ Done |
 | **6 – POS / caisse (stock out, cash + credit)** | ✅ Done |
 | **7 – Dashboard, stock history, reports** | ✅ Done |
-| **8 – Shop PC install + live scanner test** | ⬜ Not started |
+| **8 – Shop PC install + live scanner test** | 🟡 Shortcut on this PC; copy to Younes later |
 
-### Done in the code (through 25 August 2026)
+### Done in the code (through 26 August 2026)
 
 - Spec files: `COMPLETE_SPEC.txt`, `docs/DATABASE_COLUMNS.md`, `docs/COMO_FUNCIONA_LA_APP.txt`
 - Laravel **12** in `Mini_market_system/` — SQLite, Breeze + **Inertia React + TypeScript**, **shadcn/ui**
 - Login is **username + password**. No public register / Welcome page. Roles `owner` / `cashier`
 - Owner **Users** screen: create, role, disable. Gates: cashier cannot manage users, change prices, receive purchases, or delete products
 - Shop tables: categories, suppliers, products, purchases, sales, stock movements, cash sessions, settings, customers, credit payments
-- App runs with `php artisan serve` + `npm run dev`
+- App runs with `php artisan serve` + `npm run dev` for development, or the **Mini market** desktop shortcut (no terminals) after `npm run build`
 - GitHub: [Mini_market_gestion_stock_Laravel-inertia--react](https://github.com/mohamed-ali-atouhami/Mini_market_gestion_stock_Laravel-inertia--react)
 - **19 August 2026:** sidebar, Users table, Categories / suppliers / products, barcode scan-to-fill, Sonner toasts
 - **20 August 2026:** `StockService` only writer of stock; Purchases draft / receive / cancel; unknown barcode → create product
@@ -48,15 +48,20 @@
   - 10 categories, 4 suppliers, 100 Morocco hanout products, stock 0 (fill stock by receiving a delivery)
   - Rebuild shop DB: `php artisan migrate:fresh --seed` (wipes sales, purchases, caisse, credits)
 
+- **26 August 2026 — Milestone 8 on this PC:**
+  - `npm run build` so the UI loads without `npm run dev`
+  - Desktop shortcut **Mini market** runs a hidden `php artisan serve` and opens `http://127.0.0.1:8000` (PHP from XAMPP; Laragon not required)
+  - Install note: `docs/SHOP_PC.md` (how to update features, weekly SQLite copy, how to copy the folder to the shop PC)
+  - Cashier menu already hides owner screens; cashiers keep Dashboard, POS, Caisse, Credit
+  - USB scanner still to test on the shop PC (keyboard Enter works today)
+
 ### Not done yet (the real shop)
 
-- Shop-PC install and live scanner test
+- Copy the folder + shortcut onto Younes’s PC and test a real USB scanner there
 
 ### Next step
 
-**Milestone 8 – Permissions, shop install & live test**
-
-Harden cashier menu, production build, shop-PC copy notes, real USB scanner.
+When Younes is ready: follow `docs/SHOP_PC.md` on his machine. New product features stay in this repo; rebuild + same shortcut.
 
 ---
 
@@ -116,7 +121,8 @@ Harden cashier menu, production build, shop-PC copy notes, real USB scanner.
 - [x] Customer credit at POS (pay later, collect, WhatsApp reminder)
 - [x] Reports: sales by period, purchases by supplier, movements, profit from sale-time cost, cash session
 - [x] Settings: shop name, currency (MAD), ticket footer
-- [ ] Shop PC install notes (Laragon + shortcut + daily SQLite backup)
+- [x] Shop shortcut on the developer PC (`docs/SHOP_PC.md`) — no `npm run dev` / visible `artisan serve`
+- [ ] Copy to the shop PC + live USB scanner when the owner is ready
 
 ### Out of Scope for MVP (Deferred)
 - ⏸️ Windows `.exe` / NativePHP (see Post-MVP)
@@ -253,15 +259,15 @@ Harden cashier menu, production build, shop-PC copy notes, real USB scanner.
 - **Settings:** shop name, address, phone, currency MAD, ticket footer, low-stock toggle.
 - **Deliverables:** Owner can see the day, what to reorder, and a movement history.
 
-### Milestone 8 – Permissions, Shop Install & Live Test (Weeks 11–12)
+### Milestone 8 – Permissions, Shop Install & Live Test (Weeks 11–12) 🟡 *Developer PC done*
 
-- Harden cashier menu (POS + own caisse + view stock only).
-- Users CRUD already started in Milestone 2; polish if needed.
-- QA pass of the A→Z story (delivery → receive → sell → close caisse).
-- `npm run build` production assets.
-- Write a short shop-PC install note (Laragon, copy folder, shortcut, daily backup of `database.sqlite`).
-- Test with a real USB scanner if available (or keyboard: type barcode + Enter).
-- **Deliverables:** App ready to copy to the shop PC. Owner shortcut works. Scanner types into Purchases and POS.
+- Cashier sidebar: POS, caisse, credit, dashboard. Owner-only: products, purchases, stock, reports, users.
+- `npm run build` production assets in `public/build/`.
+- Windows shortcut: `Mini_market_system/shop/start-shop.vbs` (hidden PHP server + browser). Create with `shop/create-desktop-shortcut.ps1`.
+- Install note: `docs/SHOP_PC.md` (this PC uses XAMPP PHP; Laragon optional). SQLite backup = copy the file (weekly is enough if the PC is stable).
+- Keyboard barcode (type + Enter) works. Real USB scanner on the shop PC when available.
+- **Deliverables (this PC):** Double-click Mini market → login page, no developer terminals.
+- **Still waiting:** paste the folder onto Younes’s PC and plug in his scanner.
 
 ---
 
@@ -345,8 +351,8 @@ Setup → Auth → Schema → Categories/Suppliers/Products
 
 ## 9. Next Actions
 
-1. **Start Milestone 8 – Shop install & live test** — production build, Laragon shortcut, daily SQLite backup note, real scanner if available.
-2. After a wipe: `php artisan migrate:fresh --seed`, then open caisse and **receive a delivery** so POS has stock.
+1. Double-click **Mini market** on the desktop (see `docs/SHOP_PC.md`). When Younes is ready, copy the folder to his PC.
+2. After JS/CSS changes: `npm run build`. After new tables: `php artisan migrate` (never `fresh` on a live till).
 
 ---
 

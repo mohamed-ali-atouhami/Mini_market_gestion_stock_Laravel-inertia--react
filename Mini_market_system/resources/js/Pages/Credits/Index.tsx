@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import { ShopCredit } from '@/types';
 import { useForm } from '@inertiajs/react';
+import { SendIcon } from 'lucide-react';
 import { FormEvent } from 'react';
 import { toast } from 'sonner';
 
@@ -70,14 +71,14 @@ export default function Index({ credits }: { credits: ShopCredit[] }) {
                                                         rel="noopener noreferrer"
                                                         className={cn(
                                                             buttonVariants({
-                                                                variant:
-                                                                    'link',
-                                                                size: 'xs',
+                                                                variant: 'link',
+                                                                className:'text-green-500 hover:text-green-600 text-xs'
                                                             }),
                                                             'h-auto px-0',
                                                         )}
                                                     >
                                                         WhatsApp
+                                                        <SendIcon className="size-3" />
                                                     </a>
                                                 ) : null}
                                             </TableCell>
@@ -122,14 +123,18 @@ export default function Index({ credits }: { credits: ShopCredit[] }) {
 
 function CollectForm({ saleId }: { saleId: number }) {
     const form = useForm(`credit-${saleId}`, { amount: '' });
+    const errors = form.errors as typeof form.errors & {
+        cash_session?: string;
+    };
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
         form.post(route('credits.pay', saleId), {
             preserveScroll: true,
             errorBag: `credit-${saleId}`,
-            onError: (errors) => {
-                const message = errors.amount ?? errors.cash_session;
+            onError: (bag) => {
+                const extra = bag as typeof bag & { cash_session?: string };
+                const message = extra.amount ?? extra.cash_session;
 
                 if (typeof message === 'string' && message !== '') {
                     toast.error(message);
@@ -158,7 +163,7 @@ function CollectForm({ saleId }: { saleId: number }) {
                 Take
             </Button>
             <FieldError>
-                {form.errors.amount ?? form.errors.cash_session}
+                {errors.amount ?? errors.cash_session}
             </FieldError>
         </form>
     );
