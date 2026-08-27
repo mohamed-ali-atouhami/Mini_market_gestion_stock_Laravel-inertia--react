@@ -2,6 +2,7 @@ import Table, { TableColumn } from '@/Components/tables/Table';
 import { RowActions } from '@/Components/tables/RowActions';
 import { Badge } from '@/Components/ui/badge';
 import { TableCell, TableRow } from '@/Components/ui/table';
+import { useT } from '@/lib/i18n';
 import { ShopCategory } from '@/types';
 
 export function CategoriesTable({
@@ -11,6 +12,7 @@ export function CategoriesTable({
     categories: ShopCategory[];
     columns: TableColumn[];
 }) {
+    const t = useT();
     const renderRow = (category: ShopCategory) => {
         return (
             <TableRow key={category.id}>
@@ -19,7 +21,7 @@ export function CategoriesTable({
                 </TableCell>
                 <TableCell>
                     <Badge variant={category.is_active ? 'default' : 'secondary'}>
-                        {category.is_active ? 'Active' : 'Disabled'}
+                        {category.is_active ? t('Active') : t('Disabled')}
                     </Badge>
                 </TableCell>
                 <TableCell>

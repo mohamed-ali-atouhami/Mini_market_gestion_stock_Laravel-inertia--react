@@ -1,5 +1,6 @@
 import { Button } from '@/Components/ui/button';
 import { ITEMS_PER_PAGE } from '@/lib/settings';
+import { useT } from '@/lib/i18n';
 import { updateQuery } from '@/lib/query';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -10,7 +11,10 @@ export default function Pagination({
     page: number;
     totalCount: number;
 }) {
+    const t = useT();
     const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+    const from = (page - 1) * ITEMS_PER_PAGE + 1;
+    const to = Math.min(page * ITEMS_PER_PAGE, totalCount);
 
     const handlePageClick = (nextPage: number) => {
         updateQuery({ page: String(nextPage) });
@@ -21,21 +25,23 @@ export default function Pagination({
     }
 
     return (
-        <div className="flex items-center justify-between px-2 py-4">
+        <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex-1 text-sm text-muted-foreground">
-                Showing {(page - 1) * ITEMS_PER_PAGE + 1} to{' '}
-                {Math.min(page * ITEMS_PER_PAGE, totalCount)} of {totalCount}{' '}
-                results
+                {t('Showing :from to :to of :total results', {
+                    from,
+                    to,
+                    total: totalCount,
+                })}
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handlePageClick(page - 1)}
                     disabled={page === 1}
                 >
-                    <ChevronLeft className="h-4 w-4" />
-                    <span className="sr-only">Previous page</span>
+                    <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+                    <span className="sr-only">{t('Previous page')}</span>
                 </Button>
                 <div className="flex items-center gap-1">
                     {Array.from({ length: totalPages }, (_, i) => (
@@ -56,8 +62,8 @@ export default function Pagination({
                     onClick={() => handlePageClick(page + 1)}
                     disabled={page === totalPages || totalPages === 0}
                 >
-                    <ChevronRight className="h-4 w-4" />
-                    <span className="sr-only">Next page</span>
+                    <ChevronRight className="h-4 w-4 rtl:rotate-180" />
+                    <span className="sr-only">{t('Next page')}</span>
                 </Button>
             </div>
         </div>

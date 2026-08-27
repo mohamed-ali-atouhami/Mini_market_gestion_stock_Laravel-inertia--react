@@ -3,6 +3,7 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
+import { useT } from '@/lib/i18n';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
@@ -13,6 +14,7 @@ export default function ResetPassword({
     token: string;
     email: string;
 }) {
+    const t = useT();
     const { data, setData, post, processing, errors, reset } = useForm({
         token,
         email,
@@ -30,11 +32,11 @@ export default function ResetPassword({
 
     return (
         <GuestLayout>
-            <Head title="Reset Password" />
+            <Head title={t('Reset Password')} />
 
             <form onSubmit={submit} className="space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t('Email')}</Label>
                     <Input
                         id="email"
                         type="email"
@@ -47,7 +49,7 @@ export default function ResetPassword({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t('Password')}</Label>
                     <Input
                         id="password"
                         type="password"
@@ -62,7 +64,7 @@ export default function ResetPassword({
 
                 <div className="space-y-2">
                     <Label htmlFor="password_confirmation">
-                        Confirm Password
+                        {t('Confirm Password')}
                     </Label>
                     <Input
                         id="password_confirmation"
@@ -79,7 +81,7 @@ export default function ResetPassword({
 
                 <div className="flex items-center justify-end">
                     <Button type="submit" disabled={processing}>
-                        Reset Password
+                        {t('Reset Password')}
                     </Button>
                 </div>
             </form>

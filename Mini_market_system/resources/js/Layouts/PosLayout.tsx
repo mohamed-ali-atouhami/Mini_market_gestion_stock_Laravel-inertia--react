@@ -1,12 +1,14 @@
 import FlashToasts from '@/Components/FlashToasts';
 import { AppSidebar } from '@/Components/layout/AppSidebar';
 import { HeaderUserMenu } from '@/Components/layout/HeaderUserMenu';
+import { LanguageSwitcher } from '@/Components/layout/LanguageSwitcher';
 import { Badge } from '@/Components/ui/badge';
 import {
     SidebarInset,
     SidebarProvider,
     SidebarTrigger,
 } from '@/Components/ui/sidebar';
+import { useT } from '@/lib/i18n';
 import { PageProps } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { Clock, ShoppingCartIcon, TextAlignStart } from 'lucide-react';
@@ -40,6 +42,7 @@ function useClock(): string {
 
 export default function PosLayout({ children }: PropsWithChildren) {
     const { auth, shop } = usePage<PageProps>().props;
+    const t = useT();
     const clock = useClock();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -54,7 +57,7 @@ export default function PosLayout({ children }: PropsWithChildren) {
             defaultOpen={false}
             className="min-h-svh lg:h-svh lg:min-h-0 lg:overflow-hidden"
         >
-            <Head title="POS" />
+            <Head title={t('POS')} />
             <FlashToasts />
             <AppSidebar collapsible="offcanvas" />
             <SidebarInset className="min-h-0 bg-muted/40 lg:overflow-hidden">
@@ -74,11 +77,13 @@ export default function PosLayout({ children }: PropsWithChildren) {
                             className="hidden gap-1.5 font-normal sm:inline-flex bg-emerald-500/10"
                         >
                             <span className="size-1.5 rounded-full bg-emerald-500" />
-                            <span className="text-emerald-500">Caisse open</span>
+                            <span className="text-emerald-500">
+                                {t('Caisse open')}
+                            </span>
                         </Badge>
                         <span className="size-1.5 shrink-0 rounded-full bg-emerald-500 sm:hidden" />
                     </div>
-                    
+                    <LanguageSwitcher />
                     <HeaderUserMenu user={auth.user} />
                     <div className="hidden items-center gap-1.5 text-sm leading-none text-muted-foreground sm:flex">
                         <Clock className="size-4 shrink-0" />

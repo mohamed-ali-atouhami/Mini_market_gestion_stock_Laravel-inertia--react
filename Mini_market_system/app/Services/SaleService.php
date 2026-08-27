@@ -51,6 +51,8 @@ class SaleService
                 $merged[$productId] = ($merged[$productId] ?? 0) + $quantity;
             }
 
+            ksort($merged);
+
             $lines = [];
             $total = 0.0;
 

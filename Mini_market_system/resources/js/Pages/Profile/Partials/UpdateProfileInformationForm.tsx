@@ -2,6 +2,7 @@ import InputError from '@/Components/InputError';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
+import { useT } from '@/lib/i18n';
 import { Transition } from '@headlessui/react';
 import { useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -11,6 +12,7 @@ export default function UpdateProfileInformation({
 }: {
     className?: string;
 }) {
+    const t = useT();
     const user = usePage().props.auth.user;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } =
@@ -27,16 +29,16 @@ export default function UpdateProfileInformation({
         <section className={className}>
             <header>
                 <h2 className="text-lg font-medium text-foreground">
-                    Profile Information
+                    {t('Profile Information')}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    Update your display name. Username is used only to log in.
+                    {t('Update your display name. Username is used only to log in.')}
                 </p>
             </header>
 
             <form onSubmit={submit} className="mt-6 space-y-6">
                 <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="name">{t('Name')}</Label>
                     <Input
                         id="name"
                         value={data.name}
@@ -49,7 +51,7 @@ export default function UpdateProfileInformation({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
+                    <Label htmlFor="username">{t('Username')}</Label>
                     <Input
                         id="username"
                         value={user?.username ?? ''}
@@ -59,7 +61,7 @@ export default function UpdateProfileInformation({
 
                 <div className="flex items-center gap-4">
                     <Button type="submit" disabled={processing}>
-                        Save
+                        {t('Save')}
                     </Button>
 
                     <Transition
@@ -69,7 +71,7 @@ export default function UpdateProfileInformation({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-muted-foreground">Saved.</p>
+                        <p className="text-sm text-muted-foreground">{t('Saved.')}</p>
                     </Transition>
                 </div>
             </form>

@@ -11,6 +11,7 @@ import {
     FieldLabel,
 } from '@/Components/ui/field';
 import { Input } from '@/Components/ui/input';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { useForm } from '@inertiajs/react';
 import * as React from 'react';
@@ -20,6 +21,7 @@ export function LoginForm({
     className,
     ...props
 }: React.ComponentProps<'div'>) {
+    const t = useT();
     const { data, setData, post, processing, errors, reset } = useForm({
         username: '',
         password: '',
@@ -46,7 +48,7 @@ export function LoginForm({
                                 }
                             >
                                 <FieldLabel htmlFor="username">
-                                    Username
+                                    {t('Username')}
                                 </FieldLabel>
                                 <Input
                                     id="username"
@@ -72,7 +74,7 @@ export function LoginForm({
                                 }
                             >
                                 <FieldLabel htmlFor="password">
-                                    Password
+                                    {t('Password')}
                                 </FieldLabel>
                                 <Input
                                     id="password"
@@ -103,7 +105,7 @@ export function LoginForm({
                                     htmlFor="remember"
                                     className="font-normal"
                                 >
-                                    Remember me
+                                    {t('Remember me')}
                                 </FieldLabel>
                             </Field>
 
@@ -114,7 +116,7 @@ export function LoginForm({
                                     className="w-full"
                                     disabled={processing}
                                 >
-                                    Login
+                                    {t('Login')}
                                 </Button>
                             </Field>
                         </FieldGroup>

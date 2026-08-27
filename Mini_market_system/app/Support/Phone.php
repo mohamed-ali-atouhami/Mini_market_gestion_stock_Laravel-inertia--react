@@ -12,8 +12,16 @@ class Phone
             $digits = substr($digits, 2);
         }
 
+        if (str_starts_with($digits, '212')) {
+            return $digits;
+        }
+
         if (str_starts_with($digits, '0') && strlen($digits) >= 9) {
-            $digits = '212'.substr($digits, 1);
+            return '212'.substr($digits, 1);
+        }
+
+        if (strlen($digits) === 9 && preg_match('/^[5-7]/', $digits) === 1) {
+            return '212'.$digits;
         }
 
         return $digits;

@@ -1,5 +1,5 @@
 import { ProductNameCell } from '@/Components/ProductThumb';
-import { Button, ButtonLink } from '@/Components/ui/button';
+import { ButtonLink } from '@/Components/ui/button';
 import { Badge } from '@/Components/ui/badge';
 import {
     Table,
@@ -9,6 +9,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
+import { useT } from '@/lib/i18n';
 import { ShopPurchase } from '@/types';
 
 function formatMoney(value: string | number): string {
@@ -50,6 +51,7 @@ function statusLabel(status: ShopPurchase['status']): string {
 }
 
 export default function Show({ purchase }: { purchase: ShopPurchase }) {
+    const t = useT();
     const items = purchase.items ?? [];
 
     return (
@@ -61,25 +63,25 @@ export default function Show({ purchase }: { purchase: ShopPurchase }) {
                             {purchase.reference}
                         </h1>
                         <p className="mt-1 text-muted-foreground">
-                            {purchase.supplier ?? 'No supplier'} ·{' '}
-                            {purchase.purchase_date ?? 'No date'}
+                            {purchase.supplier ?? t('No supplier')} ·{' '}
+                            {purchase.purchase_date ?? t('No date')}
                         </p>
                     </div>
                     <Badge variant={statusVariant(purchase.status)}>
-                        {statusLabel(purchase.status)}
+                        {t(statusLabel(purchase.status))}
                     </Badge>
                 </div>
 
                 <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
                     <dl className="mb-4 grid gap-4 text-sm md:grid-cols-2">
                         <div>
-                            <dt className="text-muted-foreground">Invoice</dt>
+                            <dt className="text-muted-foreground">{t('Invoice')}</dt>
                             <dd className="font-medium">
                                 {purchase.invoice_number ?? '—'}
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-muted-foreground">Notes</dt>
+                            <dt className="text-muted-foreground">{t('Notes')}</dt>
                             <dd className="font-medium">
                                 {purchase.notes ?? '—'}
                             </dd>
@@ -90,13 +92,13 @@ export default function Show({ purchase }: { purchase: ShopPurchase }) {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Product</TableHead>
+                                    <TableHead>{t('Product')}</TableHead>
                                     <TableHead className="hidden md:table-cell">
-                                        Barcode
+                                        {t('Barcode')}
                                     </TableHead>
-                                    <TableHead>Qty</TableHead>
-                                    <TableHead>Cost</TableHead>
-                                    <TableHead>Total</TableHead>
+                                    <TableHead>{t('Qty')}</TableHead>
+                                    <TableHead>{t('Cost')}</TableHead>
+                                    <TableHead>{t('Total')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -134,10 +136,12 @@ export default function Show({ purchase }: { purchase: ShopPurchase }) {
                             variant="ghost"
                             href={route('purchases.index')}
                         >
-                            Back
+                            {t('Back')}
                         </ButtonLink>
                         <div className="text-sm font-medium">
-                            Total: {formatMoney(purchase.total)} MAD
+                            {t('Total: :amount MAD', {
+                                amount: formatMoney(purchase.total),
+                            })}
                         </div>
                     </div>
                 </div>

@@ -2,6 +2,7 @@ import Table, { TableColumn } from '@/Components/tables/Table';
 import { RowActions } from '@/Components/tables/RowActions';
 import { Badge } from '@/Components/ui/badge';
 import { TableCell, TableRow } from '@/Components/ui/table';
+import { useT } from '@/lib/i18n';
 import { ShopSupplier } from '@/types';
 
 export function SuppliersTable({
@@ -11,6 +12,7 @@ export function SuppliersTable({
     suppliers: ShopSupplier[];
     columns: TableColumn[];
 }) {
+    const t = useT();
     const renderRow = (supplier: ShopSupplier) => {
         return (
             <TableRow key={supplier.id}>
@@ -25,7 +27,7 @@ export function SuppliersTable({
                 </TableCell>
                 <TableCell>
                     <Badge variant={supplier.is_active ? 'default' : 'secondary'}>
-                        {supplier.is_active ? 'Active' : 'Disabled'}
+                        {supplier.is_active ? t('Active') : t('Disabled')}
                     </Badge>
                 </TableCell>
                 <TableCell>

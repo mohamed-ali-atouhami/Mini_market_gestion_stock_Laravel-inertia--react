@@ -9,6 +9,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
+import { useT } from '@/lib/i18n';
 import { ShopSale } from '@/types';
 
 function formatMoney(value: string | number): string {
@@ -18,6 +19,7 @@ function formatMoney(value: string | number): string {
 }
 
 export default function Show({ sale }: { sale: ShopSale }) {
+    const t = useT();
     const items = sale.items ?? [];
 
     return (
@@ -27,10 +29,10 @@ export default function Show({ sale }: { sale: ShopSale }) {
                     <div>
                         <h1 className="text-3xl font-bold">{sale.reference}</h1>
                         <p className="mt-1 text-muted-foreground">
-                            {sale.cashier ?? 'Cashier'} · {sale.sold_at ?? '—'}
+                            {sale.cashier ?? t('Cashier')} · {sale.sold_at ?? '—'}
                         </p>
                     </div>
-                    <Badge>Completed</Badge>
+                    <Badge>{t('Completed')}</Badge>
                 </div>
 
                 <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
@@ -38,10 +40,10 @@ export default function Show({ sale }: { sale: ShopSale }) {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Product</TableHead>
-                                    <TableHead>Qty</TableHead>
-                                    <TableHead>Price</TableHead>
-                                    <TableHead>Total</TableHead>
+                                    <TableHead>{t('Product')}</TableHead>
+                                    <TableHead>{t('Qty')}</TableHead>
+                                    <TableHead>{t('Price')}</TableHead>
+                                    <TableHead>{t('Total')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -71,7 +73,7 @@ export default function Show({ sale }: { sale: ShopSale }) {
 
                     <dl className="mt-4 grid gap-2 text-sm md:grid-cols-3">
                         <div>
-                            <dt className="text-muted-foreground">Total</dt>
+                            <dt className="text-muted-foreground">{t('Total')}</dt>
                             <dd className="font-medium">
                                 {formatMoney(sale.total)} MAD
                             </dd>
@@ -79,8 +81,8 @@ export default function Show({ sale }: { sale: ShopSale }) {
                         <div>
                             <dt className="text-muted-foreground">
                                 {sale.payment_method === 'credit'
-                                    ? 'Paid so far'
-                                    : 'Paid'}
+                                    ? t('Paid so far')
+                                    : t('Paid')}
                             </dt>
                             <dd className="font-medium">
                                 {formatMoney(
@@ -95,18 +97,18 @@ export default function Show({ sale }: { sale: ShopSale }) {
                             <>
                                 <div>
                                     <dt className="text-muted-foreground">
-                                        Remaining
+                                        {t('Remaining')}
                                     </dt>
                                     <dd className="font-medium">
                                         {Number(sale.remaining) > 0
                                             ? formatMoney(sale.remaining ?? 0) +
                                               ' MAD'
-                                            : 'Settled'}
+                                            : t('Settled')}
                                     </dd>
                                 </div>
                                 <div>
                                     <dt className="text-muted-foreground">
-                                        Customer
+                                        {t('Customer')}
                                     </dt>
                                     <dd className="font-medium">
                                         {sale.customer ?? '—'}
@@ -115,7 +117,7 @@ export default function Show({ sale }: { sale: ShopSale }) {
                                 {Number(sale.remaining) > 0 ? (
                                     <div>
                                         <dt className="text-muted-foreground">
-                                            Due
+                                            {t('Due')}
                                         </dt>
                                         <dd className="font-medium">
                                             {sale.due_date ?? '—'}
@@ -126,7 +128,7 @@ export default function Show({ sale }: { sale: ShopSale }) {
                         ) : (
                             <div>
                                 <dt className="text-muted-foreground">
-                                    Change
+                                    {t('Change')}
                                 </dt>
                                 <dd className="font-medium">
                                     {formatMoney(sale.change_amount)} MAD
@@ -140,10 +142,10 @@ export default function Show({ sale }: { sale: ShopSale }) {
                             variant="ghost"
                             href={route('sales.index')}
                         >
-                            Back
+                            {t('Back')}
                         </ButtonLink>
                         <ButtonLink href={route('sales.receipt', sale.id)}>
-                            Receipt
+                            {t('Receipt')}
                         </ButtonLink>
                     </div>
                 </div>

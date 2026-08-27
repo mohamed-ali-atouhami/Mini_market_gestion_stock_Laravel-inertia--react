@@ -1,4 +1,5 @@
 import { Search } from 'lucide-react';
+import { useT } from '@/lib/i18n';
 import { updateQuery } from '@/lib/query';
 import { useEffect, useState } from 'react';
 import { Input } from '@/Components/ui/input';
@@ -8,6 +9,7 @@ export default function TableSearch({
 }: {
     placeholder?: string;
 }) {
+    const t = useT();
     const initial =
         typeof window === 'undefined'
             ? ''
@@ -31,7 +33,7 @@ export default function TableSearch({
         <div className="flex w-full items-center gap-2 rounded-full px-2 text-xs ring-[1.5px] ring-border md:w-auto">
             <Search className="h-3.5 w-3.5 text-muted-foreground" />
             <Input
-                placeholder={placeholder}
+                placeholder={t(placeholder)}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 className="w-full border-none bg-transparent p-2 outline-none focus-visible:ring-0"

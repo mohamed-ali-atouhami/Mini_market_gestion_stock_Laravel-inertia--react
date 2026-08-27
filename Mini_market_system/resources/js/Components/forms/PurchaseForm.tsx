@@ -24,6 +24,7 @@ import {
     ShopPurchase,
 } from '@/types';
 import { formatInputNumber } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 import { router, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { Trash2 } from 'lucide-react';
@@ -61,6 +62,7 @@ export default function PurchaseForm({
     categories: CategoryOption[];
     purchase?: ShopPurchase;
 }) {
+    const t = useT();
     const barcodeRef = useRef<HTMLInputElement>(null);
     const [barcode, setBarcode] = useState('');
     const [scanning, setScanning] = useState(false);
@@ -139,9 +141,9 @@ export default function PurchaseForm({
             if (axios.isAxiosError(error) && error.response?.status === 404) {
                 setUnknownBarcode(code);
                 setCreateOpen(true);
-                toast.message('Product not found. Create it now.');
+                toast.message(t('Product not found. Create it now.'));
             } else {
-                toast.error('Could not look up this barcode.');
+                toast.error(t('Could not look up this barcode.'));
             }
         } finally {
             setScanning(false);
@@ -188,8 +190,8 @@ export default function PurchaseForm({
     };
 
     const title = purchase
-        ? `Draft ${purchase.reference}`
-        : 'New delivery';
+        ? t('Draft :reference', { reference: purchase.reference })
+        : t('New delivery');
 
     return (
         <>
@@ -197,8 +199,9 @@ export default function PurchaseForm({
                 <div>
                     <h1 className="text-3xl font-bold">{title}</h1>
                     <p className="mt-1 text-muted-foreground">
-                        Scan products, set quantities, then receive to update
-                        stock.
+                        {t(
+                            'Scan products, set quantities, then receive to update stock.',
+                        )}
                     </p>
                 </div>
 
@@ -208,7 +211,7 @@ export default function PurchaseForm({
                             <div className="grid gap-4 md:grid-cols-2">
                                 <Field>
                                     <FieldLabel htmlFor="supplier_id">
-                                        Supplier
+                                        {t('Supplier')}
                                     </FieldLabel>
                                     <select
                                         id="supplier_id"
@@ -223,7 +226,7 @@ export default function PurchaseForm({
                                     >
                                         {suppliers.length === 0 ? (
                                             <option value={0}>
-                                                Create a supplier first
+                                                {t('Create a supplier first')}
                                             </option>
                                         ) : (
                                             suppliers.map((supplier) => (
@@ -242,7 +245,7 @@ export default function PurchaseForm({
                                 </Field>
                                 <Field>
                                     <FieldLabel htmlFor="purchase_date">
-                                        Date
+                                        {t('Date')}
                                     </FieldLabel>
                                     <Input
                                         id="purchase_date"
@@ -262,7 +265,7 @@ export default function PurchaseForm({
                                 </Field>
                                 <Field>
                                     <FieldLabel htmlFor="invoice_number">
-                                        Invoice number
+                                        {t('Invoice number')}
                                     </FieldLabel>
                                     <Input
                                         id="invoice_number"
@@ -279,7 +282,7 @@ export default function PurchaseForm({
                                     </FieldError>
                                 </Field>
                                 <Field>
-                                    <FieldLabel htmlFor="notes">Notes</FieldLabel>
+                                    <FieldLabel htmlFor="notes">{t('Notes')}</FieldLabel>
                                     <Input
                                         id="notes"
                                         value={form.data.notes}
@@ -301,7 +304,7 @@ export default function PurchaseForm({
                     <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
                         <Field>
                             <FieldLabel htmlFor="scan_barcode">
-                                Scan barcode
+                                {t('Scan barcode')}
                             </FieldLabel>
                             <BarcodeInput
                                 id="scan_barcode"
@@ -313,8 +316,9 @@ export default function PurchaseForm({
                                 disabled={scanning}
                             />
                             <p className="text-xs text-muted-foreground">
-                                Scanner types the code and Enter. Same product
-                                scanned again adds +1.
+                                {t(
+                                    'Scanner types the code and Enter. Same product scanned again adds +1.',
+                                )}
                             </p>
                             <FieldError>
                                 {extraErrors.items ?? extraErrors.status}
@@ -325,13 +329,13 @@ export default function PurchaseForm({
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Product</TableHead>
+                                        <TableHead>{t('Product')}</TableHead>
                                         <TableHead className="hidden md:table-cell">
-                                            Barcode
+                                            {t('Barcode')}
                                         </TableHead>
-                                        <TableHead>Qty</TableHead>
-                                        <TableHead>Cost</TableHead>
-                                        <TableHead>Total</TableHead>
+                                        <TableHead>{t('Qty')}</TableHead>
+                                        <TableHead>{t('Cost')}</TableHead>
+                                        <TableHead>{t('Total')}</TableHead>
                                         <TableHead />
                                     </TableRow>
                                 </TableHeader>
@@ -342,7 +346,7 @@ export default function PurchaseForm({
                                                 colSpan={6}
                                                 className="h-20 text-center text-muted-foreground"
                                             >
-                                                Scan a product to add it.
+                                                {t('Scan a product to add it.')}
                                             </TableCell>
                                         </TableRow>
                                     ) : (
@@ -419,7 +423,9 @@ export default function PurchaseForm({
                         </div>
 
                         <div className="mt-4 flex justify-end text-sm font-medium">
-                            Total: {formatMoney(total)} MAD
+                            {t('Total: :amount MAD', {
+                                amount: formatMoney(total),
+                            })}
                         </div>
                     </div>
 
@@ -428,7 +434,7 @@ export default function PurchaseForm({
                             variant="ghost"
                             href={route('purchases.index')}
                         >
-                            Cancel
+                            {t('Cancel')}
                         </ButtonLink>
                         {purchase && (
                             <Button
@@ -441,7 +447,7 @@ export default function PurchaseForm({
                                 }
                                 disabled={form.processing}
                             >
-                                Cancel draft
+                                {t('Cancel draft')}
                             </Button>
                         )}
                         <Button
@@ -450,14 +456,14 @@ export default function PurchaseForm({
                             disabled={form.processing}
                             onClick={() => submit(false)}
                         >
-                            Save draft
+                            {t('Save draft')}
                         </Button>
                         <Button
                             type="button"
                             disabled={form.processing}
                             onClick={() => submit(true)}
                         >
-                            Receive
+                            {t('Receive')}
                         </Button>
                     </div>
                 </form>

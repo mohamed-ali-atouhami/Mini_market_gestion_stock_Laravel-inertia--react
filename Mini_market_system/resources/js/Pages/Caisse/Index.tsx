@@ -15,6 +15,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
+import { useT } from '@/lib/i18n';
 import { ShopCashSession } from '@/types';
 import { useForm } from '@inertiajs/react';
 
@@ -35,6 +36,7 @@ export default function Index({
     session: (ShopCashSession & { sales_total: string }) | null;
     history: ShopCashSession[];
 }) {
+    const t = useT();
     const openForm = useForm({
         opening_amount: '0',
     });
@@ -48,7 +50,7 @@ export default function Index({
                 <div>
                     {/* <h1 className="text-3xl font-bold">Caisse</h1> */}
                     <p className="mt-1 text-muted-foreground">
-                        Open before selling. Close at the end of the day.
+                        {t('Open before selling. Close at the end of the day.')}
                     </p>
                 </div>
 
@@ -56,15 +58,17 @@ export default function Index({
                     {session ? (
                         <div className="space-y-4">
                             <div className="flex items-center gap-2">
-                                <Badge>Open</Badge>
+                                <Badge>{t('Open')}</Badge>
                                 <span className="text-sm text-muted-foreground">
-                                    since {session.opened_at}
+                                    {t('since :time', {
+                                        time: session.opened_at ?? '—',
+                                    })}
                                 </span>
                             </div>
                             <dl className="grid gap-3 text-sm md:grid-cols-3">
                                 <div>
                                     <dt className="text-muted-foreground">
-                                        Opening
+                                        {t('Opening')}
                                     </dt>
                                     <dd className="font-medium">
                                         {formatMoney(session.opening_amount)} MAD
@@ -72,7 +76,7 @@ export default function Index({
                                 </div>
                                 <div>
                                     <dt className="text-muted-foreground">
-                                        Cash taken
+                                        {t('Cash taken')}
                                     </dt>
                                     <dd className="font-medium">
                                         {formatMoney(session.sales_total)} MAD
@@ -80,7 +84,7 @@ export default function Index({
                                 </div>
                                 <div>
                                     <dt className="text-muted-foreground">
-                                        Expected in drawer
+                                        {t('Expected in drawer')}
                                     </dt>
                                     <dd className="font-medium">
                                         {formatMoney(session.expected_amount)} MAD
@@ -98,7 +102,7 @@ export default function Index({
                             >
                                 <Field>
                                     <FieldLabel htmlFor="closing_amount">
-                                        Counted cash
+                                        {t('Counted cash')}
                                     </FieldLabel>
                                     <Input
                                         id="closing_amount"
@@ -115,7 +119,7 @@ export default function Index({
                                         required
                                     />
                                     <p className="text-xs text-muted-foreground">
-                                        Type what you counted in the drawer.
+                                        {t('Type what you counted in the drawer.')}
                                     </p>
                                     <FieldError>
                                         {closeForm.errors.closing_amount}
@@ -125,13 +129,13 @@ export default function Index({
                                     type="submit"
                                     disabled={closeForm.processing}
                                 >
-                                    Close caisse
+                                    {t('Close caisse')}
                                 </Button>
                                 <ButtonLink
                                     variant="outline"
                                     href={route('pos.index')}
                                 >
-                                    Go to POS
+                                    {t('Go to POS')}
                                 </ButtonLink>
                             </form>
                         </div>
@@ -146,7 +150,7 @@ export default function Index({
                             <FieldGroup>
                                 <Field>
                                     <FieldLabel htmlFor="opening_amount">
-                                        Opening amount
+                                        {t('Opening amount')}
                                     </FieldLabel>
                                     <Input
                                         id="opening_amount"
@@ -164,7 +168,7 @@ export default function Index({
                                         autoFocus
                                     />
                                     <p className="text-xs text-muted-foreground">
-                                        Cash already in the drawer.
+                                        {t('Cash already in the drawer.')}
                                     </p>
                                     <FieldError>
                                         {openForm.errors.opening_amount}
@@ -175,7 +179,7 @@ export default function Index({
                                 type="submit"
                                 disabled={openForm.processing}
                             >
-                                Open caisse
+                                {t('Open caisse')}
                             </Button>
                         </form>
                     )}
@@ -184,17 +188,17 @@ export default function Index({
                 {history.length > 0 ? (
                     <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
                         <h2 className="mb-4 text-lg font-semibold">
-                            Recent sessions
+                            {t('Recent sessions')}
                         </h2>
                         <div className="rounded-md border">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Opened</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Opening</TableHead>
-                                        <TableHead>Counted</TableHead>
-                                        <TableHead>Difference</TableHead>
+                                        <TableHead>{t('Opened')}</TableHead>
+                                        <TableHead>{t('Status')}</TableHead>
+                                        <TableHead>{t('Opening')}</TableHead>
+                                        <TableHead>{t('Counted')}</TableHead>
+                                        <TableHead>{t('Difference')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -212,8 +216,8 @@ export default function Index({
                                                     }
                                                 >
                                                     {row.status === 'open'
-                                                        ? 'Open'
-                                                        : 'Closed'}
+                                                        ? t('Open')
+                                                        : t('Closed')}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>

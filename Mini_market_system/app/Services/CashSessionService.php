@@ -59,6 +59,13 @@ class CashSessionService
 
         return DB::transaction(function () use ($session, $closingAmount) {
             $locked = CashSession::query()->lockForUpdate()->findOrFail($session->id);
+
+            if ($locked->status !== CashSession::STATUS_OPEN) {
+                throw ValidationException::withMessages([
+                    'closing_amount' => 'This caisse is already closed.',
+                ]);
+            }
+
             $expected = round((float) $locked->opening_amount + $locked->cashInDrawer(), 2);
             $counted = round((float) $closingAmount, 2);
 

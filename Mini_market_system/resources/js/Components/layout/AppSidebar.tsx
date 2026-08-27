@@ -22,6 +22,8 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/Components/ui/sidebar';
+import { useDirection } from '@/Components/ui/direction';
+import { useLocale, useT } from '@/lib/i18n';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     HandCoins,
@@ -89,49 +91,49 @@ const navigation: NavigationItem[] = [
         visible: ['owner'],
     },
     {
-        name: 'Purchases ( المشتريات )',
+        name: 'Purchases',
         href: 'purchases.index',
         match: 'purchases.*',
         icon: PackagePlus,
         visible: ['owner'],
     },
     {
-        name: 'Stock ( المخزن )',
+        name: 'Stock',
         href: 'stock.index',
         match: 'stock.*',
         icon: Warehouse,
         visible: ['owner'],
     },
     {
-        name: 'Products ( المنتجات )',
+        name: 'Products',
         href: 'products.index',
         match: 'products.*',
         icon: Package,
         visible: ['owner'],
     },
     {
-        name: 'Categories ( الفئات )',
+        name: 'Categories',
         href: 'categories.index',
         match: 'categories.*',
         icon: Tags,
         visible: ['owner'],
     },
     {
-        name: 'Suppliers ( الموردين )',
+        name: 'Suppliers',
         href: 'suppliers.index',
         match: 'suppliers.*',
         icon: Truck,
         visible: ['owner'],
     },
     {
-        name: 'Reports ( التقارير )',
+        name: 'Reports',
         href: 'reports.index',
         match: 'reports.*',
         icon: ChartColumn,
         visible: ['owner'],
     },
     {
-        name: 'Users ( المستخدمين )',
+        name: 'Users',
         href: 'users.index',
         match: 'users.*',
         icon: Users,
@@ -139,22 +141,24 @@ const navigation: NavigationItem[] = [
     },
 ];
 
-export function currentPageTitle(): string | null {
+export function usePageTitle(): string | null {
+    const t = useT();
+
     if (route().current('profile.edit')) {
-        return 'Profile';
+        return t('Profile');
     }
 
     if (route().current('settings.*')) {
-        return 'Settings';
+        return t('Settings');
     }
 
     if (route().current('sales.receipt')) {
-        return 'Receipt';
+        return t('Receipt');
     }
 
     const item = navigation.find((entry) => route().current(entry.match));
 
-    return item ? item.name.split(' (')[0] : null;
+    return item ? t(item.name) : null;
 }
 
 export function AppSidebar({
@@ -163,6 +167,9 @@ export function AppSidebar({
     collapsible?: 'offcanvas' | 'icon' | 'none';
 }) {
     const { auth, shop, cashSession } = usePage<PageProps>().props;
+    const t = useT();
+    const locale = useLocale();
+    const direction = useDirection();
     const user = auth.user;
     const role = user?.role as RoleSlug | null | undefined;
     const shopName = shop?.name || 'Mini market';
@@ -197,7 +204,11 @@ export function AppSidebar({
 
     return (
         <>
-        <Sidebar collapsible={collapsible}>
+        <Sidebar
+            collapsible={collapsible}
+            side={locale === 'ar' ? 'right' : 'left'}
+            dir={direction}
+        >
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
@@ -219,11 +230,12 @@ export function AppSidebar({
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupLabel>Shop</SidebarGroupLabel>
+                    <SidebarGroupLabel>{t('Shop')}</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {visibleItems.map((item) => {
                                 const Icon = item.icon;
+                                const label = t(item.name);
 
                                 return (
                                     <SidebarMenuItem key={item.name}>
@@ -231,7 +243,7 @@ export function AppSidebar({
                                             isActive={route().current(
                                                 item.match,
                                             )}
-                                            tooltip={item.name}
+                                            tooltip={label}
                                             render={
                                                 <Link
                                                     href={route(item.href)}
@@ -239,7 +251,7 @@ export function AppSidebar({
                                             }
                                         >
                                             <Icon />
-                                            <span>{item.name}</span>
+                                            <span>{label}</span>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 );
@@ -252,11 +264,11 @@ export function AppSidebar({
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton
-                            tooltip="Log out"
+                            tooltip={t('Log out')}
                             onClick={requestLogout}
                         >
                             <LogOut className="text-red-500" />
-                            <span className="text-red-500">Log out</span>
+                            <span className="text-red-500">{t('Log out')}</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
@@ -271,21 +283,24 @@ export function AppSidebar({
                         <AlertDialogMedia className="bg-orange-500/10 text-orange-600">
                             <Landmark />
                         </AlertDialogMedia>
-                        <AlertDialogTitle>Close the caisse first</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            {t('Close the caisse first')}
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                            Your till is still open. Count the cash and close it
-                            before you sign out.
+                            {t(
+                                'Your till is still open. Count the cash and close it before you sign out.',
+                            )}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Stay</AlertDialogCancel>
+                        <AlertDialogCancel>{t('Stay')}</AlertDialogCancel>
                         <AlertDialogCancel
                             variant="default"
                             onClick={goCloseCaisse}
                         >
                             {route().current('caisse.*')
-                                ? 'OK'
-                                : 'Go to caisse'}
+                                ? t('OK')
+                                : t('Go to caisse')}
                         </AlertDialogCancel>
                     </AlertDialogFooter>
                 </AlertDialogContent>

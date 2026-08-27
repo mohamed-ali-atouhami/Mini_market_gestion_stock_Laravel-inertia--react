@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\CashSession;
+use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
@@ -401,5 +402,48 @@ class CreditSaleTest extends TestCase
                 ->where('sale.amount_paid', '0.00')
                 ->where('sale.paid_so_far', '40.00')
                 ->where('sale.remaining', '0.00'));
+    }
+
+    public function test_phone_without_leading_zero_reuses_the_same_customer(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $product = Product::factory()->create([
+            'sale_price' => 8,
+            'stock_quantity' => 10,
+        ]);
+
+        $this->actingAs($cashier)
+            ->post(route('caisse.open'), ['opening_amount' => 0]);
+
+        $this->actingAs($cashier)
+            ->post(route('pos.store'), [
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                ],
+                'payment_method' => 'credit',
+                'customer_name' => 'Karim',
+                'customer_phone' => '0612345678',
+                'due_date' => now()->addDay()->toDateString(),
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($cashier)
+            ->post(route('pos.store'), [
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                ],
+                'payment_method' => 'credit',
+                'customer_name' => 'Karim Bennani',
+                'customer_phone' => '612345678',
+                'due_date' => now()->addDay()->toDateString(),
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(1, Customer::query()->count());
+        $this->assertDatabaseHas('customers', [
+            'name' => 'Karim Bennani',
+            'phone_normalized' => '212612345678',
+        ]);
+        $this->assertSame(2, Sale::query()->where('customer_id', Customer::query()->value('id'))->count());
     }
 }

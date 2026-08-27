@@ -4,6 +4,7 @@ import { RowActions } from '@/Components/tables/RowActions';
 import { Badge } from '@/Components/ui/badge';
 import { TableCell, TableRow } from '@/Components/ui/table';
 import { CategoryOption, ShopProduct } from '@/types';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 function formatQty(value: string): string {
@@ -35,6 +36,7 @@ export function ProductsTable({
     columns: TableColumn[];
     categories: CategoryOption[];
 }) {
+    const t = useT();
     const renderRow = (product: ShopProduct) => {
         return (
             <TableRow
@@ -67,7 +69,7 @@ export function ProductsTable({
                 </TableCell>
                 <TableCell>
                     <Badge variant={product.is_active ? 'default' : 'secondary'}>
-                        {product.is_active ? 'Active' : 'Disabled'}
+                        {product.is_active ? t('Active') : t('Disabled')}
                     </Badge>
                 </TableCell>
                 <TableCell>

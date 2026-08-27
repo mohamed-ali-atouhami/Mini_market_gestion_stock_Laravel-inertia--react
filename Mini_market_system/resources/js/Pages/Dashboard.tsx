@@ -25,22 +25,26 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
+import { useT } from '@/lib/i18n';
 import { cn, formatMoney } from '@/lib/utils';
 import { PageProps, ShopCredit } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { Banknote, HandCoins, Package, Receipt, SendIcon } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, Label, Pie, PieChart, XAxis } from 'recharts';
 
-const weekConfig = {
-    purchases: {
-        label: 'Purchases',
-        color: '#3b82f6',
-    },
-    sales: {
-        label: 'Sales',
-        color: '#22c55e',
-    },
-} satisfies ChartConfig;
+const getWeekConfig = (
+    t: (key: string, replace?: Record<string, string | number>) => string,
+) =>
+    ({
+        purchases: {
+            label: t('Purchases'),
+            color: '#3b82f6',
+        },
+        sales: {
+            label: t('Sales'),
+            color: '#22c55e',
+        },
+    }) satisfies ChartConfig;
 
 const categoryColors = ['#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#94a3b8'];
 
@@ -101,13 +105,14 @@ export default function Dashboard({
     stock_by_category: CategoryStock[];
     recent_purchases: RecentPurchase[];
 }) {
+    const t = useT();
     const { shop, auth } = usePage<PageProps>().props;
     const currency = shop?.currency ?? 'MAD';
     const isOwner = auth.user?.role === 'owner';
 
     return (
         <>
-            <Head title="Dashboard" />
+            <Head title={t('Dashboard')} />
 
             <div className="space-y-6">
                 {isOwner ? (
@@ -119,13 +124,13 @@ export default function Dashboard({
                         />
                         <div className="grid gap-4 sm:grid-cols-2">
                             <StatCard
-                                label="Today sales"
+                                label={t('Today sales')}
                                 value={formatMoney(today.sales_total, currency)}
                                 icon={Banknote}
                                 iconClass="bg-orange-500/10 text-orange-600"
                             />
                             <StatCard
-                                label="Tickets today"
+                                label={t('Tickets today')}
                                 value={String(today.ticket_count)}
                                 icon={Receipt}
                                 iconClass="bg-violet-500/10 text-violet-600"
@@ -134,7 +139,7 @@ export default function Dashboard({
 
                         <div className="grid gap-4 sm:grid-cols-2">
                             <StatCard
-                                label="Stock value"
+                                label={t('Stock value')}
                                 value={formatMoney(stock_value, currency)}
                                 icon={Package}
                                 iconClass="bg-blue-500/10 text-blue-600"
@@ -147,12 +152,12 @@ export default function Dashboard({
 
                         <Card className="h-full">
                             <CardHeader>
-                                <CardTitle>Purchases vs sales</CardTitle>
-                                <CardDescription>Last 7 days</CardDescription>
+                                <CardTitle>{t('Purchases vs sales')}</CardTitle>
+                                <CardDescription>{t('Last 7 days')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <ChartContainer
-                                    config={weekConfig}
+                                    config={getWeekConfig(t)}
                                     className="aspect-auto h-[260px] w-full"
                                 >
                                     <AreaChart
@@ -205,20 +210,20 @@ export default function Dashboard({
 
                         <Card className="h-full">
                             <CardHeader>
-                                <CardTitle>Recent purchases</CardTitle>
+                                <CardTitle>{t('Recent purchases')}</CardTitle>
                                 <CardAction>
                                     <ButtonLink
                                         variant="ghost"
                                         href={route('purchases.index')}
                                     >
-                                        View all
+                                        {t('View all')}
                                     </ButtonLink>
                                 </CardAction>
                             </CardHeader>
                             <CardContent>
                                 {recent_purchases.length === 0 ? (
                                     <p className="text-sm text-muted-foreground">
-                                        No deliveries received yet.
+                                        {t('No deliveries received yet.')}
                                     </p>
                                 ) : (
                                     <div className="rounded-md border">
@@ -226,12 +231,12 @@ export default function Dashboard({
                                             <TableHeader>
                                                 <TableRow>
                                                     <TableHead>
-                                                        Reference
+                                                        {t('Reference')}
                                                     </TableHead>
                                                     <TableHead>
-                                                        Supplier
+                                                        {t('Supplier')}
                                                     </TableHead>
-                                                    <TableHead>Total</TableHead>
+                                                    <TableHead>{t('Total')}</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
@@ -269,13 +274,13 @@ export default function Dashboard({
                         />
                         <div className="grid gap-4 lg:grid-cols-3">
                             <StatCard
-                                label="Today sales"
+                                label={t('Today sales')}
                                 value={formatMoney(today.sales_total, currency)}
                                 icon={Banknote}
                                 iconClass="bg-orange-500/10 text-orange-600"
                             />
                             <StatCard
-                                label="Tickets today"
+                                label={t('Tickets today')}
                                 value={String(today.ticket_count)}
                                 icon={Receipt}
                                 iconClass="bg-violet-500/10 text-violet-600"
@@ -302,6 +307,8 @@ function DueCreditsCard({
     currency: string;
     className?: string;
 }) {
+    const t = useT();
+
     if (rows.length === 0) {
         return null;
     }
@@ -312,10 +319,10 @@ function DueCreditsCard({
                 <div className="mb-2 flex size-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
                     <HandCoins className="size-4" />
                 </div>
-                <CardTitle>Credits due soon</CardTitle>
+                <CardTitle>{t('Credits due soon')}</CardTitle>
                 <CardAction>
                     <ButtonLink variant="ghost" href={route('credits.index')}>
-                        All credit
+                        {t('All credit')}
                     </ButtonLink>
                 </CardAction>
             </CardHeader>
@@ -332,7 +339,7 @@ function DueCreditsCard({
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         {row.due_date ?? '—'}
-                                        {row.is_overdue ? ' · overdue' : ''}
+                                        {row.is_overdue ? ` · ${t('overdue')}` : ''}
                                     </p>
                                     {row.whatsapp_url ? (
                                         <a
@@ -347,12 +354,12 @@ function DueCreditsCard({
                                                 'h-auto px-0',
                                             )}
                                         >
-                                            WhatsApp
+                                            {t('WhatsApp')}
                                             <SendIcon className="size-3" />
                                         </a>
                                     ) : null}
                                 </div>
-                                <div className="shrink-0 text-right">
+                                <div className="shrink-0 text-end">
                                     <p className="text-sm font-medium">
                                         {formatMoney(row.remaining, currency)}
                                     </p>
@@ -361,7 +368,7 @@ function DueCreditsCard({
                                             variant="destructive"
                                             className="mt-1"
                                         >
-                                            Overdue
+                                            {t('Overdue')}
                                         </Badge>
                                     ) : null}
                                 </div>
@@ -380,16 +387,18 @@ function TopSellingCard({
     rows: TopSellingRow[];
     currency: string;
 }) {
+    const t = useT();
+
     return (
         <Card className="h-full">
             <CardHeader>
-                <CardTitle>Top selling today</CardTitle>
-                <CardDescription>What left the shelf today</CardDescription>
+                <CardTitle>{t('Top selling today')}</CardTitle>
+                <CardDescription>{t('What left the shelf today')}</CardDescription>
             </CardHeader>
             <CardContent>
                 {rows.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                        No sales yet today.
+                        {t('No sales yet today.')}
                     </p>
                 ) : (
                     <ul className="space-y-3">
@@ -412,7 +421,9 @@ function TopSellingCard({
                                             {row.name}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            Qty {row.quantity}
+                                            {t('Qty :quantity', {
+                                                quantity: row.quantity,
+                                            })}
                                         </p>
                                     </div>
                                 </div>
@@ -435,10 +446,12 @@ function LowStockCard({
     rows: LowStockRow[];
     showViewAll?: boolean;
 }) {
+    const t = useT();
+
     return (
         <Card className="h-full">
             <CardHeader>
-                <CardTitle>Low stock</CardTitle>
+                <CardTitle>{t('Low stock')}</CardTitle>
                 {showViewAll ? (
                     <CardAction>
                         <ButtonLink
@@ -447,28 +460,28 @@ function LowStockCard({
                                 stock: 'LOW',
                             })}
                         >
-                            View all
+                            {t('View all')}
                         </ButtonLink>
                     </CardAction>
                 ) : (
                     <CardDescription>
-                        Tell the owner if something needs restocking.
+                        {t('Tell the owner if something needs restocking.')}
                     </CardDescription>
                 )}
             </CardHeader>
             <CardContent>
                 {rows.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                        Nothing to reorder right now.
+                        {t('Nothing to reorder right now.')}
                     </p>
                 ) : (
                     <div className="rounded-md border">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Product</TableHead>
-                                    <TableHead>Stock</TableHead>
-                                    <TableHead>Min</TableHead>
+                                    <TableHead>{t('Product')}</TableHead>
+                                    <TableHead>{t('Stock')}</TableHead>
+                                    <TableHead>{t('Min')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -531,9 +544,10 @@ function CategoryDonut({
     rows: CategoryStock[];
     className?: string;
 }) {
+    const t = useT();
     const total = rows.reduce((sum, row) => sum + Number(row.quantity), 0);
     const config: ChartConfig = {
-        quantity: { label: 'Stock' },
+        quantity: { label: t('Stock') },
     };
     const data = rows.map((row, index) => {
         const key = `cat${row.id}`;
@@ -556,13 +570,13 @@ function CategoryDonut({
     return (
         <Card className={className}>
             <CardHeader>
-                <CardTitle>Stock by category</CardTitle>
-                <CardDescription>What is sitting on the shelf</CardDescription>
+                <CardTitle>{t('Stock by category')}</CardTitle>
+                <CardDescription>{t('What is sitting on the shelf')}</CardDescription>
             </CardHeader>
             <CardContent>
                 {rows.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                        No stock on the shelf yet.
+                        {t('No stock on the shelf yet.')}
                     </p>
                 ) : (
                     <div className="flex flex-col items-center gap-4 sm:flex-row">
@@ -616,7 +630,7 @@ function CategoryDonut({
                                                             }
                                                             className="fill-muted-foreground text-xs"
                                                         >
-                                                            units
+                                                            {t('units')}
                                                         </tspan>
                                                     </text>
                                                 );

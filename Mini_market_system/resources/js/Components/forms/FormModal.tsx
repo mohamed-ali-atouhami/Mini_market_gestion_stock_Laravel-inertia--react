@@ -19,6 +19,7 @@ import {
     ShopUser,
     ScannedProduct,
 } from '@/types';
+import { useT } from '@/lib/i18n';
 import { Plus } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
@@ -56,6 +57,7 @@ export default function FormModal({
     open: openProp,
     onOpenChange,
 }: FormModalProps) {
+    const t = useT();
     const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
     const isControlled = openProp !== undefined;
     const open = isControlled ? openProp : uncontrolledOpen;
@@ -107,7 +109,7 @@ export default function FormModal({
             {!isControlled && type === 'create' ? (
                 <Button type="button" onClick={() => setOpen(true)}>
                     <Plus className="h-4 w-4" />
-                    Create {name}
+                    {t('Create :name', { name: t(name) })}
                 </Button>
             ) : null}
 
@@ -115,10 +117,14 @@ export default function FormModal({
                 <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>
-                            {type === 'create' ? 'Create' : 'Edit'} {name}
+                            {t(type === 'create' ? 'Create :name' : 'Edit :name', {
+                                name: t(name),
+                            })}
                         </DialogTitle>
                         <DialogDescription className="sr-only">
-                            {type === 'create' ? 'Create' : 'Edit'} {name}
+                            {t(type === 'create' ? 'Create :name' : 'Edit :name', {
+                                name: t(name),
+                            })}
                         </DialogDescription>
                     </DialogHeader>
                     {open ? forms[table]() : null}

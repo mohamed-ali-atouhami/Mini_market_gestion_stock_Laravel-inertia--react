@@ -15,6 +15,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ShopStockMovement, ShopStockProduct } from '@/types';
 import { useForm } from '@inertiajs/react';
@@ -29,6 +30,7 @@ export default function Show({
     product: ShopStockProduct;
     movements: ShopStockMovement[];
 }) {
+    const t = useT();
     const form = useForm({
         direction: 'out',
         quantity: '',
@@ -48,7 +50,7 @@ export default function Show({
                         <div>
                             <h1 className="text-3xl font-bold">{product.name}</h1>
                         <p className="mt-1 text-muted-foreground">
-                            {product.barcode ?? 'No barcode'} · Stock{' '}
+                            {product.barcode ?? t('No barcode')} · {t('Stock')}{' '}
                             <span
                                 className={cn(
                                     product.is_low_stock &&
@@ -57,17 +59,17 @@ export default function Show({
                             >
                                 {product.stock_quantity}
                             </span>{' '}
-                            / min {product.min_stock}
+                            / {t('Min')} {product.min_stock}
                         </p>
                         </div>
                     </div>
                     <ButtonLink variant="ghost" href={route('stock.index')}>
-                        Back
+                        {t('Back')}
                     </ButtonLink>
                 </div>
 
                 <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
-                    <h2 className="mb-4 text-lg font-semibold">Adjust stock</h2>
+                    <h2 className="mb-4 text-lg font-semibold">{t('Adjust stock')}</h2>
                     <form
                         className="space-y-4"
                         onSubmit={(e) => {
@@ -82,7 +84,7 @@ export default function Show({
                             <div className="grid gap-4 md:grid-cols-3">
                                 <Field>
                                     <FieldLabel htmlFor="direction">
-                                        Direction
+                                        {t('Direction')}
                                     </FieldLabel>
                                     <select
                                         id="direction"
@@ -96,10 +98,10 @@ export default function Show({
                                         }
                                     >
                                         <option value="out">
-                                            Out (damage, loss, count down)
+                                            {t('Out (damage, loss, count down)')}
                                         </option>
                                         <option value="in">
-                                            In (found extra, count up)
+                                            {t('In (found extra, count up)')}
                                         </option>
                                     </select>
                                     <FieldError>
@@ -108,7 +110,7 @@ export default function Show({
                                 </Field>
                                 <Field>
                                     <FieldLabel htmlFor="quantity">
-                                        Quantity
+                                        {t('Quantity')}
                                     </FieldLabel>
                                     <Input
                                         id="quantity"
@@ -130,7 +132,7 @@ export default function Show({
                                 </Field>
                                 <Field>
                                     <FieldLabel htmlFor="reason">
-                                        Reason
+                                        {t('Reason')}
                                     </FieldLabel>
                                     <Input
                                         id="reason"
@@ -141,7 +143,7 @@ export default function Show({
                                                 e.target.value,
                                             )
                                         }
-                                        placeholder="Broke a bottle"
+                                        placeholder={t('Broke a bottle')}
                                         required
                                     />
                                     <FieldError>{form.errors.reason}</FieldError>
@@ -149,23 +151,23 @@ export default function Show({
                             </div>
                         </FieldGroup>
                         <Button type="submit" disabled={form.processing}>
-                            Save adjustment
+                            {t('Save adjustment')}
                         </Button>
                     </form>
                 </div>
 
                 <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
-                    <h2 className="mb-4 text-lg font-semibold">Movements</h2>
+                    <h2 className="mb-4 text-lg font-semibold">{t('Movements')}</h2>
                     <div className="rounded-md border">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>When</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Qty</TableHead>
-                                    <TableHead>Before → after</TableHead>
-                                    <TableHead>Reason</TableHead>
-                                    <TableHead>Who</TableHead>
+                                    <TableHead>{t('When')}</TableHead>
+                                    <TableHead>{t('Type')}</TableHead>
+                                    <TableHead>{t('Qty')}</TableHead>
+                                    <TableHead>{t('Before → after')}</TableHead>
+                                    <TableHead>{t('Reason')}</TableHead>
+                                    <TableHead>{t('Who')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -175,7 +177,7 @@ export default function Show({
                                             colSpan={6}
                                             className="h-20 text-center text-muted-foreground"
                                         >
-                                            No movements yet.
+                                            {t('No movements yet.')}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -185,7 +187,7 @@ export default function Show({
                                                 {row.created_at ?? '—'}
                                             </TableCell>
                                             <TableCell>
-                                                {row.type} / {row.direction}
+                                                {t(row.type)} / {t(row.direction)}
                                             </TableCell>
                                             <TableCell>{row.quantity}</TableCell>
                                             <TableCell>

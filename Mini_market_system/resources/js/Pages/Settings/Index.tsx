@@ -7,6 +7,7 @@ import {
     FieldLabel,
 } from '@/Components/ui/field';
 import { Input } from '@/Components/ui/input';
+import { useT } from '@/lib/i18n';
 import { useForm } from '@inertiajs/react';
 
 export default function Index({
@@ -21,6 +22,7 @@ export default function Index({
         low_stock_enabled: boolean;
     };
 }) {
+    const t = useT();
     const form = useForm({
         shop_name: settings.shop_name,
         shop_phone: settings.shop_phone ?? '',
@@ -51,7 +53,7 @@ export default function Index({
                     <FieldGroup>
                         <Field>
                             <FieldLabel htmlFor="shop_name">
-                                Shop name
+                                {t('Shop name')}
                             </FieldLabel>
                             <Input
                                 id="shop_name"
@@ -64,7 +66,7 @@ export default function Index({
                             <FieldError>{form.errors.shop_name}</FieldError>
                         </Field>
                         <Field>
-                            <FieldLabel htmlFor="shop_phone">Phone</FieldLabel>
+                            <FieldLabel htmlFor="shop_phone">{t('Phone')}</FieldLabel>
                             <Input
                                 id="shop_phone"
                                 value={form.data.shop_phone}
@@ -76,7 +78,7 @@ export default function Index({
                         </Field>
                         <Field>
                             <FieldLabel htmlFor="shop_address">
-                                Address
+                                {t('Address')}
                             </FieldLabel>
                             <Input
                                 id="shop_address"
@@ -91,7 +93,7 @@ export default function Index({
                             <FieldError>{form.errors.shop_address}</FieldError>
                         </Field>
                         <Field>
-                            <FieldLabel htmlFor="currency">Currency</FieldLabel>
+                            <FieldLabel htmlFor="currency">{t('Currency')}</FieldLabel>
                             <Input
                                 id="currency"
                                 value={form.data.currency}
@@ -104,7 +106,7 @@ export default function Index({
                         </Field>
                         <Field>
                             <FieldLabel htmlFor="ticket_footer">
-                                Ticket footer
+                                {t('Ticket footer')}
                             </FieldLabel>
                             <Input
                                 id="ticket_footer"
@@ -133,12 +135,12 @@ export default function Index({
                                 htmlFor="low_stock_enabled"
                                 className="font-normal"
                             >
-                                Highlight low stock
+                                {t('Highlight low stock')}
                             </FieldLabel>
                         </Field>
                     </FieldGroup>
                     <Button type="submit" disabled={form.processing}>
-                        Save
+                        {t('Save')}
                     </Button>
                 </form>
             </div>

@@ -8,6 +8,7 @@ import {
 } from '@/Components/ui/field';
 import { Input } from '@/Components/ui/input';
 import { ShopCategory } from '@/types';
+import { useT } from '@/lib/i18n';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
@@ -20,6 +21,7 @@ export default function CategoryForm({
     data?: ShopCategory | null;
     setOpen: (open: boolean) => void;
 }) {
+    const t = useT();
     const form = useForm({
         name: data?.name ?? '',
         is_active: data?.is_active ?? true,
@@ -50,7 +52,7 @@ export default function CategoryForm({
         <form onSubmit={submit}>
             <FieldGroup>
                 <Field>
-                    <FieldLabel htmlFor="name">Name</FieldLabel>
+                    <FieldLabel htmlFor="name">{t('Name')}</FieldLabel>
                     <Input
                         id="name"
                         value={form.data.name}
@@ -69,13 +71,13 @@ export default function CategoryForm({
                         }
                     />
                     <FieldLabel htmlFor="is_active" className="font-normal">
-                        Active
+                        {t('Active')}
                     </FieldLabel>
                 </Field>
                 <FieldError>{form.errors.is_active}</FieldError>
                 <Field>
                     <Button type="submit" disabled={form.processing}>
-                        {type === 'create' ? 'Create category' : 'Save'}
+                        {type === 'create' ? t('Create category') : t('Save')}
                     </Button>
                 </Field>
             </FieldGroup>

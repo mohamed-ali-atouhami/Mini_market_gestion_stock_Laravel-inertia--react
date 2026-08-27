@@ -10,6 +10,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
+import { useT } from '@/lib/i18n';
 import { formatMoney } from '@/lib/utils';
 import { PageProps, ShopCashSession, ShopStockMovement } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
@@ -48,6 +49,7 @@ export default function Index({
     > & { cashier: string | null })[];
     movements: ShopStockMovement[];
 }) {
+    const t = useT();
     const { shop } = usePage<PageProps>().props;
     const currency = shop?.currency ?? 'MAD';
     const form = useForm({
@@ -61,7 +63,7 @@ export default function Index({
                 <div>
                     {/* <h1 className="text-3xl font-bold">Reports</h1> */}
                     <p className="text-muted-foreground">
-                        Here you can generate reports for the shop.
+                        {t('Here you can generate reports for the shop.')}
                     </p>
                 </div>
 
@@ -75,7 +77,7 @@ export default function Index({
                     }}
                 >
                     <Field>
-                        <FieldLabel htmlFor="from">From</FieldLabel>
+                        <FieldLabel htmlFor="from">{t('From')}</FieldLabel>
                         <Input
                             id="from"
                             type="date"
@@ -86,7 +88,7 @@ export default function Index({
                         />
                     </Field>
                     <Field>
-                        <FieldLabel htmlFor="to">To</FieldLabel>
+                        <FieldLabel htmlFor="to">{t('To')}</FieldLabel>
                         <Input
                             id="to"
                             type="date"
@@ -95,33 +97,33 @@ export default function Index({
                         />
                     </Field>
                     <Button type="submit" disabled={form.processing}>
-                        Apply
+                        {t('Apply')}
                     </Button>
                 </form>
 
                 <div className="grid gap-4 md:grid-cols-4">
                     <SummaryCard
-                        label="Sales"
+                        label={t('Sales')}
                         value={formatMoney(summary.sales_total, currency)}
                     />
                     <SummaryCard
-                        label="Tickets"
+                        label={t('Tickets')}
                         value={String(summary.ticket_count)}
                     />
                     <SummaryCard
-                        label="Profit estimate"
+                        label={t('Profit estimate')}
                         value={formatMoney(summary.profit, currency)}
                     />
                     <SummaryCard
-                        label="Purchases"
+                        label={t('Purchases')}
                         value={formatMoney(summary.purchases_total, currency)}
                     />
                 </div>
 
                 <ReportTable
-                    title="Sales by day"
-                    empty="No sales in this period."
-                    headers={['Day', 'Tickets', 'Total']}
+                    title={t('Sales by day')}
+                    empty={t('No sales in this period.')}
+                    headers={[t('Day'), t('Tickets'), t('Total')]}
                     rows={sales_by_day.map((row) => [
                         row.day,
                         String(row.tickets),
@@ -130,9 +132,9 @@ export default function Index({
                 />
 
                 <ReportTable
-                    title="Purchases by supplier"
-                    empty="No received deliveries in this period."
-                    headers={['Supplier', 'Deliveries', 'Total']}
+                    title={t('Purchases by supplier')}
+                    empty={t('No received deliveries in this period.')}
+                    headers={[t('Supplier'), t('Deliveries'), t('Total')]}
                     rows={purchases_by_supplier.map((row) => [
                         row.name,
                         String(row.deliveries),
@@ -141,21 +143,21 @@ export default function Index({
                 />
 
                 <ReportTable
-                    title="Cash sessions"
-                    empty="No caisse sessions in this period."
+                    title={t('Cash sessions')}
+                    empty={t('No caisse sessions in this period.')}
                     headers={[
-                        'Opened',
-                        'Cashier',
-                        'Status',
-                        'Opening',
-                        'Expected',
-                        'Counted',
-                        'Difference',
+                        t('Opened'),
+                        t('Cashier'),
+                        t('Status'),
+                        t('Opening'),
+                        t('Expected'),
+                        t('Counted'),
+                        t('Difference'),
                     ]}
                     rows={sessions.map((row) => [
                         row.opened_at ?? '—',
                         row.cashier ?? '—',
-                        row.status,
+                        t(row.status),
                         formatMoney(row.opening_amount, currency),
                         formatMoney(row.expected_amount, currency),
                         formatMoney(row.closing_amount, currency),
@@ -164,15 +166,15 @@ export default function Index({
                 />
 
                 <ReportTable
-                    title="Stock movements"
-                    empty="No movements in this period."
+                    title={t('Stock movements')}
+                    empty={t('No movements in this period.')}
                     headers={[
-                        'When',
-                        'Product',
-                        'Type',
-                        'Qty',
-                        'Reason',
-                        'Who',
+                        t('When'),
+                        t('Product'),
+                        t('Type'),
+                        t('Qty'),
+                        t('Reason'),
+                        t('Who'),
                     ]}
                     rows={movements.map((row) => [
                         row.created_at ?? '—',
@@ -181,7 +183,7 @@ export default function Index({
                             src={row.image_url}
                             name={row.product ?? '—'}
                         />,
-                        `${row.type} / ${row.direction}`,
+                        `${t(row.type)} / ${t(row.direction)}`,
                         row.quantity,
                         row.reason,
                         row.user ?? '—',

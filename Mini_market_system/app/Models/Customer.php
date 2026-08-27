@@ -7,6 +7,7 @@ use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 class Customer extends Model
 {
@@ -42,15 +43,24 @@ class Customer extends Model
     {
         $normalized = Phone::normalize($phone);
 
-        $customer = static::query()->where('phone_normalized', $normalized)->first();
+        $customer = static::query()
+            ->where('phone_normalized', $normalized)
+            ->lockForUpdate()
+            ->first();
 
         if ($customer === null) {
-            return static::query()->create([
-                'name' => $name,
-                'phone' => $phone,
-                'phone_normalized' => $normalized,
-                'is_active' => true,
-            ]);
+            try {
+                return static::query()->create([
+                    'name' => $name,
+                    'phone' => $phone,
+                    'phone_normalized' => $normalized,
+                    'is_active' => true,
+                ]);
+            } catch (UniqueConstraintViolationException) {
+                $customer = static::query()
+                    ->where('phone_normalized', $normalized)
+                    ->firstOrFail();
+            }
         }
 
         $customer->update([

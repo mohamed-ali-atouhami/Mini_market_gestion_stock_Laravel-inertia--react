@@ -8,6 +8,7 @@ import {
 } from '@/Components/ui/field';
 import { Input } from '@/Components/ui/input';
 import { ShopSupplier } from '@/types';
+import { useT } from '@/lib/i18n';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
@@ -20,6 +21,7 @@ export default function SupplierForm({
     data?: ShopSupplier | null;
     setOpen: (open: boolean) => void;
 }) {
+    const t = useT();
     const form = useForm({
         name: data?.name ?? '',
         phone: data?.phone ?? '',
@@ -53,7 +55,7 @@ export default function SupplierForm({
         <form onSubmit={submit}>
             <FieldGroup>
                 <Field>
-                    <FieldLabel htmlFor="name">Name</FieldLabel>
+                    <FieldLabel htmlFor="name">{t('Name')}</FieldLabel>
                     <Input
                         id="name"
                         value={form.data.name}
@@ -64,7 +66,7 @@ export default function SupplierForm({
                     <FieldError>{form.errors.name}</FieldError>
                 </Field>
                 <Field>
-                    <FieldLabel htmlFor="phone">Phone</FieldLabel>
+                    <FieldLabel htmlFor="phone">{t('Phone')}</FieldLabel>
                     <Input
                         id="phone"
                         value={form.data.phone}
@@ -73,7 +75,7 @@ export default function SupplierForm({
                     <FieldError>{form.errors.phone}</FieldError>
                 </Field>
                 <Field>
-                    <FieldLabel htmlFor="address">Address</FieldLabel>
+                    <FieldLabel htmlFor="address">{t('Address')}</FieldLabel>
                     <Input
                         id="address"
                         value={form.data.address}
@@ -82,7 +84,7 @@ export default function SupplierForm({
                     <FieldError>{form.errors.address}</FieldError>
                 </Field>
                 <Field>
-                    <FieldLabel htmlFor="notes">Notes</FieldLabel>
+                    <FieldLabel htmlFor="notes">{t('Notes')}</FieldLabel>
                     <Input
                         id="notes"
                         value={form.data.notes}
@@ -99,13 +101,13 @@ export default function SupplierForm({
                         }
                     />
                     <FieldLabel htmlFor="is_active" className="font-normal">
-                        Active
+                        {t('Active')}
                     </FieldLabel>
                 </Field>
                 <FieldError>{form.errors.is_active}</FieldError>
                 <Field>
                     <Button type="submit" disabled={form.processing}>
-                        {type === 'create' ? 'Create supplier' : 'Save'}
+                        {type === 'create' ? t('Create supplier') : t('Save')}
                     </Button>
                 </Field>
             </FieldGroup>

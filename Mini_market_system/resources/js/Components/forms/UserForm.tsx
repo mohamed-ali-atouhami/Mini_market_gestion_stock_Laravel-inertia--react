@@ -8,6 +8,7 @@ import {
 } from '@/Components/ui/field';
 import { Input } from '@/Components/ui/input';
 import { RoleOption, ShopUser } from '@/types';
+import { useT } from '@/lib/i18n';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
@@ -25,6 +26,7 @@ export default function UserForm({
     roles: RoleOption[];
     setOpen: (open: boolean) => void;
 }) {
+    const t = useT();
     const form = useForm({
         name: data?.name ?? '',
         username: data?.username ?? '',
@@ -59,7 +61,7 @@ export default function UserForm({
         <form onSubmit={submit}>
             <FieldGroup>
                 <Field>
-                    <FieldLabel htmlFor="name">Name</FieldLabel>
+                    <FieldLabel htmlFor="name">{t('Name')}</FieldLabel>
                     <Input
                         id="name"
                         value={form.data.name}
@@ -70,7 +72,7 @@ export default function UserForm({
                     <FieldError>{form.errors.name}</FieldError>
                 </Field>
                 <Field>
-                    <FieldLabel htmlFor="username">Username</FieldLabel>
+                    <FieldLabel htmlFor="username">{t('Username')}</FieldLabel>
                     <Input
                         id="username"
                         value={form.data.username}
@@ -85,8 +87,8 @@ export default function UserForm({
                 <Field>
                     <FieldLabel htmlFor="password">
                         {type === 'edit'
-                            ? 'New password (optional)'
-                            : 'Password'}
+                            ? t('New password (optional)')
+                            : t('Password')}
                     </FieldLabel>
                     <Input
                         id="password"
@@ -102,7 +104,7 @@ export default function UserForm({
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="password_confirmation">
-                        Confirm password
+                        {t('Confirm password')}
                     </FieldLabel>
                     <Input
                         id="password_confirmation"
@@ -122,7 +124,7 @@ export default function UserForm({
                     </FieldError>
                 </Field>
                 <Field>
-                    <FieldLabel htmlFor="role_id">Role</FieldLabel>
+                    <FieldLabel htmlFor="role_id">{t('Role')}</FieldLabel>
                     <select
                         id="role_id"
                         className={selectClassName}
@@ -133,7 +135,7 @@ export default function UserForm({
                     >
                         {roles.map((role) => (
                             <option key={role.id} value={role.id}>
-                                {role.name}
+                                {t(role.name)}
                             </option>
                         ))}
                     </select>
@@ -148,13 +150,13 @@ export default function UserForm({
                         }
                     />
                     <FieldLabel htmlFor="is_active" className="font-normal">
-                        Active (can log in)
+                        {t('Active (can log in)')}
                     </FieldLabel>
                 </Field>
                 <FieldError>{form.errors.is_active}</FieldError>
                 <Field>
                     <Button type="submit" disabled={form.processing}>
-                        {type === 'create' ? 'Create user' : 'Save'}
+                        {type === 'create' ? t('Create user') : t('Save')}
                     </Button>
                 </Field>
             </FieldGroup>

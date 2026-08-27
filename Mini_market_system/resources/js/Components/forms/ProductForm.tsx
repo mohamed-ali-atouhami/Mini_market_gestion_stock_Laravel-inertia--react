@@ -10,6 +10,7 @@ import {
 } from '@/Components/ui/field';
 import { Input } from '@/Components/ui/input';
 import { CategoryOption, PageProps, ScannedProduct, ShopProduct } from '@/types';
+import { useT } from '@/lib/i18n';
 import { formatInputNumber } from '@/lib/utils';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useState } from 'react';
@@ -34,6 +35,7 @@ export default function ProductForm({
     initialBarcode?: string;
     onCreated?: (product: ScannedProduct) => void;
 }) {
+    const t = useT();
     const fromPurchases = returnTo === 'purchases';
     const [preview, setPreview] = useState<string | null>(
         data?.image_url ?? null,
@@ -119,7 +121,7 @@ export default function ProductForm({
         <form onSubmit={submit}>
             <FieldGroup>
                 <Field>
-                    <FieldLabel htmlFor="name">Name</FieldLabel>
+                    <FieldLabel htmlFor="name">{t('Name')}</FieldLabel>
                     <Input
                         id="name"
                         value={form.data.name}
@@ -130,7 +132,7 @@ export default function ProductForm({
                     <FieldError>{form.errors.name}</FieldError>
                 </Field>
                 <Field>
-                    <FieldLabel htmlFor="category_id">Category</FieldLabel>
+                    <FieldLabel htmlFor="category_id">{t('Category')}</FieldLabel>
                     <select
                         id="category_id"
                         className={selectClassName}
@@ -140,7 +142,7 @@ export default function ProductForm({
                         }
                     >
                         {categories.length === 0 ? (
-                            <option value={0}>Create a category first</option>
+                            <option value={0}>{t('Create a category first')}</option>
                         ) : (
                             categories.map((category) => (
                                 <option key={category.id} value={category.id}>
@@ -152,24 +154,25 @@ export default function ProductForm({
                     <FieldError>{form.errors.category_id}</FieldError>
                 </Field>
                 <Field>
-                    <FieldLabel htmlFor="barcode">Barcode</FieldLabel>
+                    <FieldLabel htmlFor="barcode">{t('Barcode')}</FieldLabel>
                     <BarcodeInput
                         id="barcode"
                         value={form.data.barcode}
                         onChange={(value) => form.setData('barcode', value)}
                     />
                     <p className="text-xs text-muted-foreground">
-                        Scan with the USB scanner (it types the code and Enter)
-                        or type it by hand.
+                        {t(
+                            'Scan with the USB scanner (it types the code and Enter) or type it by hand.',
+                        )}
                     </p>
                     <FieldError>{form.errors.barcode}</FieldError>
                 </Field>
                 <Field>
-                    <FieldLabel htmlFor="image">Photo</FieldLabel>
+                    <FieldLabel htmlFor="image">{t('Photo')}</FieldLabel>
                     <div className="flex items-center gap-3">
                         <ProductThumb
                             src={preview}
-                            name={form.data.name || 'Product'}
+                            name={form.data.name || t('Product')}
                             className="size-16"
                         />
                         <Input
@@ -189,7 +192,7 @@ export default function ProductForm({
                         />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        Optional. JPEG, PNG or WebP, up to 2 MB.
+                        {t('Optional. JPEG, PNG or WebP, up to 2 MB.')}
                     </p>
                     {type === 'edit' &&
                     data?.image_url &&
@@ -208,14 +211,14 @@ export default function ProductForm({
                                 htmlFor="remove_image"
                                 className="font-normal"
                             >
-                                Remove photo
+                                {t('Remove photo')}
                             </FieldLabel>
                         </Field>
                     ) : null}
                     <FieldError>{form.errors.image}</FieldError>
                 </Field>
                 <Field>
-                    <FieldLabel htmlFor="cost_price">Cost price (MAD)</FieldLabel>
+                    <FieldLabel htmlFor="cost_price">{t('Cost price (MAD)')}</FieldLabel>
                     <Input
                         id="cost_price"
                         type="number"
@@ -230,7 +233,7 @@ export default function ProductForm({
                     <FieldError>{form.errors.cost_price}</FieldError>
                 </Field>
                 <Field>
-                    <FieldLabel htmlFor="sale_price">Sale price (MAD)</FieldLabel>
+                    <FieldLabel htmlFor="sale_price">{t('Sale price (MAD)')}</FieldLabel>
                     <Input
                         id="sale_price"
                         type="number"
@@ -246,7 +249,7 @@ export default function ProductForm({
                 </Field>
                 {!fromPurchases && (
                 <Field>
-                    <FieldLabel htmlFor="stock_quantity">Stock</FieldLabel>
+                    <FieldLabel htmlFor="stock_quantity">{t('Stock')}</FieldLabel>
                     <Input
                         id="stock_quantity"
                         type="number"
@@ -260,14 +263,18 @@ export default function ProductForm({
                     />
                     <p className="text-xs text-muted-foreground">
                         {type === 'create'
-                            ? 'Starting quantity. After this, stock changes only when you receive or sell.'
-                            : 'Stock is updated by purchases and sales, not here.'}
+                            ? t(
+                                  'Starting quantity. After this, stock changes only when you receive or sell.',
+                              )
+                            : t(
+                                  'Stock is updated by purchases and sales, not here.',
+                              )}
                     </p>
                     <FieldError>{form.errors.stock_quantity}</FieldError>
                 </Field>
                 )}
                 <Field>
-                    <FieldLabel htmlFor="min_stock">Min stock</FieldLabel>
+                    <FieldLabel htmlFor="min_stock">{t('Min stock')}</FieldLabel>
                     <Input
                         id="min_stock"
                         type="number"
@@ -282,15 +289,15 @@ export default function ProductForm({
                     <FieldError>{form.errors.min_stock}</FieldError>
                 </Field>
                 <Field>
-                    <FieldLabel htmlFor="unit">Unit</FieldLabel>
+                    <FieldLabel htmlFor="unit">{t('Unit')}</FieldLabel>
                     <select
                         id="unit"
                         className={selectClassName}
                         value={form.data.unit}
                         onChange={(e) => form.setData('unit', e.target.value)}
                     >
-                        <option value="piece">Piece</option>
-                        <option value="kg">Kg</option>
+                        <option value="piece">{t('Piece')}</option>
+                        <option value="kg">{t('Kg')}</option>
                     </select>
                     <FieldError>{form.errors.unit}</FieldError>
                 </Field>
@@ -303,13 +310,13 @@ export default function ProductForm({
                         }
                     />
                     <FieldLabel htmlFor="is_active" className="font-normal">
-                        Active (can be sold)
+                        {t('Active (can be sold)')}
                     </FieldLabel>
                 </Field>
                 <FieldError>{form.errors.is_active}</FieldError>
                 <Field>
                     <Button type="submit" disabled={form.processing}>
-                        {type === 'create' ? 'Create product' : 'Save'}
+                        {type === 'create' ? t('Create product') : t('Save')}
                     </Button>
                 </Field>
             </FieldGroup>

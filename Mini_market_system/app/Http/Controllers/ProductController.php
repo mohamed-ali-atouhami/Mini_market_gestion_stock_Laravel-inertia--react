@@ -11,6 +11,7 @@ use App\Models\StockMovement;
 use App\Services\StockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -103,18 +104,22 @@ class ProductController extends Controller
             $openingStock = 0;
         }
 
-        $product = Product::query()->create($data);
-        $product->syncImage($request->file('image'));
+        $product = DB::transaction(function () use ($request, $data, $openingStock) {
+            $created = Product::query()->create($data);
+            $created->syncImage($request->file('image'));
 
-        if ($openingStock > 0) {
-            $this->stock->adjust(
-                $product,
-                $openingStock,
-                StockMovement::DIRECTION_IN,
-                $request->user(),
-                'Opening stock',
-            );
-        }
+            if ($openingStock > 0) {
+                $this->stock->adjust(
+                    $created,
+                    $openingStock,
+                    StockMovement::DIRECTION_IN,
+                    $request->user(),
+                    'Opening stock',
+                );
+            }
+
+            return $created->refresh();
+        });
 
         $created = [
             'id' => $product->id,

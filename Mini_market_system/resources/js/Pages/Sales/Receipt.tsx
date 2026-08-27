@@ -1,4 +1,5 @@
 import { Button, ButtonLink } from '@/Components/ui/button';
+import { useT } from '@/lib/i18n';
 import { ShopSale } from '@/types';
 
 function formatMoney(value: string | number): string {
@@ -19,6 +20,7 @@ export default function Receipt({
         footer: string | null;
     };
 }) {
+    const t = useT();
     const items = sale.items ?? [];
 
     return (
@@ -41,7 +43,7 @@ export default function Receipt({
                         {sale.sold_at} · {sale.cashier}
                     </p>
 
-                    <div className="mt-4 space-y-1 text-left text-sm">
+                    <div className="mt-4 space-y-1 text-start text-sm">
                         {items.map((item) => (
                             <div
                                 key={item.product_id}
@@ -60,16 +62,16 @@ export default function Receipt({
                         ))}
                     </div>
 
-                    <div className="mt-4 space-y-1 border-t pt-3 text-left text-sm">
+                    <div className="mt-4 space-y-1 border-t pt-3 text-start text-sm">
                         <div className="flex justify-between font-medium">
-                            <span>Total</span>
+                            <span>{t('Total')}</span>
                             <span>{formatMoney(sale.total)} MAD</span>
                         </div>
                         <div className="flex justify-between">
                             <span>
                                 {sale.payment_method === 'credit'
-                                    ? 'Paid so far'
-                                    : 'Paid'}
+                                    ? t('Paid so far')
+                                    : t('Paid')}
                             </span>
                             <span>
                                 {formatMoney(
@@ -85,7 +87,7 @@ export default function Receipt({
                                 {Number(sale.remaining) > 0 ? (
                                     <>
                                         <div className="flex justify-between">
-                                            <span>Remaining</span>
+                                            <span>{t('Remaining')}</span>
                                             <span>
                                                 {formatMoney(
                                                     sale.remaining ?? 0,
@@ -95,27 +97,27 @@ export default function Receipt({
                                         </div>
                                         {sale.due_date ? (
                                             <div className="flex justify-between">
-                                                <span>Pay by</span>
+                                                <span>{t('Pay by')}</span>
                                                 <span>{sale.due_date}</span>
                                             </div>
                                         ) : null}
                                     </>
                                 ) : (
                                     <div className="flex justify-between">
-                                        <span>Credit</span>
-                                        <span>Settled</span>
+                                        <span>{t('Credit')}</span>
+                                        <span>{t('Settled')}</span>
                                     </div>
                                 )}
                                 {sale.customer ? (
                                     <div className="flex justify-between">
-                                        <span>Customer</span>
+                                        <span>{t('Customer')}</span>
                                         <span>{sale.customer}</span>
                                     </div>
                                 ) : null}
                             </>
                         ) : (
                             <div className="flex justify-between">
-                                <span>Change</span>
+                                <span>{t('Change')}</span>
                                 <span>
                                     {formatMoney(sale.change_amount)} MAD
                                 </span>
@@ -132,10 +134,10 @@ export default function Receipt({
 
                 <div className="flex justify-center gap-2 print:hidden">
                     <ButtonLink variant="ghost" href={route('pos.index')}>
-                        New sale
+                        {t('New sale')}
                     </ButtonLink>
                     <Button type="button" onClick={() => window.print()}>
-                        Print
+                        {t('Print')}
                     </Button>
                 </div>
             </div>

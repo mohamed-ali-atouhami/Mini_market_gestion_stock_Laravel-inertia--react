@@ -1,9 +1,10 @@
 import FlashToasts from '@/Components/FlashToasts';
 import {
     AppSidebar,
-    currentPageTitle,
+    usePageTitle,
 } from '@/Components/layout/AppSidebar';
 import { HeaderUserMenu } from '@/Components/layout/HeaderUserMenu';
+import { LanguageSwitcher } from '@/Components/layout/LanguageSwitcher';
 import {
     SidebarInset,
     SidebarProvider,
@@ -20,7 +21,8 @@ export default function AuthenticatedLayout({
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const { auth } = usePage<PageProps>().props;
-    const pageTitle = header ?? currentPageTitle();
+    const resolvedTitle = usePageTitle();
+    const pageTitle = header ?? resolvedTitle;
 
     if (!auth.user) {
         return null;
@@ -44,6 +46,7 @@ export default function AuthenticatedLayout({
                     ) : (
                         <div className="flex-1" />
                     )}
+                    <LanguageSwitcher />
                     <HeaderUserMenu user={auth.user} />
                 </header>
                 <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">

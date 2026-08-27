@@ -14,6 +14,7 @@ import {
     DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import { Button } from '@/Components/ui/button';
+import { useT } from '@/lib/i18n';
 import { updateQuery } from '@/lib/query';
 import { ArrowUpDown, ArrowUp, ArrowDown, Check, X } from 'lucide-react';
 import { ReactNode } from 'react';
@@ -42,6 +43,7 @@ export default function Table<T>({
     renderRow: (row: T) => ReactNode;
     data: T[];
 }) {
+    const t = useT();
     const searchParams = new URLSearchParams(window.location.search);
 
     const handleFilterChange = (paramKey: string, value: string) => {
@@ -78,7 +80,7 @@ export default function Table<T>({
                             return (
                                 <TableHead
                                     key={column.accessor}
-                                    className={`${column.className || ''} ${isFirstColumn && isClickable ? 'pl-4' : ''}`}
+                                    className={`${column.className || ''} ${isFirstColumn && isClickable ? 'ps-4' : ''}`}
                                 >
                                     {hasFilter || hasSort ? (
                                         <DropdownMenu>
@@ -86,17 +88,17 @@ export default function Table<T>({
                                                 render={
                                                     <Button
                                                         variant="ghost"
-                                                        className="h-8 -ml-3 data-popup-open:bg-accent"
+                                                        className="h-8 -ms-3 data-popup-open:bg-accent"
                                                     />
                                                 }
                                             >
                                                 <span>{column.header}</span>
                                                 {currentSort === 'asc' ? (
-                                                    <ArrowUp className="ml-2 h-4 w-4" />
+                                                    <ArrowUp className="ms-2 h-4 w-4" />
                                                 ) : currentSort === 'desc' ? (
-                                                    <ArrowDown className="ml-2 h-4 w-4" />
+                                                    <ArrowDown className="ms-2 h-4 w-4" />
                                                 ) : (
-                                                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                                                    <ArrowUpDown className="ms-2 h-4 w-4" />
                                                 )}
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="start">
@@ -111,7 +113,7 @@ export default function Table<T>({
                                                             }
                                                         >
                                                             <ArrowUp className="h-4 w-4" />
-                                                            Asc
+                                                            {t('Asc')}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             onClick={() =>
@@ -122,7 +124,7 @@ export default function Table<T>({
                                                             }
                                                         >
                                                             <ArrowDown className="h-4 w-4" />
-                                                            Desc
+                                                            {t('Desc')}
                                                         </DropdownMenuItem>
                                                         {currentSort && (
                                                             <DropdownMenuItem
@@ -136,7 +138,7 @@ export default function Table<T>({
                                                                 }
                                                             >
                                                                 <X className="h-4 w-4" />
-                                                                Clear
+                                                                {t('Clear')}
                                                             </DropdownMenuItem>
                                                         )}
                                                     </>
@@ -181,9 +183,9 @@ export default function Table<T>({
                                                                     }
                                                                 >
                                                                     {isSelected ? (
-                                                                        <Check className="mr-2 h-4 w-4" />
+                                                                        <Check className="me-2 h-4 w-4" />
                                                                     ) : (
-                                                                        <span className="mr-2 h-4 w-4" />
+                                                                        <span className="me-2 h-4 w-4" />
                                                                     )}
                                                                     {
                                                                         option.label
@@ -211,7 +213,7 @@ export default function Table<T>({
                                 colSpan={columns.length}
                                 className="h-24 text-center"
                             >
-                                No results.
+                                {t('No results.')}
                             </TableCell>
                         </TableRow>
                     )}

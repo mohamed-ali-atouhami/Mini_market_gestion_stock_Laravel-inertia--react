@@ -25,6 +25,7 @@ import {
 } from '@/Components/ui/field';
 import { Input } from '@/Components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
+import { useT } from '@/lib/i18n';
 import { cn, formatInputNumber, formatMoney } from '@/lib/utils';
 import {
     CartLine,
@@ -69,13 +70,15 @@ function qtyStep(unit: string | undefined): number {
 }
 
 function LowStockCorner() {
+    const t = useT();
+
     return (
         <span
-            aria-label="Low stock"
-            className="pointer-events-none absolute top-0 right-0 z-10 h-[4.5rem] w-[5.5rem] overflow-hidden"
+            aria-label={t('Low stock')}
+            className="pointer-events-none absolute top-0 end-0 z-10 h-[4.5rem] w-[5.5rem] overflow-hidden"
         >
-            <span className="absolute top-[0.85rem] -right-8 w-[6.5rem] rotate-45 bg-red-100 py-0.5 text-center text-[10px] font-semibold tracking-wide text-red-800">
-                Low stock
+            <span className="absolute top-[0.85rem] -end-8 w-[6.5rem] rotate-45 bg-red-100 py-0.5 text-center text-[10px] font-semibold tracking-wide text-red-800">
+                {t('Low stock')}
             </span>
         </span>
     );
@@ -93,6 +96,7 @@ function Index({
 }) {
     const barcodeRef = useRef<HTMLInputElement>(null);
     const tabsScrollRef = useRef<HTMLDivElement>(null);
+    const t = useT();
     const [barcode, setBarcode] = useState('');
     const [scanning, setScanning] = useState(false);
     const [search, setSearch] = useState('');
@@ -109,17 +113,10 @@ function Index({
             return;
         }
 
-        const scrollerBox = scroller.getBoundingClientRect();
-        const activeBox = active.getBoundingClientRect();
-        const nextLeft =
-            scroller.scrollLeft +
-            (activeBox.left - scrollerBox.left) -
-            scroller.clientWidth / 2 +
-            activeBox.width / 2;
-
-        scroller.scrollTo({
-            left: Math.max(0, nextLeft),
+        active.scrollIntoView({
             behavior: 'smooth',
+            inline: 'center',
+            block: 'nearest',
         });
     }, [tab]);
 
@@ -192,7 +189,7 @@ function Index({
             : firstQty;
 
         if (nextQty > stock || nextQty < 0.001) {
-            toast.error('Not enough stock for ' + product.name + '.');
+            toast.error(t('Not enough stock for :name.', { name: product.name }));
             return;
         }
 
@@ -254,12 +251,14 @@ function Index({
             }
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 404) {
-                toast.error('Product not found.');
+                toast.error(t('Product not found.'));
             } else {
                 toast.error(
-                    productId !== undefined
-                        ? 'Could not load this product.'
-                        : 'Could not look up this barcode.',
+                    t(
+                        productId !== undefined
+                            ? 'Could not load this product.'
+                            : 'Could not look up this barcode.',
+                    ),
                 );
             }
         } finally {
@@ -276,7 +275,7 @@ function Index({
         }
 
         if (value !== '' && Number(value) > Number(line.stock_quantity)) {
-            toast.error('Not enough stock for ' + line.name + '.');
+            toast.error(t('Not enough stock for :name.', { name: line.name }));
             return;
         }
 
@@ -326,7 +325,7 @@ function Index({
                 const qty = Number(item.quantity);
 
                 if (qty > Number(product.stock_quantity)) {
-                    toast.error('Not enough stock for ' + product.name + '.');
+                    toast.error(t('Not enough stock for :name.', { name: product.name }));
                     form.setData(
                         'items',
                         form.data.items.map((line) =>
@@ -370,7 +369,9 @@ function Index({
             form.setData('items', nextItems);
 
             if (Math.abs(oldTotal - newTotal) >= 0.01) {
-                toast.error('Prices changed. Check the total, then pay again.');
+                toast.error(
+                    t('Prices changed. Check the total, then pay again.'),
+                );
                 setScanning(false);
                 return;
             }
@@ -403,15 +404,17 @@ function Index({
                         errors.due_date;
 
                     if (typeof message === 'string' && message !== '') {
-                        toast.error(message);
+                        toast.error(t(message));
                     }
                 },
             });
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 404) {
-                toast.error('A product in the cart is no longer available.');
+                toast.error(
+                    t('A product in the cart is no longer available.'),
+                );
             } else {
-                toast.error('Could not refresh product prices.');
+                toast.error(t('Could not refresh product prices.'));
             }
             setScanning(false);
         }
@@ -442,20 +445,20 @@ function Index({
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:h-full lg:grid-cols-[minmax(18rem,24rem)_1fr]">
             <Card className="min-h-0 gap-0 overflow-hidden py-0 lg:h-full">
                 <CardHeader className="border-b py-4">
-                    <CardTitle>Ticket</CardTitle>
+                    <CardTitle>{t('Ticket')}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden py-4">
                     <Field>
                         <FieldLabel htmlFor="scan_barcode" className="sr-only">
-                            Scan barcode
+                            {t('Scan barcode')}
                         </FieldLabel>
                         <div className="relative">
-                            <ScanLine className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <ScanLine className="pointer-events-none absolute top-1/2 start-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                             <BarcodeInput
                                 id="scan_barcode"
                                 ref={barcodeRef}
                                 autoFocus
-                                className="pl-8"
+                                className="ps-8"
                                 value={barcode}
                                 onChange={setBarcode}
                                 onScan={(code) => {
@@ -464,20 +467,25 @@ function Index({
                                 disabled={scanning}
                             />
                         </div>
-                        <FieldError>{form.errors.items}</FieldError>
-                        <FieldError>{cashSessionError}</FieldError>
+                        <FieldError>
+                            {form.errors.items ? t(form.errors.items) : null}
+                        </FieldError>
+                        <FieldError>
+                            {cashSessionError ? t(cashSessionError) : null}
+                        </FieldError>
                     </Field>
 
                     <div className="min-h-0 max-h-64 flex-1 space-y-2 overflow-y-auto lg:max-h-none">
                         {form.data.items.length === 0 ? (
                             <p className="px-1 py-8 text-center text-sm text-muted-foreground">
-                                Scan a product, or tap one
-                                <span className="lg:hidden"> below</span>
-                                <span className="hidden lg:inline">
-                                    {' '}
-                                    on the right
+                                <span className="lg:hidden">
+                                    {t('Scan a product, or tap one below.')}
                                 </span>
-                                .
+                                <span className="hidden lg:inline">
+                                    {t(
+                                        'Scan a product, or tap one beside the ticket.',
+                                    )}
+                                </span>
                             </p>
                         ) : (
                             form.data.items.map((item) => (
@@ -497,7 +505,7 @@ function Index({
                                         <p className="text-xs text-muted-foreground">
                                             {Number(item.unit_price).toFixed(2)}{' '}
                                             MAD
-                                            {item.unit === 'kg' ? ' / kg' : ''}{' '}
+                                            {item.unit === 'kg' ? t(' / kg') : ''}{' '}
                                             × {item.quantity}
                                         </p>
                                     </div>
@@ -536,7 +544,7 @@ function Index({
                                             <Plus />
                                         </Button>
                                     </div>
-                                    <span className="ml-auto w-14 shrink-0 text-right text-sm font-medium tabular-nums sm:w-16">
+                                    <span className="ms-auto w-14 shrink-0 text-end text-sm font-medium tabular-nums sm:w-16">
                                         {(
                                             Number(item.quantity) *
                                             Number(item.unit_price)
@@ -548,7 +556,9 @@ function Index({
                                         size="icon-sm"
                                         className="text-destructive hover:text-destructive"
                                         disabled={busy}
-                                        aria-label={'Remove ' + item.name}
+                                        aria-label={t('Remove :name', {
+                                            name: item.name,
+                                        })}
                                         onClick={() =>
                                             removeLine(item.product_id)
                                         }
@@ -567,20 +577,31 @@ function Index({
                         </p>
                         <p className="text-xs text-muted-foreground">
                             {isCredit ? (
-                                <>Remaining {formatMoney(remaining)}</>
+                                <>
+                                    {t('Remaining :amount', {
+                                        amount: formatMoney(remaining),
+                                    })}
+                                </>
                             ) : paid > 0 ? (
                                 <>
-                                    Paid {paid.toFixed(2)} · Change{' '}
-                                    {change >= 0 ? change.toFixed(2) : '0.00'}
+                                    {t('Paid :paid · Change :change', {
+                                        paid: paid.toFixed(2),
+                                        change:
+                                            change >= 0
+                                                ? change.toFixed(2)
+                                                : '0.00',
+                                    })}
                                 </>
                             ) : (
-                                'Enter cash received, or pay the exact total'
+                                t(
+                                    'Enter cash received, or pay the exact total',
+                                )
                             )}
                         </p>
                     </div>
                     <Field>
                         <FieldLabel htmlFor="amount_paid">
-                            Amount paid
+                            {t('Amount paid')}
                         </FieldLabel>
                         <Input
                             id="amount_paid"
@@ -593,7 +614,11 @@ function Index({
                                 form.setData('amount_paid', e.target.value)
                             }
                         />
-                        <FieldError>{form.errors.amount_paid}</FieldError>
+                        <FieldError>
+                            {form.errors.amount_paid
+                                ? t(form.errors.amount_paid)
+                                : null}
+                        </FieldError>
                     </Field>
                     <div className="grid grid-cols-2 gap-2">
                         <Button
@@ -607,7 +632,7 @@ function Index({
                             }}
                         >
                             <Banknote />
-                            Pay cash
+                            {t('Pay cash')}
                         </Button>
                         <Button
                             type="button"
@@ -619,9 +644,9 @@ function Index({
                         >
                             <HandCoins />
                             <span className="flex flex-col items-start leading-tight">
-                                <span>Credit</span>
+                                <span>{t('Credit')}</span>
                                 <span className="hidden text-[10px] font-normal text-muted-foreground sm:inline">
-                                    Pay later · WhatsApp
+                                    {t('Pay later · WhatsApp')}
                                 </span>
                             </span>
                         </Button>
@@ -632,10 +657,10 @@ function Index({
             <Card className="min-h-0 min-w-0 gap-0 overflow-hidden py-0 lg:h-full">
                 <CardHeader className="min-w-0 gap-3 overflow-hidden border-b py-4">
                     <div className="relative">
-                        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Search className="pointer-events-none absolute top-1/2 start-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
-                            className="pl-8"
-                            placeholder="Search product"
+                            className="ps-8"
+                            placeholder={t('Search product')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -660,7 +685,7 @@ function Index({
                                         value="all"
                                         className="flex-none px-2"
                                     >
-                                        All
+                                        {t('All')}
                                     </TabsTrigger>
                                     {categories.map((category) => (
                                         <TabsTrigger
@@ -675,19 +700,19 @@ function Index({
                                         value="no-barcode"
                                         className="flex-none px-2"
                                     >
-                                        No barcode
+                                        {t('No barcode')}
                                     </TabsTrigger>
                                 </TabsList>
                             </Tabs>
                         </div>
-                        <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-linear-to-r from-card to-transparent" />
-                        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-linear-to-l from-card to-transparent" />
+                        <div className="pointer-events-none absolute inset-y-0 start-0 w-6 bg-linear-to-r from-card to-transparent rtl:bg-linear-to-l" />
+                        <div className="pointer-events-none absolute inset-y-0 end-0 w-6 bg-linear-to-l from-card to-transparent rtl:bg-linear-to-r" />
                     </div>
                 </CardHeader>
                 <CardContent className="min-h-0 py-4 lg:flex-1 lg:overflow-y-auto">
                     {visibleProducts.length === 0 ? (
                         <p className="py-12 text-center text-sm text-muted-foreground">
-                            No products in this list.
+                            {t('No products in this list.')}
                         </p>
                     ) : (
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
@@ -706,7 +731,7 @@ function Index({
                                             });
                                         }}
                                         className={cn(
-                                            'relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-background text-left outline-none transition hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50',
+                                            'relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-background text-start outline-none transition hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50',
                                         )}
                                     >
                                         <div className="relative">
@@ -729,10 +754,10 @@ function Index({
                                             )}{' '}
                                             MAD
                                             {product.unit === 'kg'
-                                                ? ' / kg'
+                                                ? t(' / kg')
                                                 : ''}
                                             {outOfStock
-                                                ? ' · out of stock'
+                                                ? ' · ' + t('out of stock')
                                                 : ''}
                                         </span>
                                     </button>
@@ -749,25 +774,33 @@ function Index({
                     setCreditOpen(open);
 
                     if (!open) {
-                        form.setData('payment_method', 'cash');
+                        form.setData({
+                            ...form.data,
+                            payment_method: 'cash',
+                            customer_name: '',
+                            customer_phone: '',
+                            due_date: localIsoDate(1),
+                        });
                     }
                 }}
             >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Sell on credit</DialogTitle>
+                        <DialogTitle>{t('Sell on credit')}</DialogTitle>
                         <DialogDescription>
-                            Stock leaves now. They can pay nothing today, or a
-                            part, then the rest by the date they say.
+                            {t(
+                                'Stock leaves now. They can pay nothing today, or a part, then the rest by the date they say.',
+                            )}
                         </DialogDescription>
                     </DialogHeader>
                     <FieldGroup>
                         {customers.length > 0 ? (
                             <Field>
                                 <FieldLabel htmlFor="known_customer">
-                                    Known customer
+                                    {t('Known customer')}
                                 </FieldLabel>
                                 <select
+                                    key={creditOpen ? 'credit-open' : 'credit-closed'}
                                     id="known_customer"
                                     className={selectClassName}
                                     defaultValue=""
@@ -787,7 +820,7 @@ function Index({
                                         });
                                     }}
                                 >
-                                    <option value="">New customer</option>
+                                    <option value="">{t('New customer')}</option>
                                     {customers.map((customer) => (
                                         <option
                                             key={customer.id}
@@ -801,7 +834,7 @@ function Index({
                         ) : null}
                         <Field>
                             <FieldLabel htmlFor="customer_name">
-                                Customer name
+                                {t('Customer name')}
                             </FieldLabel>
                             <Input
                                 id="customer_name"
@@ -813,11 +846,15 @@ function Index({
                                     )
                                 }
                             />
-                            <FieldError>{form.errors.customer_name}</FieldError>
+                            <FieldError>
+                                {form.errors.customer_name
+                                    ? t(form.errors.customer_name)
+                                    : null}
+                            </FieldError>
                         </Field>
                         <Field>
                             <FieldLabel htmlFor="customer_phone">
-                                Phone (WhatsApp)
+                                {t('Phone (WhatsApp)')}
                             </FieldLabel>
                             <Input
                                 id="customer_phone"
@@ -830,11 +867,13 @@ function Index({
                                 }
                             />
                             <FieldError>
-                                {form.errors.customer_phone}
+                                {form.errors.customer_phone
+                                    ? t(form.errors.customer_phone)
+                                    : null}
                             </FieldError>
                         </Field>
                         <Field>
-                            <FieldLabel htmlFor="due_date">Pay by</FieldLabel>
+                            <FieldLabel htmlFor="due_date">{t('Pay by')}</FieldLabel>
                             <Input
                                 id="due_date"
                                 type="date"
@@ -844,11 +883,15 @@ function Index({
                                     form.setData('due_date', e.target.value)
                                 }
                             />
-                            <FieldError>{form.errors.due_date}</FieldError>
+                            <FieldError>
+                                {form.errors.due_date
+                                    ? t(form.errors.due_date)
+                                    : null}
+                            </FieldError>
                         </Field>
                         <Field>
                             <FieldLabel htmlFor="credit_paid_now">
-                                Paid now (optional)
+                                {t('Paid now (optional)')}
                             </FieldLabel>
                             <Input
                                 id="credit_paid_now"
@@ -869,14 +912,14 @@ function Index({
                             variant="outline"
                             onClick={() => setCreditOpen(false)}
                         >
-                            Cancel
+                            {t('Cancel')}
                         </Button>
                         <Button
                             type="button"
                             disabled={busy}
                             onClick={() => void pay('credit')}
                         >
-                            Sell on credit
+                            {t('Sell on credit')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

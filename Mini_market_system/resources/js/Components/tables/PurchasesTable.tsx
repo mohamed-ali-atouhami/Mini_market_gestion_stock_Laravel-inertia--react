@@ -3,6 +3,7 @@ import { Badge } from '@/Components/ui/badge';
 import { ButtonLink } from '@/Components/ui/button';
 import { TableCell, TableRow } from '@/Components/ui/table';
 import { ShopPurchase } from '@/types';
+import { useT } from '@/lib/i18n';
 import { Eye, Pencil } from 'lucide-react';
 
 function formatMoney(value: string): string {
@@ -25,16 +26,19 @@ function statusVariant(
     return 'outline';
 }
 
-function statusLabel(status: ShopPurchase['status']): string {
+function statusLabel(
+    status: ShopPurchase['status'],
+    t: (key: string) => string,
+): string {
     if (status === 'received') {
-        return 'Received';
+        return t('Received');
     }
 
     if (status === 'cancelled') {
-        return 'Cancelled';
+        return t('Cancelled');
     }
 
-    return 'Draft';
+    return t('Draft');
 }
 
 export function PurchasesTable({
@@ -44,6 +48,7 @@ export function PurchasesTable({
     purchases: ShopPurchase[];
     columns: TableColumn[];
 }) {
+    const t = useT();
     const renderRow = (purchase: ShopPurchase) => {
         const href =
             purchase.status === 'draft'
@@ -64,7 +69,7 @@ export function PurchasesTable({
                 </TableCell>
                 <TableCell>
                     <Badge variant={statusVariant(purchase.status)}>
-                        {statusLabel(purchase.status)}
+                        {statusLabel(purchase.status, t)}
                     </Badge>
                 </TableCell>
                 <TableCell>

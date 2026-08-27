@@ -14,6 +14,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ShopCredit } from '@/types';
 import { useForm } from '@inertiajs/react';
@@ -22,34 +23,37 @@ import { FormEvent } from 'react';
 import { toast } from 'sonner';
 
 export default function Index({ credits }: { credits: ShopCredit[] }) {
+    const t = useT();
+
     return (
         <>
             <div className="space-y-6">
                 <p className="text-muted-foreground">
-                    Customers who took goods now and will pay later. Anyone on
-                    shift can collect.
+                    {t(
+                        'Customers who took goods now and will pay later. Anyone on shift can collect.',
+                    )}
                 </p>
 
                 <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
                     {credits.length === 0 ? (
                         <p className="text-sm text-muted-foreground">
-                            No open credit.
+                            {t('No open credit.')}
                         </p>
                     ) : (
                         <div className="rounded-md border">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Customer</TableHead>
+                                        <TableHead>{t('Customer')}</TableHead>
                                         <TableHead className="hidden md:table-cell">
-                                            Ticket
+                                            {t('Ticket')}
                                         </TableHead>
-                                        <TableHead>Remaining</TableHead>
-                                        <TableHead>Due</TableHead>
+                                        <TableHead>{t('Remaining')}</TableHead>
+                                        <TableHead>{t('Due')}</TableHead>
                                         <TableHead className="hidden md:table-cell">
-                                            Opened by
+                                            {t('Opened by')}
                                         </TableHead>
-                                        <TableHead>Collect</TableHead>
+                                        <TableHead>{t('Collect')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -77,7 +81,7 @@ export default function Index({ credits }: { credits: ShopCredit[] }) {
                                                             'h-auto px-0',
                                                         )}
                                                     >
-                                                        WhatsApp
+                                                        {t('WhatsApp')}
                                                         <SendIcon className="size-3" />
                                                     </a>
                                                 ) : null}
@@ -96,7 +100,7 @@ export default function Index({ credits }: { credits: ShopCredit[] }) {
                                                     </span>
                                                     {credit.is_overdue ? (
                                                         <Badge variant="destructive">
-                                                            Overdue
+                                                            {t('Overdue')}
                                                         </Badge>
                                                     ) : null}
                                                 </div>
@@ -122,6 +126,7 @@ export default function Index({ credits }: { credits: ShopCredit[] }) {
 }
 
 function CollectForm({ saleId }: { saleId: number }) {
+    const t = useT();
     const form = useForm(`credit-${saleId}`, { amount: '' });
     const errors = form.errors as typeof form.errors & {
         cash_session?: string;
@@ -137,7 +142,7 @@ function CollectForm({ saleId }: { saleId: number }) {
                 const message = extra.amount ?? extra.cash_session;
 
                 if (typeof message === 'string' && message !== '') {
-                    toast.error(message);
+                    toast.error(t(message));
                 }
             },
         });
@@ -147,7 +152,7 @@ function CollectForm({ saleId }: { saleId: number }) {
         <form className="flex flex-wrap items-end gap-2" onSubmit={submit}>
             <Field className="w-28">
                 <FieldLabel htmlFor={`amount-${saleId}`} className="sr-only">
-                    Amount
+                    {t('Amount')}
                 </FieldLabel>
                 <Input
                     id={`amount-${saleId}`}
@@ -160,10 +165,14 @@ function CollectForm({ saleId }: { saleId: number }) {
                 />
             </Field>
             <Button type="submit" size="sm" disabled={form.processing}>
-                Take
+                {t('Take')}
             </Button>
             <FieldError>
-                {errors.amount ?? errors.cash_session}
+                {errors.amount
+                    ? t(errors.amount)
+                    : errors.cash_session
+                      ? t(errors.cash_session)
+                      : null}
             </FieldError>
         </form>
     );

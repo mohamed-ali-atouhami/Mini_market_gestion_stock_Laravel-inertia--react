@@ -138,3 +138,7 @@
         @apply font-sans;
     }
 }
+
+html[dir="rtl"] body {
+    font-family: "Cairo", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+}

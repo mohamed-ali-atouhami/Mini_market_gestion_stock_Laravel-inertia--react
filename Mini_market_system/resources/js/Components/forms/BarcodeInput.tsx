@@ -1,4 +1,5 @@
 import { Input } from '@/Components/ui/input';
+import { useT } from '@/lib/i18n';
 import { KeyboardEvent, ComponentProps, forwardRef } from 'react';
 
 type BarcodeInputProps = Omit<
@@ -12,6 +13,7 @@ type BarcodeInputProps = Omit<
 
 const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
     function BarcodeInput({ value, onChange, onScan, ...props }, ref) {
+        const t = useT();
         const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
             if (event.key !== 'Enter') {
                 return;
@@ -28,7 +30,7 @@ const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                 ref={ref}
                 inputMode="numeric"
                 autoComplete="off"
-                placeholder="Scan or type barcode"
+                placeholder={t('Scan or type barcode')}
                 {...props}
                 value={value}
                 onChange={(event) => onChange(event.target.value)}

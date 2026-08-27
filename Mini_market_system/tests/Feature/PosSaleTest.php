@@ -8,7 +8,9 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Services\CashSessionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class PosSaleTest extends TestCase
@@ -346,5 +348,29 @@ class PosSaleTest extends TestCase
         $this->assertSame(1, $sale->items()->count());
         $this->assertSame('3.000', $sale->items()->first()?->quantity);
         $this->assertSame('7.000', $product->refresh()->stock_quantity);
+    }
+
+    public function test_closing_a_caisse_twice_does_not_overwrite_the_count(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+
+        $this->actingAs($cashier)
+            ->post(route('caisse.open'), ['opening_amount' => 200]);
+
+        $session = CashSession::query()->firstOrFail();
+        $service = app(CashSessionService::class);
+
+        $service->close($session, 180);
+
+        try {
+            $service->close($session, 50);
+            $this->fail('The second close should have been rejected.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('closing_amount', $exception->errors());
+        }
+
+        $session->refresh();
+        $this->assertSame(CashSession::STATUS_CLOSED, $session->status);
+        $this->assertSame('180.00', $session->closing_amount);
     }
 }

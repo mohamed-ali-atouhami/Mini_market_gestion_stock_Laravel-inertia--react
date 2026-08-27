@@ -1,9 +1,11 @@
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Button } from '@/Components/ui/button';
+import { useT } from '@/lib/i18n';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 export default function VerifyEmail({ status }: { status?: string }) {
+    const t = useT();
     const { post, processing } = useForm({});
 
     const submit: FormEventHandler = (e) => {
@@ -13,26 +15,26 @@ export default function VerifyEmail({ status }: { status?: string }) {
 
     return (
         <GuestLayout>
-            <Head title="Email Verification" />
+            <Head title={t('Email Verification')} />
 
             <div className="mb-4 text-sm text-muted-foreground">
-                Thanks for signing up! Before getting started, could you verify
-                your email address by clicking on the link we just emailed to
-                you? If you didn't receive the email, we will gladly send you
-                another.
+                {t(
+                    "Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.",
+                )}
             </div>
 
             {status === 'verification-link-sent' && (
                 <div className="mb-4 text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
+                    {t(
+                        'A new verification link has been sent to the email address you provided during registration.',
+                    )}
                 </div>
             )}
 
             <form onSubmit={submit}>
                 <div className="mt-4 flex items-center justify-between">
                     <Button type="submit" disabled={processing}>
-                        Resend Verification Email
+                        {t('Resend Verification Email')}
                     </Button>
 
                     <Link
@@ -41,7 +43,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
                         as="button"
                         className="text-sm text-muted-foreground underline-offset-4 hover:underline"
                     >
-                        Log Out
+                        {t('Log Out')}
                     </Link>
                 </div>
             </form>

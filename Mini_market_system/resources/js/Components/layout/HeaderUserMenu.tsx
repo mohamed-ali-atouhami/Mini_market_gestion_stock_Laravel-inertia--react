@@ -5,26 +5,28 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
+import { useT } from '@/lib/i18n';
 import { User } from '@/types';
 import { router } from '@inertiajs/react';
 import { ChevronDown, Settings, UserIcon, UserRound } from 'lucide-react';
 
 export function HeaderUserMenu({ user }: { user: User }) {
+    const t = useT();
     const roleLabel =
         user.role === 'owner'
-            ? 'Owner'
+            ? t('Owner')
             : user.role === 'cashier'
-              ? 'Cashier'
-              : 'No role';
+              ? t('Cashier')
+              : t('No role');
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger className="ml-auto flex items-center gap-2 rounded-lg px-2 py-1.5 text-left outline-none hover:bg-muted/80 focus-visible:ring-3 focus-visible:ring-ring/50">
+            <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-start outline-none hover:bg-muted/80 focus-visible:ring-3 focus-visible:ring-ring/50">
                 <div className="hidden min-w-0 leading-tight sm:grid">
                     <span className="truncate text-sm font-medium">
                         {user.name}
                     </span>
-                    <span className="truncate text-xs text-muted-foreground text-center">
+                    <span className="truncate text-center text-xs text-muted-foreground">
                         {user.username} / {roleLabel}
                     </span>
                 </div>
@@ -40,7 +42,7 @@ export function HeaderUserMenu({ user }: { user: User }) {
                     onClick={() => router.visit(route('profile.edit'))}
                 >
                     <UserRound />
-                    Profile
+                    {t('Profile')}
                 </DropdownMenuItem>
                 {user.role === 'owner' ? (
                     <DropdownMenuItem
@@ -49,7 +51,7 @@ export function HeaderUserMenu({ user }: { user: User }) {
                         }
                     >
                         <Settings />
-                        Settings
+                        {t('Settings')}
                     </DropdownMenuItem>
                 ) : null}
             </DropdownMenuContent>

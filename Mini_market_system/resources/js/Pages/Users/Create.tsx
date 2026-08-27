@@ -3,6 +3,7 @@ import { Button, ButtonLink } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
+import { useT } from '@/lib/i18n';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
@@ -15,6 +16,7 @@ const selectClassName =
     'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
 
 export default function Create({ roles }: { roles: RoleOption[] }) {
+    const t = useT();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         username: '',
@@ -31,7 +33,7 @@ export default function Create({ roles }: { roles: RoleOption[] }) {
 
     return (
         <>
-            <Head title="Add user" />
+            <Head title={t('Add user')} />
 
             <div className="py-12">
                 <div className="mx-auto max-w-xl sm:px-6 lg:px-8">
@@ -40,7 +42,7 @@ export default function Create({ roles }: { roles: RoleOption[] }) {
                         className="space-y-6 rounded-xl bg-card p-6 shadow-sm ring-1 ring-foreground/10 sm:p-8"
                     >
                         <div className="space-y-2">
-                            <Label htmlFor="name">Name</Label>
+                            <Label htmlFor="name">{t('Name')}</Label>
                             <Input
                                 id="name"
                                 value={data.name}
@@ -52,7 +54,7 @@ export default function Create({ roles }: { roles: RoleOption[] }) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="username">Username</Label>
+                            <Label htmlFor="username">{t('Username')}</Label>
                             <Input
                                 id="username"
                                 value={data.username}
@@ -66,7 +68,7 @@ export default function Create({ roles }: { roles: RoleOption[] }) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">{t('Password')}</Label>
                             <Input
                                 id="password"
                                 type="password"
@@ -82,7 +84,7 @@ export default function Create({ roles }: { roles: RoleOption[] }) {
 
                         <div className="space-y-2">
                             <Label htmlFor="password_confirmation">
-                                Confirm password
+                                {t('Confirm password')}
                             </Label>
                             <Input
                                 id="password_confirmation"
@@ -101,7 +103,7 @@ export default function Create({ roles }: { roles: RoleOption[] }) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="role_id">Role</Label>
+                            <Label htmlFor="role_id">{t('Role')}</Label>
                             <select
                                 id="role_id"
                                 className={selectClassName}
@@ -112,7 +114,7 @@ export default function Create({ roles }: { roles: RoleOption[] }) {
                             >
                                 {roles.map((role) => (
                                     <option key={role.id} value={role.id}>
-                                        {role.name}
+                                        {t(role.name)}
                                     </option>
                                 ))}
                             </select>
@@ -128,7 +130,7 @@ export default function Create({ roles }: { roles: RoleOption[] }) {
                                 }
                             />
                             <Label htmlFor="is_active" className="font-normal">
-                                Active (can log in)
+                                {t('Active (can log in)')}
                             </Label>
                         </div>
                         <InputError message={errors.is_active} />
@@ -138,10 +140,10 @@ export default function Create({ roles }: { roles: RoleOption[] }) {
                                 variant="ghost"
                                 href={route('users.index')}
                             >
-                                Cancel
+                                {t('Cancel')}
                             </ButtonLink>
                             <Button type="submit" disabled={processing}>
-                                Create user
+                                {t('Create user')}
                             </Button>
                         </div>
                     </form>

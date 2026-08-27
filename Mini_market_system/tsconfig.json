@@ -10,6 +10,7 @@
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "skipLibCheck": true,
+        "resolveJsonModule": true,
         "noEmit": true,
         "lib": ["ESNext", "DOM", "DOM.Iterable"],
         "paths": {
@@ -20,6 +21,7 @@
     "include": [
         "resources/js/**/*.ts",
         "resources/js/**/*.tsx",
-        "resources/js/**/*.d.ts"
+        "resources/js/**/*.d.ts",
+        "resources/js/**/*.json"
     ]
 }

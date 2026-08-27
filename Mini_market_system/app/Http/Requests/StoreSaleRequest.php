@@ -61,4 +61,17 @@ class StoreSaleRequest extends FormRequest
             }
         });
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'customer_name.required' => 'Enter the customer name.',
+            'customer_phone.required' => 'Enter a valid phone number.',
+            'due_date.required' => 'Choose a pay-by date.',
+            'due_date.after_or_equal' => 'Pay-by date cannot be in the past.',
+        ];
+    }
 }

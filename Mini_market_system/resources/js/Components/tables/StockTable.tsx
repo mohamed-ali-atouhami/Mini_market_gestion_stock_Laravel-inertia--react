@@ -3,6 +3,7 @@ import Table, { TableColumn } from '@/Components/tables/Table';
 import { ButtonLink } from '@/Components/ui/button';
 import { TableCell, TableRow } from '@/Components/ui/table';
 import { ShopStockProduct } from '@/types';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import {HistoryIcon} from 'lucide-react';
 
@@ -19,6 +20,7 @@ export function StockTable({
     products: ShopStockProduct[];
     columns: TableColumn[];
 }) {
+    const t = useT();
     const renderRow = (product: ShopStockProduct) => {
         return (
             <TableRow
@@ -52,7 +54,7 @@ export function StockTable({
                         className="text-xs font-normal hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground"
                     >
                         <HistoryIcon size={10} />
-                        <span className="ml-2 text-xs">History</span>
+                        <span className="ms-2 text-xs">{t('History')}</span>
                     </ButtonLink>
                 </TableCell>
             </TableRow>

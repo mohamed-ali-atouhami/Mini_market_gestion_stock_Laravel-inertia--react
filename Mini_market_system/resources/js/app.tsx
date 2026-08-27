@@ -1,6 +1,7 @@
 import '../css/app.css';
 import './bootstrap';
 
+import { ApplyLocale } from '@/Components/layout/ApplyLocale';
 import { Toaster } from '@/Components/ui/sonner';
 import { TooltipProvider } from '@/Components/ui/tooltip';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -14,6 +15,7 @@ const appName = import.meta.env.VITE_APP_NAME || 'Mini_market_system';
 type InertiaPageModule = {
     default: {
         layout?: (page: ReactNode) => ReactNode;
+        __localeWrapped?: boolean;
     };
 };
 
@@ -31,17 +33,25 @@ createInertiaApp({
             );
         }
 
+        if (!page.default.__localeWrapped) {
+            const pageLayout = page.default.layout;
+            page.default.layout = (component) => (
+                <ApplyLocale>
+                    <TooltipProvider>
+                        {pageLayout ? pageLayout(component) : component}
+                        <Toaster />
+                    </TooltipProvider>
+                </ApplyLocale>
+            );
+            page.default.__localeWrapped = true;
+        }
+
         return page;
     },
     setup({ el, App, props }) {
         const root = createRoot(el);
 
-        root.render(
-            <TooltipProvider>
-                <App {...props} />
-                <Toaster />
-            </TooltipProvider>,
-        );
+        root.render(<App {...props} />);
     },
     progress: {
         color: '#4B5563',

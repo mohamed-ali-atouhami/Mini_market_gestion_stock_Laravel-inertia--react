@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useDirection } from '@/Components/ui/direction';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 import {
     CircleCheckIcon,
@@ -8,11 +9,14 @@ import {
     Loader2Icon,
 } from 'lucide-react';
 
-const Toaster = ({ ...props }: ToasterProps) => {
+const Toaster = ({ dir, ...props }: ToasterProps) => {
+    const direction = useDirection();
+
     return (
         <Sonner
             theme="system"
             className="toaster group"
+            dir={dir ?? direction}
             icons={{
                 success: <CircleCheckIcon className="size-4" />,
                 info: <InfoIcon className="size-4" />,

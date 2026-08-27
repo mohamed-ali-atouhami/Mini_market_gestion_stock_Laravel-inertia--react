@@ -58,6 +58,9 @@ class HandleInertiaRequests extends Middleware
             ],
             'shop' => $this->shop(),
             'cashSession' => $this->openCashSession($user),
+            'locale' => in_array(app()->getLocale(), ['en', 'ar'], true)
+                ? app()->getLocale()
+                : 'en',
             'flash' => [
                 'status' => $request->session()->get('status'),
                 'error' => $request->session()->get('error'),

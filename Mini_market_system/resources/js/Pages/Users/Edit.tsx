@@ -3,6 +3,7 @@ import { Button, ButtonLink } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
+import { useT } from '@/lib/i18n';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
@@ -29,6 +30,7 @@ export default function Edit({
     user: EditUser;
     roles: RoleOption[];
 }) {
+    const t = useT();
     const { data, setData, patch, processing, errors } = useForm({
         name: user.name,
         username: user.username,
@@ -45,7 +47,7 @@ export default function Edit({
 
     return (
         <>
-            <Head title="Edit user" />
+            <Head title={t('Edit user')} />
 
             <div className="py-12">
                 <div className="mx-auto max-w-xl sm:px-6 lg:px-8">
@@ -54,7 +56,7 @@ export default function Edit({
                         className="space-y-6 rounded-xl bg-card p-6 shadow-sm ring-1 ring-foreground/10 sm:p-8"
                     >
                         <div className="space-y-2">
-                            <Label htmlFor="name">Name</Label>
+                            <Label htmlFor="name">{t('Name')}</Label>
                             <Input
                                 id="name"
                                 value={data.name}
@@ -66,7 +68,7 @@ export default function Edit({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="username">Username</Label>
+                            <Label htmlFor="username">{t('Username')}</Label>
                             <Input
                                 id="username"
                                 value={data.username}
@@ -81,7 +83,7 @@ export default function Edit({
 
                         <div className="space-y-2">
                             <Label htmlFor="password">
-                                New password (optional)
+                                {t('New password (optional)')}
                             </Label>
                             <Input
                                 id="password"
@@ -97,7 +99,7 @@ export default function Edit({
 
                         <div className="space-y-2">
                             <Label htmlFor="password_confirmation">
-                                Confirm new password
+                                {t('Confirm new password')}
                             </Label>
                             <Input
                                 id="password_confirmation"
@@ -115,7 +117,7 @@ export default function Edit({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="role_id">Role</Label>
+                            <Label htmlFor="role_id">{t('Role')}</Label>
                             <select
                                 id="role_id"
                                 className={selectClassName}
@@ -126,7 +128,7 @@ export default function Edit({
                             >
                                 {roles.map((role) => (
                                     <option key={role.id} value={role.id}>
-                                        {role.name}
+                                        {t(role.name)}
                                     </option>
                                 ))}
                             </select>
@@ -142,7 +144,7 @@ export default function Edit({
                                 }
                             />
                             <Label htmlFor="is_active" className="font-normal">
-                                Active (can log in)
+                                {t('Active (can log in)')}
                             </Label>
                         </div>
                         <InputError message={errors.is_active} />
@@ -152,10 +154,10 @@ export default function Edit({
                                 variant="ghost"
                                 href={route('users.index')}
                             >
-                                Cancel
+                                {t('Cancel')}
                             </ButtonLink>
                             <Button type="submit" disabled={processing}>
-                                Save
+                                {t('Save')}
                             </Button>
                         </div>
                     </form>
