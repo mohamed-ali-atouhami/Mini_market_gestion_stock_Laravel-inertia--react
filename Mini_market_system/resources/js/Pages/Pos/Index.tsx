@@ -1,5 +1,6 @@
 import BarcodeInput from '@/Components/forms/BarcodeInput';
 import { ProductThumb } from '@/Components/ProductThumb';
+import { StockCornerBadge } from '@/Components/StockCornerBadge';
 import PosLayout from '@/Layouts/PosLayout';
 import { Button } from '@/Components/ui/button';
 import {
@@ -69,21 +70,6 @@ function qtyStep(unit: string | undefined): number {
     return unit === 'kg' ? 0.1 : 1;
 }
 
-function LowStockCorner() {
-    const t = useT();
-
-    return (
-        <span
-            aria-label={t('Low stock')}
-            className="pointer-events-none absolute top-0 end-0 z-10 h-[4.5rem] w-[5.5rem] overflow-hidden"
-        >
-            <span className="absolute top-[0.85rem] -end-8 w-[6.5rem] rotate-45 bg-red-100 py-0.5 text-center text-[10px] font-semibold tracking-wide text-red-800">
-                {t('Low stock')}
-            </span>
-        </span>
-    );
-}
-
 function Index({
     products = [],
     categories = [],
@@ -140,6 +126,9 @@ function Index({
         form.errors as typeof form.errors & { cash_session?: string }
     ).cash_session;
     const busy = form.processing || scanning;
+    const qtyMissing = form.data.items.some(
+        (item) => Number(item.quantity) < 0.001,
+    );
 
     const visibleProducts = useMemo(() => {
         const query = search.trim().toLowerCase();
@@ -307,7 +296,15 @@ function Index({
     };
 
     const pay = async (method: 'cash' | 'credit') => {
-        if (busy || form.data.items.length === 0) {
+        if (busy || form.data.items.length === 0 || qtyMissing) {
+            if (qtyMissing) {
+                toast.error(t('Enter a quantity for every product.'));
+            }
+            return;
+        }
+
+        if (method === 'cash' && form.data.amount_paid.trim() === '') {
+            toast.error(t('Enter the amount paid.'));
             return;
         }
 
@@ -376,16 +373,11 @@ function Index({
                 return;
             }
 
-            const amountPaid =
-                method === 'cash' && form.data.amount_paid === ''
-                    ? String(newTotal)
-                    : form.data.amount_paid;
-
             form.transform((data) => ({
                 ...data,
                 items: nextItems,
                 payment_method: method,
-                amount_paid: amountPaid,
+                amount_paid: form.data.amount_paid,
             }));
             form.post(route('pos.store'), {
                 preserveScroll: true,
@@ -421,7 +413,7 @@ function Index({
     };
 
     const openCredit = () => {
-        if (form.data.items.length === 0 || busy) {
+        if (form.data.items.length === 0 || busy || qtyMissing) {
             return;
         }
 
@@ -593,9 +585,7 @@ function Index({
                                     })}
                                 </>
                             ) : (
-                                t(
-                                    'Enter cash received, or pay the exact total',
-                                )
+                                t('Enter the amount paid.')
                             )}
                         </p>
                     </div>
@@ -625,7 +615,11 @@ function Index({
                             type="button"
                             size="lg"
                             className="h-12 text-sm sm:h-14 sm:text-base"
-                            disabled={busy || form.data.items.length === 0}
+                            disabled={
+                                busy ||
+                                form.data.items.length === 0 ||
+                                qtyMissing
+                            }
                             onClick={() => {
                                 form.setData('payment_method', 'cash');
                                 void pay('cash');
@@ -639,7 +633,11 @@ function Index({
                             size="lg"
                             variant="outline"
                             className="h-12 text-sm sm:h-14 sm:text-base"
-                            disabled={busy || form.data.items.length === 0}
+                            disabled={
+                                busy ||
+                                form.data.items.length === 0 ||
+                                qtyMissing
+                            }
                             onClick={openCredit}
                         >
                             <HandCoins />
@@ -742,7 +740,9 @@ function Index({
                                             />
                                             {product.is_low_stock &&
                                             !outOfStock ? (
-                                                <LowStockCorner />
+                                                <StockCornerBadge kind="low" />
+                                            ) : outOfStock ? (
+                                                <StockCornerBadge kind="out" />
                                             ) : null}
                                         </div>
                                         <span className="truncate px-3 pt-2 text-sm font-medium">

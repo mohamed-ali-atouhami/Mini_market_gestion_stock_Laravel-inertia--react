@@ -9,7 +9,7 @@ import {
     SidebarTrigger,
 } from '@/Components/ui/sidebar';
 import { useT } from '@/lib/i18n';
-import { PageProps } from '@/types';
+import { PageProps, ShopPurchase } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { Clock, ShoppingCartIcon, TextAlignStart } from 'lucide-react';
 import { PropsWithChildren, useEffect, useState } from 'react';
@@ -40,11 +40,20 @@ function useClock(): string {
     return time;
 }
 
-export default function PosLayout({ children }: PropsWithChildren) {
-    const { auth, shop } = usePage<PageProps>().props;
+export default function PosLayout({
+    children,
+    till = 'pos',
+}: PropsWithChildren<{ till?: 'pos' | 'delivery' }>) {
+    const { auth, shop, purchase, cashSession } = usePage<
+        PageProps & { purchase?: ShopPurchase }
+    >().props;
     const t = useT();
     const clock = useClock();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const isDelivery = till === 'delivery';
+    const deliveryHeading = purchase?.reference
+        ? t('Draft :reference', { reference: purchase.reference })
+        : t('New delivery');
 
     if (!auth.user) {
         return null;
@@ -57,7 +66,7 @@ export default function PosLayout({ children }: PropsWithChildren) {
             defaultOpen={false}
             className="min-h-svh lg:h-svh lg:min-h-0 lg:overflow-hidden"
         >
-            <Head title={t('POS')} />
+            <Head title={isDelivery ? deliveryHeading : t('POS')} />
             <FlashToasts />
             <AppSidebar collapsible="offcanvas" />
             <SidebarInset className="min-h-0 bg-muted/40 lg:overflow-hidden">
@@ -72,16 +81,27 @@ export default function PosLayout({ children }: PropsWithChildren) {
                         <span className="truncate text-sm font-semibold">
                             {shop?.name || 'Mini market'}
                         </span>
-                        <Badge
-                            variant="default"
-                            className="hidden gap-1.5 font-normal sm:inline-flex bg-emerald-500/10"
-                        >
-                            <span className="size-1.5 rounded-full bg-emerald-500" />
-                            <span className="text-emerald-500">
-                                {t('Caisse open')}
-                            </span>
-                        </Badge>
-                        <span className="size-1.5 shrink-0 rounded-full bg-emerald-500 sm:hidden" />
+                        {isDelivery ? (
+                            <>
+                                <span className="text-muted-foreground">|</span>
+                                <span className="truncate text-sm text-muted-foreground">
+                                    {deliveryHeading}
+                                </span>
+                            </>
+                        ) : cashSession ? (
+                            <>
+                                <Badge
+                                    variant="default"
+                                    className="hidden gap-1.5 bg-emerald-500/10 font-normal sm:inline-flex"
+                                >
+                                    <span className="size-1.5 rounded-full bg-emerald-500" />
+                                    <span className="text-emerald-500">
+                                        {t('Caisse open')}
+                                    </span>
+                                </Badge>
+                                <span className="size-1.5 shrink-0 rounded-full bg-emerald-500 sm:hidden" />
+                            </>
+                        ) : null}
                     </div>
                     <LanguageSwitcher />
                     <HeaderUserMenu user={auth.user} />

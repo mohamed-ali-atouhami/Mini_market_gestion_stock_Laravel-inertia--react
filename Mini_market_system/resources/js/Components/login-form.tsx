@@ -55,7 +55,7 @@ export function LoginForm({
                                     type="text"
                                     name="username"
                                     value={data.username}
-                                    placeholder="owner"
+                                    placeholder={t('Enter your username')}
                                     autoComplete="username"
                                     autoFocus
                                     required
@@ -81,6 +81,7 @@ export function LoginForm({
                                     type="password"
                                     name="password"
                                     value={data.password}
+                                    placeholder={t('Enter your password')}
                                     autoComplete="current-password"
                                     required
                                     aria-invalid={!!errors.password}

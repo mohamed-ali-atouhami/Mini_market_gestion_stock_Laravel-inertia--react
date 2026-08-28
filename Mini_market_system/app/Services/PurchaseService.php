@@ -28,10 +28,14 @@ class PurchaseService
     public function saveDraft(array $data, User $user, ?Purchase $purchase = null): Purchase
     {
         return DB::transaction(function () use ($data, $user, $purchase) {
-            if ($purchase !== null && $purchase->status !== Purchase::STATUS_DRAFT) {
-                throw ValidationException::withMessages([
-                    'status' => 'Only a draft delivery can be edited.',
-                ]);
+            if ($purchase !== null) {
+                $purchase = Purchase::query()->lockForUpdate()->findOrFail($purchase->id);
+
+                if ($purchase->status !== Purchase::STATUS_DRAFT) {
+                    throw ValidationException::withMessages([
+                        'status' => 'Only a draft delivery can be edited.',
+                    ]);
+                }
             }
 
             $items = $this->mergeItems($data['items']);
@@ -145,17 +149,21 @@ class PurchaseService
 
     public function cancel(Purchase $purchase): Purchase
     {
-        if ($purchase->status !== Purchase::STATUS_DRAFT) {
-            throw ValidationException::withMessages([
-                'status' => 'Only a draft delivery can be cancelled.',
+        return DB::transaction(function () use ($purchase) {
+            $locked = Purchase::query()->lockForUpdate()->findOrFail($purchase->id);
+
+            if ($locked->status !== Purchase::STATUS_DRAFT) {
+                throw ValidationException::withMessages([
+                    'status' => 'Only a draft delivery can be cancelled.',
+                ]);
+            }
+
+            $locked->update([
+                'status' => Purchase::STATUS_CANCELLED,
             ]);
-        }
 
-        $purchase->update([
-            'status' => Purchase::STATUS_CANCELLED,
-        ]);
-
-        return $purchase->refresh();
+            return $locked->refresh();
+        });
     }
 
     /**

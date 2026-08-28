@@ -16,6 +16,20 @@ class UpdatePurchaseRequest extends FormRequest
             && ($this->user()?->can('update', $purchase) ?? false);
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'supplier_id.required' => 'Choose a supplier.',
+            'supplier_id.exists' => 'Choose a supplier.',
+            'items.required' => 'Add at least one product.',
+            'items.min' => 'Add at least one product.',
+            'items.*.quantity.min' => 'Enter a quantity for every product.',
+        ];
+    }
+
     protected function prepareForValidation(): void
     {
         $this->merge([

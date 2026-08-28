@@ -10,7 +10,31 @@ class StorePurchaseRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('create', Purchase::class) ?? false;
+        $user = $this->user();
+
+        if (! ($user?->can('create', Purchase::class) ?? false)) {
+            return false;
+        }
+
+        if ($this->boolean('receive') && ! $user->can('receive-purchases')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'supplier_id.required' => 'Choose a supplier.',
+            'supplier_id.exists' => 'Choose a supplier.',
+            'items.required' => 'Add at least one product.',
+            'items.min' => 'Add at least one product.',
+            'items.*.quantity.min' => 'Enter a quantity for every product.',
+        ];
     }
 
     protected function prepareForValidation(): void

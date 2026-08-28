@@ -1,6 +1,6 @@
 # Mini_market_system – Development Roadmap
 
-**Last updated:** 26 August 2026 (M8 shortcut on the developer PC; copy to the shop PC when Younes is ready)
+**Last updated:** 28 August 2026 (purchase orders deferred until the owner asks)
 
 ---
 
@@ -135,6 +135,7 @@ When Younes is ready: follow `docs/SHOP_PC.md` on his machine. New product featu
 - ⏸️ Size/color variants (clothing)
 - ⏸️ Recipes (restaurant)
 - ⏸️ Supplier credit / unpaid invoices (buying from a supplier now, paying later)
+- ⏸️ Supplier purchase orders (bon de commande before the truck — see §6)
 - ⏸️ Full customer accounts / statements (V1 has simple POS credit only)
 - ⏸️ Public self-registration (owner creates every user)
 - ⏸️ Laravel marketing Welcome page
@@ -278,8 +279,9 @@ When Younes is ready: follow `docs/SHOP_PC.md` on his machine. New product featu
 - **Milestone 11:** PostgreSQL + optional online hosting (check stock from a phone).
 - **Milestone 12:** Pack barcode (scan carton = +6) and units of measure extras.
 - **Milestone 13:** Supplier credit (buy now, pay later). Simple **customer credit at POS is already in V1**.
-- **Milestone 14:** ERP extras per business: expiry/batches, variants, recipes.
-
+- **Milestone 14:** Supplier purchase orders (bon de commande → receive) — **only if the owner asks**. See §6.
+- **Milestone 15:** ERP extras per business: expiry/batches, variants, recipes.
+<!-- Void sale just means cancel a ticket after it is already recorded. Example: cashier sold the wrong bottle, the stock already left, and the money is already on the till. Today there is no “undo that sale” button — they would have to fix stock by hand. That is a new feature, not a bug. We can add it later if you want. -->
 ---
 
 ## 6. Future Enhancements (Skipped from MVP)
@@ -302,7 +304,18 @@ When Younes is ready: follow `docs/SHOP_PC.md` on his machine. New product featu
 
 ### Multi-barcode / pack vs bottle
 - **Status:** ⏸️ Deferred
-- **Reason:** Owner scans the bottle code and types quantity 6. Matches how many small shops work.
+- **Reason:** Owner scans the bottle code and types quantity 6. Matches how some small shops work.
+
+### Supplier purchase orders (bon de commande)
+- **Status:** ⏸️ Deferred — **do not build unless the owner asks for it**
+- **What V1 already does:** Truck at the door → scan / type qty → **Receive** (stock up). **Save draft** is a list with no stock change yet. That is enough if he only deals with the driver at the door.
+- **What this would add (iGoodar-style “paper side”):** Three steps instead of one till:
+  1. **Bon de commande** — write the order *before* anything arrives (“Tuesday: 24 × Coca 1L”). Stock does **not** move. Print or keep a PDF.
+  2. **Bon de livraison** — truck is here; tick what *actually* arrived (maybe 20, not 24). **Then** stock goes up. “Convert to delivery” = reuse the order list so he does not retype 20 lines.
+  3. **Facture** — the supplier bill (money/debt), not the shelf.
+- **When it is useful:** He often orders by WhatsApp days ahead and wants that list waiting when the truck comes, or he regularly gets “I asked for 24, they brought 18” and wants it written first.
+- **When it is extra work:** Coca guy shows up, he counts crates, he scans. Paper chain feels like school paperwork.
+- **If we add it:** Start with a simple **Order** (no stock) that becomes **Receive** (stock up). Do not copy a full PDF / BL / facture chain unless he already uses those papers today.
 
 ### Safe delete (unused mistakes only)
 - **Status:** ⏸️ Deferred — add if the owner piles up unused rows (typo products, empty categories, suppliers never purchased from)

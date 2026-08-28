@@ -185,7 +185,7 @@ export default function Index({
                         />,
                         `${t(row.type)} / ${t(row.direction)}`,
                         row.quantity,
-                        row.reason,
+                        t(row.reason),
                         row.user ?? '—',
                     ])}
                 />

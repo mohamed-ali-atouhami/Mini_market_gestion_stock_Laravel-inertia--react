@@ -7,6 +7,7 @@ use App\Http\Requests\UpdatePurchaseRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Purchase;
+use App\Models\Setting;
 use App\Models\Supplier;
 use App\Services\PurchaseService;
 use Illuminate\Http\JsonResponse;
@@ -166,31 +167,25 @@ class PurchaseController extends Controller
     {
         $this->authorize('create', Purchase::class);
 
+        $productId = $request->integer('product_id');
         $barcode = trim($request->string('barcode')->toString());
 
-        if ($barcode === '') {
+        $query = Product::query()->where('is_active', true);
+
+        if ($productId > 0) {
+            $product = $query->find($productId);
+        } elseif ($barcode !== '') {
+            $product = $query->where('barcode', $barcode)->first();
+        } else {
             return response()->json(['product' => null], 404);
         }
-
-        $product = Product::query()
-            ->where('is_active', true)
-            ->where('barcode', $barcode)
-            ->first();
 
         if ($product === null) {
             return response()->json(['product' => null], 404);
         }
 
         return response()->json([
-            'product' => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'barcode' => $product->barcode,
-                'cost_price' => $this->formatDecimal($product->cost_price, 2),
-                'unit' => $product->unit,
-                'is_active' => $product->is_active,
-                'image_url' => $product->imageUrl(),
-            ],
+            'product' => $this->tillProductPayload($product, Setting::current()->low_stock_enabled),
         ]);
     }
 
@@ -216,10 +211,16 @@ class PurchaseController extends Controller
     }
 
     /**
-     * @return array{suppliers: list<array{id: int, name: string}>, categories: list<array{id: int, name: string}>}
+     * @return array{
+     *     suppliers: list<array{id: int, name: string}>,
+     *     categories: list<array{id: int, name: string}>,
+     *     products: list<array<string, mixed>>
+     * }
      */
     private function formProps(?Purchase $purchase = null): array
     {
+        $lowStockEnabled = Setting::current()->low_stock_enabled;
+
         return [
             'suppliers' => Supplier::query()
                 ->where(function ($query) use ($purchase) {
@@ -244,6 +245,32 @@ class PurchaseController extends Controller
                     'name' => $category->name,
                 ])
                 ->all(),
+            'products' => Product::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Product $product) => $this->tillProductPayload($product, $lowStockEnabled))
+                ->all(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function tillProductPayload(Product $product, bool $lowStockEnabled = false): array
+    {
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'barcode' => $product->barcode,
+            'category_id' => $product->category_id,
+            'cost_price' => $this->formatDecimal($product->cost_price, 2),
+            'unit' => $product->unit,
+            'is_active' => $product->is_active,
+            'is_low_stock' => $lowStockEnabled && $product->isLowStock(),
+            'stock_quantity' => $this->formatDecimal($product->stock_quantity, 3),
+            'min_stock' => $this->formatDecimal($product->min_stock, 3),
+            'image_url' => $product->imageUrl(),
         ];
     }
 
@@ -285,6 +312,7 @@ class PurchaseController extends Controller
                 'image_url' => $item->product?->imageUrl(),
                 'quantity' => $this->formatDecimal($item->quantity, 3),
                 'unit_cost' => $this->formatDecimal($item->unit_cost, 2),
+                'unit' => $item->product?->unit,
             ])->all(),
         ];
     }

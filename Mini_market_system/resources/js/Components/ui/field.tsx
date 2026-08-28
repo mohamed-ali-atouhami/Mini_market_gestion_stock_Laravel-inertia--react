@@ -3,6 +3,7 @@ import { useMemo } from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { useT } from "@/lib/i18n"
 import { Label } from "@/Components/ui/label"
 import { Separator } from "@/Components/ui/separator"
 
@@ -180,6 +181,7 @@ function FieldError({
 }: React.ComponentProps<"div"> & {
   errors?: Array<{ message?: string } | undefined>
 }) {
+  const t = useT()
   const content = useMemo(() => {
     if (children) {
       return children
@@ -218,7 +220,7 @@ function FieldError({
       className={cn("text-sm font-normal text-destructive", className)}
       {...props}
     >
-      {content}
+      {typeof content === "string" ? t(content) : content}
     </div>
   )
 }

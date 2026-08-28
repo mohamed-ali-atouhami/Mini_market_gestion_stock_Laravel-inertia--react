@@ -22,4 +22,16 @@ class OpenCashSessionRequest extends FormRequest
             'opening_amount' => ['required', 'numeric', 'min:0'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'opening_amount.required' => 'Enter the opening amount.',
+            'opening_amount.numeric' => 'Enter the opening amount.',
+            'opening_amount.min' => 'Enter the opening amount.',
+        ];
+    }
 }

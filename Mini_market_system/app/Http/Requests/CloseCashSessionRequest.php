@@ -25,4 +25,16 @@ class CloseCashSessionRequest extends FormRequest
             'closing_amount' => ['required', 'numeric', 'min:0'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'closing_amount.required' => 'Enter the counted cash.',
+            'closing_amount.numeric' => 'Enter the counted cash.',
+            'closing_amount.min' => 'Enter the counted cash.',
+        ];
+    }
 }

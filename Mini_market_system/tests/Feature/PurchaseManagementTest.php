@@ -8,7 +8,9 @@ use App\Models\Purchase;
 use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\PurchaseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class PurchaseManagementTest extends TestCase
@@ -22,6 +24,44 @@ class PurchaseManagementTest extends TestCase
         $this->actingAs($owner)
             ->get(route('purchases.index'))
             ->assertOk();
+    }
+
+    public function test_create_delivery_page_includes_products_to_tap(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $product = Product::factory()->create([
+            'name' => 'Coca-Cola 1L',
+            'cost_price' => 5.50,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('purchases.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Purchases/Create')
+                ->has('products', 1)
+                ->where('products.0.id', $product->id)
+                ->where('products.0.cost_price', '5.5')
+                ->where('products.0.stock_quantity', '0')
+                ->where('products.0.min_stock', '6')
+                ->has('suppliers')
+                ->has('categories'));
+    }
+
+    public function test_owner_can_look_up_a_product_by_id_on_the_delivery_till(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $product = Product::factory()->create([
+            'name' => 'Coca-Cola 1L',
+            'cost_price' => 5.50,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('purchases.lookup-product', ['product_id' => $product->id]))
+            ->assertOk()
+            ->assertJsonPath('product.id', $product->id)
+            ->assertJsonPath('product.cost_price', '5.5');
     }
 
     public function test_cashier_cannot_view_or_receive_purchases(): void
@@ -193,6 +233,69 @@ class PurchaseManagementTest extends TestCase
         $this->assertSame(Purchase::STATUS_CANCELLED, $purchase->refresh()->status);
         $this->assertSame('4.000', $product->refresh()->stock_quantity);
         $this->assertDatabaseCount('stock_movements', 0);
+    }
+
+    public function test_stale_draft_cannot_overwrite_a_received_delivery(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->create([
+            'stock_quantity' => 0,
+            'cost_price' => 5.50,
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('purchases.store'), $this->deliveryPayload($supplier, $product, receive: false));
+
+        $stale = Purchase::query()->firstOrFail();
+
+        app(PurchaseService::class)->receive($stale, $owner);
+
+        $this->assertSame(Purchase::STATUS_RECEIVED, $stale->refresh()->status);
+        $this->assertSame('12.000', $product->refresh()->stock_quantity);
+
+        $stale->status = Purchase::STATUS_DRAFT;
+
+        try {
+            app(PurchaseService::class)->saveDraft(
+                $this->deliveryPayload($supplier, $product, 1, 1),
+                $owner,
+                $stale,
+            );
+            $this->fail('A received delivery must not be saved as a draft.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('status', $exception->errors());
+        }
+
+        $this->assertSame(Purchase::STATUS_RECEIVED, $stale->refresh()->status);
+        $this->assertSame('12.000', $product->refresh()->stock_quantity);
+        $this->assertSame('66.00', $stale->total);
+    }
+
+    public function test_stale_draft_cannot_cancel_a_received_delivery(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->create(['stock_quantity' => 0]);
+
+        $this->actingAs($owner)
+            ->post(route('purchases.store'), $this->deliveryPayload($supplier, $product, receive: false));
+
+        $stale = Purchase::query()->firstOrFail();
+
+        app(PurchaseService::class)->receive($stale, $owner);
+
+        $stale->status = Purchase::STATUS_DRAFT;
+
+        try {
+            app(PurchaseService::class)->cancel($stale);
+            $this->fail('A received delivery must not be cancelled.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('status', $exception->errors());
+        }
+
+        $this->assertSame(Purchase::STATUS_RECEIVED, $stale->refresh()->status);
+        $this->assertSame('12.000', $product->refresh()->stock_quantity);
     }
 
     public function test_owner_can_look_up_a_product_by_barcode(): void

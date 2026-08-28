@@ -194,7 +194,7 @@ export default function Show({
                                                 {row.quantity_before} →{' '}
                                                 {row.quantity_after}
                                             </TableCell>
-                                            <TableCell>{row.reason}</TableCell>
+                                            <TableCell>{t(row.reason)}</TableCell>
                                             <TableCell>
                                                 {row.user ?? '—'}
                                             </TableCell>

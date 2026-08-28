@@ -109,7 +109,22 @@ export type PurchaseLine = {
     barcode: string | null;
     quantity: string;
     unit_cost: string;
+    unit?: string;
     image_url?: string | null;
+};
+
+export type PurchaseProduct = {
+    id: number;
+    name: string;
+    barcode: string | null;
+    category_id: number;
+    cost_price: string;
+    unit: string;
+    is_active: boolean;
+    is_low_stock: boolean;
+    stock_quantity: string;
+    min_stock: string;
+    image_url: string | null;
 };
 
 export type PosProduct = {
