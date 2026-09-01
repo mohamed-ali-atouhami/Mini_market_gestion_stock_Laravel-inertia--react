@@ -38,6 +38,7 @@ import {
     ShoppingCart,
     Tags,
     Truck,
+    Undo2,
     Users,
     Warehouse,
     type LucideIcon,
@@ -81,6 +82,13 @@ const navigation: NavigationItem[] = [
         href: 'credits.index',
         match: 'credits.*',
         icon: HandCoins,
+        visible: ['owner', 'cashier'],
+    },
+    {
+        name: 'Returns',
+        href: 'returns.index',
+        match: 'returns.*',
+        icon: Undo2,
         visible: ['owner', 'cashier'],
     },
     {

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\CustomerReturn;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\User;
@@ -30,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         Relation::enforceMorphMap([
             'Purchase' => Purchase::class,
             'Sale' => Sale::class,
+            'CustomerReturn' => CustomerReturn::class,
         ]);
 
         Gate::define('manage-users', fn (User $user) => $user->isOwner());

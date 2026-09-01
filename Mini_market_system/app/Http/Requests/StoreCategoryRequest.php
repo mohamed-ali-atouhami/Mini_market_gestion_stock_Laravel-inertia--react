@@ -33,4 +33,15 @@ class StoreCategoryRequest extends FormRequest
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Enter the name.',
+            'name.unique' => 'This name is already used.',
+        ];
+    }
 }

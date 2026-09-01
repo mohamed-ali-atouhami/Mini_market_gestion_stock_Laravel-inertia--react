@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\InsufficientStockException;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
@@ -122,13 +123,19 @@ class PurchaseService
                     ]);
                 }
 
-                $movement = $this->stock->increase(
-                    $product,
-                    $item->quantity,
-                    $user,
-                    StockMovement::TYPE_PURCHASE,
-                    $locked,
-                );
+                try {
+                    $movement = $this->stock->increase(
+                        $product,
+                        $item->quantity,
+                        $user,
+                        StockMovement::TYPE_PURCHASE,
+                        $locked,
+                    );
+                } catch (InsufficientStockException $exception) {
+                    throw ValidationException::withMessages([
+                        'items' => $exception->getMessage(),
+                    ]);
+                }
 
                 $this->updateProductCost(
                     $product,
@@ -178,6 +185,12 @@ class PurchaseService
             $productId = (int) $item['product_id'];
             $quantity = round((float) $item['quantity'], 3);
             $unitCost = round((float) $item['unit_cost'], 2);
+
+            if ($quantity <= 0) {
+                throw ValidationException::withMessages([
+                    'items' => 'Enter a quantity for every product.',
+                ]);
+            }
 
             if (! isset($merged[$productId])) {
                 $merged[$productId] = [

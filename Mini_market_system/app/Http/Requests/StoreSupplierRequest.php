@@ -42,6 +42,16 @@ class StoreSupplierRequest extends FormRequest
         ];
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Enter the name.',
+        ];
+    }
+
     private function blankToNull(string $key): ?string
     {
         if (! $this->has($key)) {

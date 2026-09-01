@@ -32,4 +32,16 @@ class AdjustStockRequest extends FormRequest
             'reason' => ['required', 'string', 'max:255'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'quantity.required' => 'Quantity must be greater than zero.',
+            'quantity.min' => 'Quantity must be greater than zero.',
+            'reason.required' => 'Enter a reason.',
+        ];
+    }
 }

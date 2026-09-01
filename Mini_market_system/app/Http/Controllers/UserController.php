@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\CashSession;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -112,6 +113,19 @@ class UserController extends Controller
             throw ValidationException::withMessages([
                 'is_active' => 'You cannot disable your own account.',
             ]);
+        }
+
+        if (! $request->boolean('is_active')) {
+            $openTill = CashSession::query()
+                ->where('user_id', $user->id)
+                ->where('status', CashSession::STATUS_OPEN)
+                ->exists();
+
+            if ($openTill) {
+                throw ValidationException::withMessages([
+                    'is_active' => 'This user still has an open caisse. Close it first.',
+                ]);
+            }
         }
 
         $newRole = Role::query()->findOrFail($request->integer('role_id'));

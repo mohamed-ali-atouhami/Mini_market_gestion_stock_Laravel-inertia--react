@@ -58,4 +58,23 @@ class UpdateProductRequest extends FormRequest
             'remove_image' => ['sometimes', 'boolean'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Enter the name.',
+            'category_id.required' => 'Choose a category.',
+            'barcode.unique' => 'This barcode is already used.',
+            'cost_price.required' => 'Enter the cost price.',
+            'sale_price.required' => 'Enter the sale price.',
+            'min_stock.required' => 'Enter the min stock.',
+            'unit.required' => 'Choose a unit.',
+            'image.image' => 'The photo must be an image.',
+            'image.mimes' => 'The photo must be jpeg, png, or webp.',
+            'image.max' => 'The photo is too large.',
+        ];
+    }
 }

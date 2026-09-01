@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CloseCashSessionRequest;
 use App\Http\Requests\OpenCashSessionRequest;
 use App\Models\CashSession;
-use App\Models\Sale;
 use App\Services\CashSessionService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -36,12 +35,35 @@ class CashSessionController extends Controller
             ->get()
             ->map(fn (CashSession $session) => $this->payload($session));
 
+        $otherOpen = [];
+
+        if ($user->isOwner()) {
+            $otherOpen = CashSession::query()
+                ->with('user')
+                ->where('status', CashSession::STATUS_OPEN)
+                ->where('user_id', '!=', $user->id)
+                ->orderBy('opened_at')
+                ->get()
+                ->map(function (CashSession $session) {
+                    $taken = $session->cashInDrawer();
+
+                    return [
+                        ...$this->payload($session),
+                        'cashier' => $session->user?->name,
+                        'sales_total' => number_format($taken, 2, '.', ''),
+                        'expected_amount' => number_format((float) $session->opening_amount + $taken, 2, '.', ''),
+                    ];
+                })
+                ->all();
+        }
+
         return Inertia::render('Caisse/Index', [
             'session' => $open ? [
                 ...$this->payload($open),
                 'sales_total' => number_format($salesTotal, 2, '.', ''),
                 'expected_amount' => number_format((float) $open->opening_amount + $salesTotal, 2, '.', ''),
             ] : null,
+            'other_open' => $otherOpen,
             'history' => $history,
         ]);
     }

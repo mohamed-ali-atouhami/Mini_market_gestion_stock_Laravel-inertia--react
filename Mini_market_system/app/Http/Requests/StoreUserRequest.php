@@ -38,4 +38,18 @@ class StoreUserRequest extends FormRequest
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Enter the name.',
+            'username.required' => 'Enter the username.',
+            'username.unique' => 'This username is already used.',
+            'password.required' => 'Enter the password.',
+            'role_id.required' => 'Choose a role.',
+        ];
+    }
 }

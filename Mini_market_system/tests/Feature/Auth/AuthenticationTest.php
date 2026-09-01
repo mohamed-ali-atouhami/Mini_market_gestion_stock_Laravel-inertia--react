@@ -74,6 +74,8 @@ class AuthenticationTest extends TestCase
         $this->post('/login', [
             'username' => $user->username,
             'password' => 'wrong-password',
+        ])->assertSessionHasErrors([
+            'username' => 'These credentials do not match our records.',
         ]);
 
         $this->assertGuest();

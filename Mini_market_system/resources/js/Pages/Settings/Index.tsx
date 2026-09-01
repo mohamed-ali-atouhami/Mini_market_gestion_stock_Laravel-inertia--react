@@ -63,7 +63,11 @@ export default function Index({
                                 }
                                 required
                             />
-                            <FieldError>{form.errors.shop_name}</FieldError>
+                            <FieldError>
+                                {form.errors.shop_name
+                                    ? t(form.errors.shop_name)
+                                    : null}
+                            </FieldError>
                         </Field>
                         <Field>
                             <FieldLabel htmlFor="shop_phone">{t('Phone')}</FieldLabel>
@@ -74,7 +78,11 @@ export default function Index({
                                     form.setData('shop_phone', e.target.value)
                                 }
                             />
-                            <FieldError>{form.errors.shop_phone}</FieldError>
+                            <FieldError>
+                                {form.errors.shop_phone
+                                    ? t(form.errors.shop_phone)
+                                    : null}
+                            </FieldError>
                         </Field>
                         <Field>
                             <FieldLabel htmlFor="shop_address">
@@ -90,7 +98,11 @@ export default function Index({
                                     )
                                 }
                             />
-                            <FieldError>{form.errors.shop_address}</FieldError>
+                            <FieldError>
+                                {form.errors.shop_address
+                                    ? t(form.errors.shop_address)
+                                    : null}
+                            </FieldError>
                         </Field>
                         <Field>
                             <FieldLabel htmlFor="currency">{t('Currency')}</FieldLabel>
@@ -102,7 +114,11 @@ export default function Index({
                                 }
                                 required
                             />
-                            <FieldError>{form.errors.currency}</FieldError>
+                            <FieldError>
+                                {form.errors.currency
+                                    ? t(form.errors.currency)
+                                    : null}
+                            </FieldError>
                         </Field>
                         <Field>
                             <FieldLabel htmlFor="ticket_footer">
@@ -118,7 +134,11 @@ export default function Index({
                                     )
                                 }
                             />
-                            <FieldError>{form.errors.ticket_footer}</FieldError>
+                            <FieldError>
+                                {form.errors.ticket_footer
+                                    ? t(form.errors.ticket_footer)
+                                    : null}
+                            </FieldError>
                         </Field>
                         <Field orientation="horizontal">
                             <Checkbox

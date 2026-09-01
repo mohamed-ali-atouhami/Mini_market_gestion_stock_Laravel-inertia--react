@@ -31,9 +31,14 @@ function formatMoney(value: string | number | null): string {
 
 export default function Index({
     session,
+    other_open = [],
     history,
 }: {
     session: (ShopCashSession & { sales_total: string }) | null;
+    other_open?: (ShopCashSession & {
+        cashier: string | null;
+        sales_total: string;
+    })[];
     history: ShopCashSession[];
 }) {
     const t = useT();
@@ -122,7 +127,9 @@ export default function Index({
                                         {t('Type what you counted in the drawer.')}
                                     </p>
                                     <FieldError>
-                                        {closeForm.errors.closing_amount}
+                                        {closeForm.errors.closing_amount
+                                            ? t(closeForm.errors.closing_amount)
+                                            : null}
                                     </FieldError>
                                 </Field>
                                 <Button
@@ -171,7 +178,9 @@ export default function Index({
                                         {t('Cash already in the drawer.')}
                                     </p>
                                     <FieldError>
-                                        {openForm.errors.opening_amount}
+                                        {openForm.errors.opening_amount
+                                            ? t(openForm.errors.opening_amount)
+                                            : null}
                                     </FieldError>
                                 </Field>
                             </FieldGroup>
@@ -184,6 +193,24 @@ export default function Index({
                         </form>
                     )}
                 </div>
+
+                {other_open.length > 0 ? (
+                    <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
+                        <h2 className="mb-4 text-lg font-semibold">
+                            {t('Open caisses on this shop')}
+                        </h2>
+                        <p className="mb-4 text-sm text-muted-foreground">
+                            {t(
+                                'Someone left their till open. Count that drawer, then close it here.',
+                            )}
+                        </p>
+                        <div className="space-y-4">
+                            {other_open.map((row) => (
+                                <OtherOpenCaisse key={row.id} session={row} />
+                            ))}
+                        </div>
+                    </div>
+                ) : null}
 
                 {history.length > 0 ? (
                     <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
@@ -238,5 +265,82 @@ export default function Index({
                 ) : null}
             </div>
         </>
+    );
+}
+
+function OtherOpenCaisse({
+    session,
+}: {
+    session: ShopCashSession & { cashier: string | null; sales_total: string };
+}) {
+    const t = useT();
+    const form = useForm(`close-other-${session.id}`, {
+        closing_amount: '',
+    });
+
+    return (
+        <div className="space-y-3 rounded-md border p-3">
+            <div className="flex flex-wrap items-center gap-2">
+                <Badge>{t('Open')}</Badge>
+                <span className="font-medium">{session.cashier ?? '—'}</span>
+                <span className="text-sm text-muted-foreground">
+                    {t('since :time', { time: session.opened_at ?? '—' })}
+                </span>
+            </div>
+            <dl className="grid gap-3 text-sm md:grid-cols-3">
+                <div>
+                    <dt className="text-muted-foreground">{t('Opening')}</dt>
+                    <dd className="font-medium">
+                        {formatMoney(session.opening_amount)} MAD
+                    </dd>
+                </div>
+                <div>
+                    <dt className="text-muted-foreground">{t('Cash taken')}</dt>
+                    <dd className="font-medium">
+                        {formatMoney(session.sales_total)} MAD
+                    </dd>
+                </div>
+                <div>
+                    <dt className="text-muted-foreground">
+                        {t('Expected in drawer')}
+                    </dt>
+                    <dd className="font-medium">
+                        {formatMoney(session.expected_amount)} MAD
+                    </dd>
+                </div>
+            </dl>
+            <form
+                className="flex flex-wrap items-end gap-3"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    form.post(route('caisse.close', session.id));
+                }}
+            >
+                <Field>
+                    <FieldLabel htmlFor={`closing-other-${session.id}`}>
+                        {t('Counted cash')}
+                    </FieldLabel>
+                    <Input
+                        id={`closing-other-${session.id}`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={form.data.closing_amount}
+                        onChange={(event) =>
+                            form.setData('closing_amount', event.target.value)
+                        }
+                        required
+                    />
+                    <FieldError>
+                        {form.errors.closing_amount
+                            ? t(form.errors.closing_amount)
+                            : null}
+                    </FieldError>
+                </Field>
+                <Button type="submit" disabled={form.processing}>
+                    {t('Close caisse')}
+                </Button>
+            </form>
+        </div>
     );
 }

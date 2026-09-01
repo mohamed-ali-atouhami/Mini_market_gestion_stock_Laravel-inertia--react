@@ -65,7 +65,9 @@ export function LoginForm({
                                         setData('username', e.target.value)
                                     }
                                 />
-                                <FieldError>{errors.username}</FieldError>
+                                <FieldError>
+                                    {errors.username ? t(errors.username) : null}
+                                </FieldError>
                             </Field>
 
                             <Field
@@ -90,7 +92,9 @@ export function LoginForm({
                                         setData('password', e.target.value)
                                     }
                                 />
-                                <FieldError>{errors.password}</FieldError>
+                                <FieldError>
+                                    {errors.password ? t(errors.password) : null}
+                                </FieldError>
                             </Field>
 
                             <Field orientation="horizontal">

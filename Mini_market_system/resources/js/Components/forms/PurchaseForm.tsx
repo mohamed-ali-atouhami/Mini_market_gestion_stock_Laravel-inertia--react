@@ -19,7 +19,7 @@ import {
 import { Input } from '@/Components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { useT } from '@/lib/i18n';
-import { cn, formatInputNumber, formatMoney } from '@/lib/utils';
+import { cn, formatInputNumber, formatMoney, isPieceQuantity } from '@/lib/utils';
 import {
     CategoryOption,
     PurchaseLine,
@@ -178,7 +178,7 @@ export default function PurchaseForm({
         const step = qtyStep(product.unit);
         const nextQty = existing
             ? roundQty(Number(existing.quantity) + step)
-            : 1;
+            : step;
 
         if (existing) {
             form.setData(
@@ -263,6 +263,19 @@ export default function PurchaseForm({
         field: 'quantity' | 'unit_cost',
         value: string,
     ) => {
+        if (
+            field === 'quantity' &&
+            value !== '' &&
+            !isPieceQuantity(
+                form.data.items.find((item) => item.product_id === productId)
+                    ?.unit,
+                Number(value),
+            )
+        ) {
+            toast.error(t('This product is sold by the piece. Use a whole number.'));
+            return;
+        }
+
         form.setData(
             'items',
             form.data.items.map((item) =>
@@ -301,6 +314,15 @@ export default function PurchaseForm({
             if (qtyMissing) {
                 toast.error(t('Enter a quantity for every product.'));
             }
+            return;
+        }
+
+        if (
+            form.data.items.some(
+                (item) => !isPieceQuantity(item.unit, Number(item.quantity)),
+            )
+        ) {
+            toast.error(t('This product is sold by the piece. Use a whole number.'));
             return;
         }
 

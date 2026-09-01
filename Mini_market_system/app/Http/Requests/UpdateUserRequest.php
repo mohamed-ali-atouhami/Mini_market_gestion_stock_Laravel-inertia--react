@@ -54,4 +54,17 @@ class UpdateUserRequest extends FormRequest
             'is_active' => ['required', 'boolean'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Enter the name.',
+            'username.required' => 'Enter the username.',
+            'username.unique' => 'This username is already used.',
+            'role_id.required' => 'Choose a role.',
+        ];
+    }
 }

@@ -16,7 +16,7 @@ import {
     TableRow,
 } from '@/Components/ui/table';
 import { useT } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
+import { cn, isPieceQuantity } from '@/lib/utils';
 import { ShopStockMovement, ShopStockProduct } from '@/types';
 import { useForm } from '@inertiajs/react';
 
@@ -74,6 +74,20 @@ export default function Show({
                         className="space-y-4"
                         onSubmit={(e) => {
                             e.preventDefault();
+
+                            if (
+                                !isPieceQuantity(
+                                    product.unit,
+                                    Number(form.data.quantity),
+                                )
+                            ) {
+                                form.setError(
+                                    'quantity',
+                                    'This product is sold by the piece. Use a whole number.',
+                                );
+                                return;
+                            }
+
                             form.post(route('stock.adjust', product.id), {
                                 preserveScroll: true,
                                 onSuccess: () => form.reset('quantity', 'reason'),
@@ -105,7 +119,9 @@ export default function Show({
                                         </option>
                                     </select>
                                     <FieldError>
-                                        {form.errors.direction}
+                                        {form.errors.direction
+                                            ? t(form.errors.direction)
+                                            : null}
                                     </FieldError>
                                 </Field>
                                 <Field>
@@ -116,7 +132,7 @@ export default function Show({
                                         id="quantity"
                                         type="number"
                                         min="0.001"
-                                        step="0.001"
+                                        step={product.unit === 'kg' ? '0.1' : '1'}
                                         value={form.data.quantity}
                                         onChange={(e) =>
                                             form.setData(
@@ -127,7 +143,9 @@ export default function Show({
                                         required
                                     />
                                     <FieldError>
-                                        {form.errors.quantity}
+                                        {form.errors.quantity
+                                            ? t(form.errors.quantity)
+                                            : null}
                                     </FieldError>
                                 </Field>
                                 <Field>
@@ -146,7 +164,11 @@ export default function Show({
                                         placeholder={t('Broke a bottle')}
                                         required
                                     />
-                                    <FieldError>{form.errors.reason}</FieldError>
+                                    <FieldError>
+                                        {form.errors.reason
+                                            ? t(form.errors.reason)
+                                            : null}
+                                    </FieldError>
                                 </Field>
                             </div>
                         </FieldGroup>

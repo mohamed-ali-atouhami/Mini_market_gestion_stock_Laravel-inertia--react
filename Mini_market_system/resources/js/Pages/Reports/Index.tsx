@@ -157,7 +157,7 @@ export default function Index({
                     rows={sessions.map((row) => [
                         row.opened_at ?? '—',
                         row.cashier ?? '—',
-                        t(row.status),
+                        t(row.status === 'closed' ? 'Closed' : 'Open'),
                         formatMoney(row.opening_amount, currency),
                         formatMoney(row.expected_amount, currency),
                         formatMoney(row.closing_amount, currency),

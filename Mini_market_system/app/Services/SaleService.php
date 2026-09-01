@@ -71,6 +71,12 @@ class SaleService
                     ]);
                 }
 
+                if ($product->unit === Product::UNIT_PIECE && round($quantity, 3) !== round($quantity, 0)) {
+                    throw ValidationException::withMessages([
+                        'items' => 'This product is sold by the piece. Use a whole number.',
+                    ]);
+                }
+
                 $unitPrice = (float) $product->sale_price;
                 $unitCost = (float) $product->cost_price;
                 $total += $quantity * $unitPrice;

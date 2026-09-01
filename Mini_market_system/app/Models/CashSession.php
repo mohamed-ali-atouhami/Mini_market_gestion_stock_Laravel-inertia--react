@@ -64,6 +64,14 @@ class CashSession extends Model
         return $this->hasMany(CreditPayment::class);
     }
 
+    /**
+     * @return HasMany<CustomerReturn, $this>
+     */
+    public function customerReturns(): HasMany
+    {
+        return $this->hasMany(CustomerReturn::class);
+    }
+
     public function cashInDrawer(): float
     {
         $fromSales = $this->sales()
@@ -72,8 +80,9 @@ class CashSession extends Model
             ->sum(fn (Sale $sale) => $sale->drawerAmount());
 
         $fromCredit = (float) $this->creditPayments()->sum('amount');
+        $fromReturns = (float) $this->customerReturns()->sum('cash_delta');
 
-        return round((float) $fromSales + $fromCredit, 2);
+        return round((float) $fromSales + $fromCredit + $fromReturns, 2);
     }
 
     public function isOpen(): bool

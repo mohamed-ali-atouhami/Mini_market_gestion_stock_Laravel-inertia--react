@@ -90,6 +90,7 @@ class StockController extends Controller
                 'barcode' => $product->barcode,
                 'stock_quantity' => Formats::decimal($product->stock_quantity, 3),
                 'min_stock' => Formats::decimal($product->min_stock, 3),
+                'unit' => $product->unit,
                 'is_low_stock' => Setting::current()->low_stock_enabled && $product->isLowStock(),
                 'image_url' => $product->imageUrl(),
             ],
@@ -130,7 +131,7 @@ class StockController extends Controller
             'quantity' => Formats::decimal($movement->quantity, 3),
             'quantity_before' => Formats::decimal($movement->quantity_before, 3),
             'quantity_after' => Formats::decimal($movement->quantity_after, 3),
-            'reason' => $movement->reason,
+            'reason' => $movement->reasonLabel(),
             'user' => $movement->user?->name,
             'created_at' => $movement->created_at?->format('Y-m-d H:i'),
         ];

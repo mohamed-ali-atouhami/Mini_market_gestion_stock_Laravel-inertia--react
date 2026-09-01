@@ -106,4 +106,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(StockMovement::class);
     }
+
+    /**
+     * @return HasMany<CustomerReturn, $this>
+     */
+    public function customerReturns(): HasMany
+    {
+        return $this->hasMany(CustomerReturn::class);
+    }
 }

@@ -30,7 +30,7 @@ const getColumns = (
             options: [
                 { value: 'ALL', label: t('All stock') },
                 { value: 'LOW', label: t('Low stock') },
-                { value: 'OK', label: t('OK') },
+                { value: 'OK', label: t('In stock') },
             ],
         },
     },

@@ -1,6 +1,6 @@
 # Mini_market_system – Development Roadmap
 
-**Last updated:** 28 August 2026 (purchase orders deferred until the owner asks)
+**Last updated:** 30 August 2026 (shop install: XAMPP + shortcut until the app is finished; `.exe` later for many shops)
 
 ---
 
@@ -95,7 +95,7 @@ When Younes is ready: follow `docs/SHOP_PC.md` on his machine. New product featu
 
 **Why not a separate React SPA:** Double the work. Inertia is the sweet spot for a caisse.
 
-**Why not an `.exe` in V1:** NativePHP can wrap this same app later as `MiniMarket.exe`. First we make the web app work locally.
+**Why not an `.exe` in V1:** Finish the till first (XAMPP + **Mini market** shortcut). Wrap as a Windows installer later when we sell to many shops — see §6 Milestone 9.
 
 ---
 
@@ -274,7 +274,7 @@ When Younes is ready: follow `docs/SHOP_PC.md` on his machine. New product featu
 
 ## 5. Post-MVP Milestones (High-Level)
 
-- **Milestone 9:** NativePHP / Windows `.exe` (same app, desktop icon, no Chrome/localhost).
+- **Milestone 9:** NativePHP Windows **installer** `.exe` (after the till is finished — for many shops; not while we still build). See §6.
 - **Milestone 10:** Receipt printer + cash drawer.
 - **Milestone 11:** PostgreSQL + optional online hosting (check stock from a phone).
 - **Milestone 12:** Pack barcode (scan carton = +6) and units of measure extras.
@@ -287,8 +287,13 @@ When Younes is ready: follow `docs/SHOP_PC.md` on his machine. New product featu
 ## 6. Future Enhancements (Skipped from MVP)
 
 ### Windows desktop `.exe` (Milestone 9)
-- **Status:** ⏸️ Skipped for MVP
-- **Reason:** A Laragon shortcut is enough for one shop PC. An `.exe` is the same Laravel app wrapped with PHP + a private browser (NativePHP). Extra work after the shop already uses the app.
+- **Status:** ⏸️ After the app is finished (not while we still build features)
+- **While we code / first shop PC:** Keep the **old way**. Install XAMPP once, copy `Mini_market_system` (with `vendor`, `public/build`, `.env`), run `shop\create-desktop-shortcut.ps1` on **his** PC. Do not copy our desktop `.lnk` (it points at our path). He never installs Node or Git. Details: `docs/SHOP_PC.md`.
+- **When we have many owners (e.g. 100 shops):** The **product** is a NativePHP **installer** `.exe`, not XAMPP on every till. He runs setup once, then double-clicks **Mini market** like any Windows program. PHP and the browser stay inside the app.
+- **Not “paste one file and boom”:** Typical NativePHP is an installer, not a lone USB file. After install it looks like a normal Windows app.
+- **Each shop has its own data.** Do not copy our `database.sqlite` (our sales) onto his till. First open = empty shop or the demo catalog. His sales stay on his PC.
+- **Updates:** New installer. Must **not** wipe his SQLite. Same rule as today: never replace a live `database.sqlite` with ours after real sales exist.
+- **Why wait:** Wrapping now means re-testing POS, scanner, caisse, Arabic, backups. Finish the web till first; then wrap the same app.
 
 ### Online hosting / domain
 - **Status:** ⏸️ Skipped for MVP

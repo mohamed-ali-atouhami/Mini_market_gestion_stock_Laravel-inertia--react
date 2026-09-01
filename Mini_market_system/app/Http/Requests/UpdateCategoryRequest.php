@@ -44,4 +44,15 @@ class UpdateCategoryRequest extends FormRequest
             'is_active' => ['required', 'boolean'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Enter the name.',
+            'name.unique' => 'This name is already used.',
+        ];
+    }
 }

@@ -39,6 +39,22 @@ function interpolatedKey(key: string): { template: string; replace: Replacements
         };
     }
 
+    const replacementFor = /^replacement for (.+)$/.exec(key);
+    if (replacementFor) {
+        return {
+            template: 'replacement for :name',
+            replace: { name: replacementFor[1] },
+        };
+    }
+
+    const throttle = /^Too many login attempts. Try again in (\d+) seconds\.$/.exec(key);
+    if (throttle) {
+        return {
+            template: 'Too many login attempts. Try again in :seconds seconds.',
+            replace: { seconds: throttle[1] },
+        };
+    }
+
     return null;
 }
 

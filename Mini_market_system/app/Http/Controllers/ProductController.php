@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\InsufficientStockException;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Category;
@@ -12,6 +13,7 @@ use App\Services\StockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -109,13 +111,19 @@ class ProductController extends Controller
             $created->syncImage($request->file('image'));
 
             if ($openingStock > 0) {
-                $this->stock->adjust(
-                    $created,
-                    $openingStock,
-                    StockMovement::DIRECTION_IN,
-                    $request->user(),
-                    'Opening stock',
-                );
+                try {
+                    $this->stock->adjust(
+                        $created,
+                        $openingStock,
+                        StockMovement::DIRECTION_IN,
+                        $request->user(),
+                        'Opening stock',
+                    );
+                } catch (InsufficientStockException $exception) {
+                    throw ValidationException::withMessages([
+                        'stock_quantity' => $exception->getMessage(),
+                    ]);
+                }
             }
 
             return $created->refresh();

@@ -28,6 +28,9 @@ class ShopSchemaTest extends TestCase
             'cash_sessions',
             'sales',
             'sale_items',
+            'credit_payments',
+            'customer_returns',
+            'customer_return_items',
             'stock_movements',
             'settings',
         ] as $table) {

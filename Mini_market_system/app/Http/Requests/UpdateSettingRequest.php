@@ -27,4 +27,15 @@ class UpdateSettingRequest extends FormRequest
             'low_stock_enabled' => ['required', 'boolean'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'shop_name.required' => 'Enter the shop name.',
+            'currency.required' => 'Enter the currency.',
+        ];
+    }
 }

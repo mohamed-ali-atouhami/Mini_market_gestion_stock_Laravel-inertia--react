@@ -84,4 +84,22 @@ class StockServiceTest extends TestCase
         $stock->adjust($product, 2, StockMovement::DIRECTION_IN, $user, 'count correction');
         $this->assertSame('11.000', $product->refresh()->stock_quantity);
     }
+
+    public function test_record_return_uses_return_type(): void
+    {
+        $user = User::factory()->cashier()->create();
+        $product = Product::factory()->create(['stock_quantity' => 4]);
+
+        $in = app(StockService::class)->recordReturn(
+            $product,
+            1,
+            $user,
+            StockMovement::DIRECTION_IN,
+            'customer return',
+        );
+
+        $this->assertSame(StockMovement::TYPE_RETURN, $in->type);
+        $this->assertSame(StockMovement::DIRECTION_IN, $in->direction);
+        $this->assertSame('5.000', $product->refresh()->stock_quantity);
+    }
 }

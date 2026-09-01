@@ -63,7 +63,7 @@ export default function SupplierForm({
                         required
                         autoFocus
                     />
-                    <FieldError>{form.errors.name}</FieldError>
+                    <FieldError>{form.errors.name ? t(form.errors.name) : null}</FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="phone">{t('Phone')}</FieldLabel>
@@ -72,7 +72,7 @@ export default function SupplierForm({
                         value={form.data.phone}
                         onChange={(e) => form.setData('phone', e.target.value)}
                     />
-                    <FieldError>{form.errors.phone}</FieldError>
+                    <FieldError>{form.errors.phone ? t(form.errors.phone) : null}</FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="address">{t('Address')}</FieldLabel>
@@ -81,7 +81,7 @@ export default function SupplierForm({
                         value={form.data.address}
                         onChange={(e) => form.setData('address', e.target.value)}
                     />
-                    <FieldError>{form.errors.address}</FieldError>
+                    <FieldError>{form.errors.address ? t(form.errors.address) : null}</FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="notes">{t('Notes')}</FieldLabel>
@@ -90,7 +90,7 @@ export default function SupplierForm({
                         value={form.data.notes}
                         onChange={(e) => form.setData('notes', e.target.value)}
                     />
-                    <FieldError>{form.errors.notes}</FieldError>
+                    <FieldError>{form.errors.notes ? t(form.errors.notes) : null}</FieldError>
                 </Field>
                 <Field orientation="horizontal">
                     <Checkbox
@@ -104,7 +104,7 @@ export default function SupplierForm({
                         {t('Active')}
                     </FieldLabel>
                 </Field>
-                <FieldError>{form.errors.is_active}</FieldError>
+                <FieldError>{form.errors.is_active ? t(form.errors.is_active) : null}</FieldError>
                 <Field>
                     <Button type="submit" disabled={form.processing}>
                         {type === 'create' ? t('Create supplier') : t('Save')}

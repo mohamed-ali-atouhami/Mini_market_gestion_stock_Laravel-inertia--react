@@ -129,7 +129,7 @@ export default function ProductForm({
                         required
                         autoFocus
                     />
-                    <FieldError>{form.errors.name}</FieldError>
+                    <FieldError>{form.errors.name ? t(form.errors.name) : null}</FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="category_id">{t('Category')}</FieldLabel>
@@ -151,7 +151,7 @@ export default function ProductForm({
                             ))
                         )}
                     </select>
-                    <FieldError>{form.errors.category_id}</FieldError>
+                    <FieldError>{form.errors.category_id ? t(form.errors.category_id) : null}</FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="barcode">{t('Barcode')}</FieldLabel>
@@ -165,7 +165,7 @@ export default function ProductForm({
                             'Scan with the USB scanner (it types the code and Enter) or type it by hand.',
                         )}
                     </p>
-                    <FieldError>{form.errors.barcode}</FieldError>
+                    <FieldError>{form.errors.barcode ? t(form.errors.barcode) : null}</FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="image">{t('Photo')}</FieldLabel>
@@ -215,7 +215,7 @@ export default function ProductForm({
                             </FieldLabel>
                         </Field>
                     ) : null}
-                    <FieldError>{form.errors.image}</FieldError>
+                    <FieldError>{form.errors.image ? t(form.errors.image) : null}</FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="cost_price">{t('Cost price (MAD)')}</FieldLabel>
@@ -230,7 +230,7 @@ export default function ProductForm({
                         }
                         required
                     />
-                    <FieldError>{form.errors.cost_price}</FieldError>
+                    <FieldError>{form.errors.cost_price ? t(form.errors.cost_price) : null}</FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="sale_price">{t('Sale price (MAD)')}</FieldLabel>
@@ -245,7 +245,7 @@ export default function ProductForm({
                         }
                         required
                     />
-                    <FieldError>{form.errors.sale_price}</FieldError>
+                    <FieldError>{form.errors.sale_price ? t(form.errors.sale_price) : null}</FieldError>
                 </Field>
                 {!fromPurchases && (
                 <Field>
@@ -270,7 +270,7 @@ export default function ProductForm({
                                   'Stock is updated by purchases and sales, not here.',
                               )}
                     </p>
-                    <FieldError>{form.errors.stock_quantity}</FieldError>
+                    <FieldError>{form.errors.stock_quantity ? t(form.errors.stock_quantity) : null}</FieldError>
                 </Field>
                 )}
                 <Field>
@@ -286,7 +286,7 @@ export default function ProductForm({
                         }
                         required
                     />
-                    <FieldError>{form.errors.min_stock}</FieldError>
+                    <FieldError>{form.errors.min_stock ? t(form.errors.min_stock) : null}</FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="unit">{t('Unit')}</FieldLabel>
@@ -299,7 +299,7 @@ export default function ProductForm({
                         <option value="piece">{t('Piece')}</option>
                         <option value="kg">{t('Kg')}</option>
                     </select>
-                    <FieldError>{form.errors.unit}</FieldError>
+                    <FieldError>{form.errors.unit ? t(form.errors.unit) : null}</FieldError>
                 </Field>
                 <Field orientation="horizontal">
                     <Checkbox
@@ -313,7 +313,7 @@ export default function ProductForm({
                         {t('Active (can be sold)')}
                     </FieldLabel>
                 </Field>
-                <FieldError>{form.errors.is_active}</FieldError>
+                <FieldError>{form.errors.is_active ? t(form.errors.is_active) : null}</FieldError>
                 <Field>
                     <Button type="submit" disabled={form.processing}>
                         {type === 'create' ? t('Create product') : t('Save')}

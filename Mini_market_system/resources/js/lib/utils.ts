@@ -30,3 +30,11 @@ export function formatMoney(
         ? String(value)
         : `${amount.toFixed(2)} ${currency}`;
 }
+
+export function isPieceQuantity(unit: string | undefined, quantity: number): boolean {
+    if (unit !== 'piece') {
+        return true;
+    }
+
+    return Math.round(quantity * 1000) / 1000 === Math.round(quantity);
+}

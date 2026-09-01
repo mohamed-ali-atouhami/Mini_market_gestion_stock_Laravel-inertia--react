@@ -27,7 +27,7 @@ import {
 import { Input } from '@/Components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { useT } from '@/lib/i18n';
-import { cn, formatInputNumber, formatMoney } from '@/lib/utils';
+import { cn, formatInputNumber, formatMoney, isPieceQuantity } from '@/lib/utils';
 import {
     CartLine,
     CategoryOption,
@@ -263,6 +263,11 @@ function Index({
             return;
         }
 
+        if (value !== '' && !isPieceQuantity(line.unit, Number(value))) {
+            toast.error(t('This product is sold by the piece. Use a whole number.'));
+            return;
+        }
+
         if (value !== '' && Number(value) > Number(line.stock_quantity)) {
             toast.error(t('Not enough stock for :name.', { name: line.name }));
             return;
@@ -303,8 +308,18 @@ function Index({
             return;
         }
 
+        if (form.data.items.some((item) => !isPieceQuantity(item.unit, Number(item.quantity)))) {
+            toast.error(t('This product is sold by the piece. Use a whole number.'));
+            return;
+        }
+
         if (method === 'cash' && form.data.amount_paid.trim() === '') {
             toast.error(t('Enter the amount paid.'));
+            return;
+        }
+
+        if (method === 'cash' && paid + 0.001 < total) {
+            toast.error(t('Amount paid is less than the total.'));
             return;
         }
 
@@ -414,6 +429,11 @@ function Index({
 
     const openCredit = () => {
         if (form.data.items.length === 0 || busy || qtyMissing) {
+            return;
+        }
+
+        if (form.data.items.some((item) => !isPieceQuantity(item.unit, Number(item.quantity)))) {
+            toast.error(t('This product is sold by the piece. Use a whole number.'));
             return;
         }
 
@@ -574,14 +594,15 @@ function Index({
                                         amount: formatMoney(remaining),
                                     })}
                                 </>
+                            ) : paid > 0 && change < 0 ? (
+                                t('Need :amount more', {
+                                    amount: formatMoney(remaining),
+                                })
                             ) : paid > 0 ? (
                                 <>
                                     {t('Paid :paid · Change :change', {
                                         paid: paid.toFixed(2),
-                                        change:
-                                            change >= 0
-                                                ? change.toFixed(2)
-                                                : '0.00',
+                                        change: change.toFixed(2),
                                     })}
                                 </>
                             ) : (
@@ -904,6 +925,11 @@ function Index({
                                     form.setData('amount_paid', e.target.value)
                                 }
                             />
+                            <FieldError>
+                                {form.errors.amount_paid
+                                    ? t(form.errors.amount_paid)
+                                    : null}
+                            </FieldError>
                         </Field>
                     </FieldGroup>
                     <DialogFooter>

@@ -132,6 +132,33 @@ class PosSaleTest extends TestCase
         $this->assertDatabaseCount('sales', 0);
     }
 
+    public function test_piece_quantity_must_be_a_whole_number(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $product = Product::factory()->create([
+            'sale_price' => 8,
+            'stock_quantity' => 10,
+            'unit' => Product::UNIT_PIECE,
+        ]);
+
+        $this->actingAs($cashier)
+            ->post(route('caisse.open'), ['opening_amount' => 0]);
+
+        $this->actingAs($cashier)
+            ->from(route('pos.index'))
+            ->post(route('pos.store'), [
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1.5],
+                ],
+                'amount_paid' => 20,
+            ])
+            ->assertRedirect(route('pos.index'))
+            ->assertSessionHasErrors('items');
+
+        $this->assertSame('10.000', $product->refresh()->stock_quantity);
+        $this->assertDatabaseCount('sales', 0);
+    }
+
     public function test_pos_lists_active_products_for_the_grid(): void
     {
         $cashier = User::factory()->cashier()->create();
@@ -296,6 +323,34 @@ class PosSaleTest extends TestCase
         $this->assertSame(CashSession::STATUS_CLOSED, $session->status);
         $this->assertSame('208.00', $session->expected_amount);
         $this->assertSame('1.00', $session->difference);
+    }
+
+    public function test_owner_can_see_and_close_cashier_caisse(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $cashier = User::factory()->cashier()->create();
+
+        $this->actingAs($cashier)
+            ->post(route('caisse.open'), ['opening_amount' => 50]);
+
+        $session = CashSession::query()
+            ->where('user_id', $cashier->id)
+            ->firstOrFail();
+
+        $this->actingAs($owner)
+            ->get(route('caisse.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Caisse/Index')
+                ->has('other_open', 1)
+                ->where('other_open.0.id', $session->id)
+                ->where('other_open.0.cashier', $cashier->name));
+
+        $this->actingAs($owner)
+            ->post(route('caisse.close', $session), ['closing_amount' => 50])
+            ->assertRedirect(route('caisse.index'));
+
+        $this->assertSame(CashSession::STATUS_CLOSED, $session->refresh()->status);
     }
 
     public function test_owner_can_view_sales_list_after_a_sale(): void

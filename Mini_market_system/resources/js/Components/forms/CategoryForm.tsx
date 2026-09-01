@@ -60,7 +60,7 @@ export default function CategoryForm({
                         required
                         autoFocus
                     />
-                    <FieldError>{form.errors.name}</FieldError>
+                    <FieldError>{form.errors.name ? t(form.errors.name) : null}</FieldError>
                 </Field>
                 <Field orientation="horizontal">
                     <Checkbox
@@ -74,7 +74,7 @@ export default function CategoryForm({
                         {t('Active')}
                     </FieldLabel>
                 </Field>
-                <FieldError>{form.errors.is_active}</FieldError>
+                <FieldError>{form.errors.is_active ? t(form.errors.is_active) : null}</FieldError>
                 <Field>
                     <Button type="submit" disabled={form.processing}>
                         {type === 'create' ? t('Create category') : t('Save')}

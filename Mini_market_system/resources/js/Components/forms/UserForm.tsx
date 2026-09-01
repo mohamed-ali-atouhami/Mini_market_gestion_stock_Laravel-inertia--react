@@ -69,7 +69,7 @@ export default function UserForm({
                         required
                         autoFocus
                     />
-                    <FieldError>{form.errors.name}</FieldError>
+                    <FieldError>{form.errors.name ? t(form.errors.name) : null}</FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="username">{t('Username')}</FieldLabel>
@@ -82,7 +82,9 @@ export default function UserForm({
                         required
                         autoComplete="off"
                     />
-                    <FieldError>{form.errors.username}</FieldError>
+                    <FieldError>
+                        {form.errors.username ? t(form.errors.username) : null}
+                    </FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="password">
@@ -100,7 +102,9 @@ export default function UserForm({
                         required={type === 'create'}
                         autoComplete="new-password"
                     />
-                    <FieldError>{form.errors.password}</FieldError>
+                    <FieldError>
+                        {form.errors.password ? t(form.errors.password) : null}
+                    </FieldError>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="password_confirmation">
@@ -120,7 +124,9 @@ export default function UserForm({
                         autoComplete="new-password"
                     />
                     <FieldError>
-                        {form.errors.password_confirmation}
+                        {form.errors.password_confirmation
+                            ? t(form.errors.password_confirmation)
+                            : null}
                     </FieldError>
                 </Field>
                 <Field>
@@ -139,7 +145,9 @@ export default function UserForm({
                             </option>
                         ))}
                     </select>
-                    <FieldError>{form.errors.role_id}</FieldError>
+                    <FieldError>
+                        {form.errors.role_id ? t(form.errors.role_id) : null}
+                    </FieldError>
                 </Field>
                 <Field orientation="horizontal">
                     <Checkbox
@@ -153,7 +161,9 @@ export default function UserForm({
                         {t('Active (can log in)')}
                     </FieldLabel>
                 </Field>
-                <FieldError>{form.errors.is_active}</FieldError>
+                <FieldError>
+                    {form.errors.is_active ? t(form.errors.is_active) : null}
+                </FieldError>
                 <Field>
                     <Button type="submit" disabled={form.processing}>
                         {type === 'create' ? t('Create user') : t('Save')}

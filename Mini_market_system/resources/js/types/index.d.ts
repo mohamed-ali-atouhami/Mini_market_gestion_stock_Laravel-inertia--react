@@ -139,6 +139,17 @@ export type PosProduct = {
     is_active: boolean;
     is_low_stock: boolean;
     image_url: string | null;
+    last_supplier_id?: number | null;
+};
+
+export type ShopWaitingReturn = {
+    id: number;
+    reference: string;
+    returned_product: string | null;
+    returned_quantity: string;
+    supplier: string | null;
+    cashier: string | null;
+    created_at: string | null;
 };
 
 export type CartLine = {
@@ -209,6 +220,7 @@ export type ShopStockProduct = {
     barcode: string | null;
     stock_quantity: string;
     min_stock: string;
+    unit?: string;
     is_low_stock: boolean;
     image_url: string | null;
 };

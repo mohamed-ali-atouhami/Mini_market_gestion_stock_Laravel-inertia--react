@@ -120,7 +120,7 @@ class ReportController extends Controller
                 'type' => $movement->typeLabel(),
                 'direction' => $movement->direction,
                 'quantity' => Formats::decimal($movement->quantity, 3),
-                'reason' => $movement->reason,
+                'reason' => $movement->reasonLabel(),
                 'user' => $movement->user?->name,
                 'created_at' => $movement->created_at?->format('Y-m-d H:i'),
             ])

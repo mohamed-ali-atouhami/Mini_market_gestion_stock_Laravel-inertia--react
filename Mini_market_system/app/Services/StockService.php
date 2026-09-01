@@ -47,6 +47,25 @@ class StockService
         );
     }
 
+    public function recordReturn(
+        Product $product,
+        float|int|string $quantity,
+        User $user,
+        string $direction,
+        string $reason,
+        ?Model $reference = null,
+    ): StockMovement {
+        return $this->move(
+            $product,
+            $quantity,
+            $user,
+            StockMovement::TYPE_RETURN,
+            $direction,
+            $reason,
+            $reference,
+        );
+    }
+
     public function adjust(
         Product $product,
         float|int|string $quantity,
@@ -82,6 +101,13 @@ class StockService
 
         return DB::transaction(function () use ($product, $qty, $user, $type, $direction, $reason, $reference) {
             $locked = Product::query()->lockForUpdate()->findOrFail($product->id);
+
+            if ($locked->unit === Product::UNIT_PIECE && round($qty, 3) !== round($qty, 0)) {
+                throw new InsufficientStockException(
+                    'This product is sold by the piece. Use a whole number.',
+                );
+            }
+
             $before = (float) $locked->stock_quantity;
             $after = $direction === StockMovement::DIRECTION_IN
                 ? $before + $qty

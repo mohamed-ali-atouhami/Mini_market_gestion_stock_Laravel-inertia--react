@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CashSession;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -115,6 +116,32 @@ class UserManagementTest extends TestCase
             ->assertSessionHasErrors('role_id');
 
         $this->assertTrue($owner->refresh()->isOwner());
+    }
+
+    public function test_owner_cannot_disable_cashier_with_open_caisse(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $cashier = User::factory()->cashier()->create();
+
+        $this->actingAs($cashier)
+            ->post(route('caisse.open'), ['opening_amount' => 20]);
+
+        $this->actingAs($owner)
+            ->from(route('users.edit', $cashier))
+            ->patch(route('users.update', $cashier), [
+                'name' => $cashier->name,
+                'username' => $cashier->username,
+                'role_id' => $cashier->role_id,
+                'is_active' => 0,
+            ])
+            ->assertRedirect(route('users.edit', $cashier))
+            ->assertSessionHasErrors('is_active');
+
+        $this->assertTrue($cashier->refresh()->is_active);
+        $this->assertDatabaseHas('cash_sessions', [
+            'user_id' => $cashier->id,
+            'status' => CashSession::STATUS_OPEN,
+        ]);
     }
 
     public function test_cashier_cannot_change_prices_receive_purchases_or_delete_products(): void

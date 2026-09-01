@@ -14,6 +14,8 @@ class StockMovement extends Model
 
     public const TYPE_ADJUSTMENT = 'adjustment';
 
+    public const TYPE_RETURN = 'return';
+
     public const DIRECTION_IN = 'in';
 
     public const DIRECTION_OUT = 'out';
@@ -81,5 +83,32 @@ class StockMovement extends Model
         }
 
         return $this->type;
+    }
+
+    public function reasonLabel(): string
+    {
+        $reason = (string) $this->reason;
+
+        if ($reason !== 'replacement') {
+            return $reason;
+        }
+
+        $this->loadMissing('reference');
+
+        if (! $this->reference instanceof CustomerReturn) {
+            return $reason;
+        }
+
+        $this->reference->loadMissing('items.returnedProduct');
+
+        $item = $this->reference->items->first(
+            fn (CustomerReturnItem $row) => (int) $row->replacement_product_id === (int) $this->product_id,
+        ) ?? $this->reference->items->first();
+
+        $name = $item?->returnedProduct?->name;
+
+        return is_string($name) && $name !== ''
+            ? 'replacement for '.$name
+            : $reason;
     }
 }
