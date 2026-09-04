@@ -59,6 +59,7 @@ type CategoryStock = {
     id: number;
     name: string;
     quantity: string;
+    value: string;
     percent: number;
 };
 
@@ -545,7 +546,9 @@ function CategoryDonut({
     className?: string;
 }) {
     const t = useT();
-    const total = rows.reduce((sum, row) => sum + Number(row.quantity), 0);
+    const { shop } = usePage<PageProps>().props;
+    const currency = shop?.currency ?? 'MAD';
+    const totalValue = rows.reduce((sum, row) => sum + Number(row.value), 0);
     const config: ChartConfig = {
         quantity: { label: t('Stock') },
     };
@@ -561,6 +564,7 @@ function CategoryDonut({
             key,
             name: row.name,
             quantity: Number(row.quantity),
+            value: Number(row.value),
             percent: row.percent,
             color,
             fill: `var(--color-${key})`,
@@ -596,7 +600,7 @@ function CategoryDonut({
                                 />
                                 <Pie
                                     data={data}
-                                    dataKey="quantity"
+                                    dataKey="value"
                                     nameKey="key"
                                     innerRadius={58}
                                     strokeWidth={4}
@@ -620,7 +624,7 @@ function CategoryDonut({
                                                             y={viewBox.cy}
                                                             className="fill-foreground text-2xl font-bold"
                                                         >
-                                                            {total}
+                                                            {totalValue.toFixed(2)}
                                                         </tspan>
                                                         <tspan
                                                             x={viewBox.cx}
@@ -630,7 +634,7 @@ function CategoryDonut({
                                                             }
                                                             className="fill-muted-foreground text-xs"
                                                         >
-                                                            {t('units')}
+                                                            {currency}
                                                         </tspan>
                                                     </text>
                                                 );
@@ -660,7 +664,7 @@ function CategoryDonut({
                                         </span>
                                     </span>
                                     <span className="shrink-0 text-muted-foreground">
-                                        {row.percent}% ({row.quantity})
+                                        {row.percent}% ({formatMoney(row.value, currency)})
                                     </span>
                                 </li>
                             ))}

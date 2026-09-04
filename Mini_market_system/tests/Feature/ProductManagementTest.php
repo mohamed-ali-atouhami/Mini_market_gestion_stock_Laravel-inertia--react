@@ -146,6 +146,32 @@ class ProductManagementTest extends TestCase
         $this->assertSame('10.000', $product->refresh()->stock_quantity);
     }
 
+    public function test_unit_cannot_change_while_stock_remains(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $product = Product::factory()->create([
+            'stock_quantity' => 10,
+            'unit' => Product::UNIT_PIECE,
+        ]);
+
+        $this->actingAs($owner)
+            ->from(route('products.index'))
+            ->patch(route('products.update', $product), [
+                'name' => $product->name,
+                'category_id' => $product->category_id,
+                'barcode' => $product->barcode,
+                'cost_price' => $product->cost_price,
+                'sale_price' => $product->sale_price,
+                'min_stock' => $product->min_stock,
+                'unit' => Product::UNIT_KG,
+                'is_active' => 1,
+            ])
+            ->assertRedirect(route('products.index'))
+            ->assertSessionHasErrors('unit');
+
+        $this->assertSame(Product::UNIT_PIECE, $product->refresh()->unit);
+    }
+
     public function test_owner_can_search_products_by_barcode(): void
     {
         $owner = User::factory()->owner()->create();

@@ -167,7 +167,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * @return list<array{id: int, name: string, quantity: string, percent: int}>
+     * @return list<array{id: int, name: string, quantity: string, value: string, percent: int}>
      */
     private function stockByCategory(): array
     {
@@ -176,23 +176,25 @@ class DashboardController extends Controller
                 'categories.id',
                 'categories.name',
                 DB::raw('SUM(products.stock_quantity) as quantity'),
+                DB::raw('SUM(products.stock_quantity * products.cost_price) as value'),
             ])
             ->join('categories', 'categories.id', '=', 'products.category_id')
             ->where('products.is_active', true)
             ->groupBy('categories.id', 'categories.name')
             ->havingRaw('SUM(products.stock_quantity) > 0')
-            ->orderByDesc('quantity')
+            ->orderByDesc('value')
             ->get();
 
-        $categoryTotal = (float) $categoryRows->sum('quantity');
+        $categoryTotal = (float) $categoryRows->sum('value');
 
         return $categoryRows
             ->map(fn ($row) => [
                 'id' => (int) $row->id,
                 'name' => $row->name,
                 'quantity' => Formats::decimal($row->quantity, 3),
+                'value' => Formats::money($row->value),
                 'percent' => $categoryTotal > 0
-                    ? (int) round(((float) $row->quantity / $categoryTotal) * 100)
+                    ? (int) round(((float) $row->value / $categoryTotal) * 100)
                     : 0,
             ])
             ->all();

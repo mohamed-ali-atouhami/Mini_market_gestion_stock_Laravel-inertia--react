@@ -134,6 +134,9 @@ function CollectForm({ saleId }: { saleId: number }) {
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
+        if (form.processing) {
+            return;
+        }
         form.post(route('credits.pay', saleId), {
             preserveScroll: true,
             errorBag: `credit-${saleId}`,

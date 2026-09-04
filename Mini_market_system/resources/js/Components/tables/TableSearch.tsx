@@ -1,8 +1,15 @@
 import { Search } from 'lucide-react';
 import { useT } from '@/lib/i18n';
 import { updateQuery } from '@/lib/query';
-import { useEffect, useState } from 'react';
+import { usePage } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/Components/ui/input';
+
+function searchFromPageUrl(url: string): string {
+    const query = url.includes('?') ? url.slice(url.indexOf('?') + 1) : '';
+
+    return new URLSearchParams(query).get('search') ?? '';
+}
 
 export default function TableSearch({
     placeholder = 'Search...',
@@ -10,20 +17,28 @@ export default function TableSearch({
     placeholder?: string;
 }) {
     const t = useT();
-    const initial =
-        typeof window === 'undefined'
-            ? ''
-            : new URLSearchParams(window.location.search).get('search') ?? '';
-    const [value, setValue] = useState(initial);
+    const pageUrl = usePage().url;
+    const urlSearch = searchFromPageUrl(pageUrl);
+    const [value, setValue] = useState(urlSearch);
+    const typingRef = useRef(false);
 
     useEffect(() => {
+        if (typingRef.current) {
+            return;
+        }
+
+        setValue(urlSearch);
+    }, [urlSearch]);
+
+    useEffect(() => {
+        typingRef.current = true;
         const timeout = window.setTimeout(() => {
             const current =
                 new URLSearchParams(window.location.search).get('search') ?? '';
-            if (value === current) {
-                return;
+            if (value !== current) {
+                updateQuery({ search: value || null, page: '1' });
             }
-            updateQuery({ search: value || null, page: '1' });
+            typingRef.current = false;
         }, 300);
 
         return () => window.clearTimeout(timeout);

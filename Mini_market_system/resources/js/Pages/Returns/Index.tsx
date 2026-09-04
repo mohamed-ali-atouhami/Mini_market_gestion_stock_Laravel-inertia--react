@@ -96,6 +96,11 @@ export default function Index({
     const [picking, setPicking] = useState<Picking>({ kind: 'returned' });
     const [lines, setLines] = useState<DraftLine[]>([]);
     const [givingId, setGivingId] = useState<number | null>(null);
+    const [submitting, setSubmitting] = useState(false);
+    const pickingRef = useRef(picking);
+    const linesRef = useRef(lines);
+    pickingRef.current = picking;
+    linesRef.current = lines;
 
     const form = useForm({
         amount_paid: '',
@@ -133,7 +138,7 @@ export default function Index({
         cash_session?: string;
     };
     const cashSessionError = extraErrors.cash_session;
-    const busy = form.processing || scanning;
+    const busy = form.processing || scanning || submitting;
     const pickingReplacement =
         picking.kind === 'replacement'
             ? (lines.find((line) => line.key === picking.key) ?? null)
@@ -210,19 +215,28 @@ export default function Index({
     };
 
     const assignReplacement = (product: ReturnProduct, lineKey: string) => {
-        const line = lines.find((row) => row.key === lineKey);
+        const current = linesRef.current;
+        const line = current.find((row) => row.key === lineKey);
+
+        if (!line || line.action !== 'replace') {
+            return;
+        }
+
         const stock = Number(product.stock_quantity);
         const sameSellable =
-            line?.product.id === product.id && line.condition === 'sellable';
-        const coveredByReturn = sellableReturnedIds.has(product.id);
+            line.product.id === product.id && line.condition === 'sellable';
+        const coveredByReturn = current.some(
+            (row) =>
+                row.condition === 'sellable' && row.product.id === product.id,
+        );
 
         if (stock <= 0 && !sameSellable && !coveredByReturn) {
             toast.error(t('Not enough stock for :name.', { name: product.name }));
             return;
         }
 
-        setLines((current) =>
-            current.map((row) =>
+        setLines((rows) =>
+            rows.map((row) =>
                 row.key === lineKey
                     ? {
                           ...row,
@@ -250,6 +264,7 @@ export default function Index({
         }
 
         setScanning(true);
+        const pickingWhenStarted = pickingRef.current;
 
         try {
             const response = await window.axios.get<{ product: ReturnProduct }>(
@@ -264,10 +279,16 @@ export default function Index({
             const product =
                 products.find((row) => row.id === response.data.product.id) ??
                 response.data.product;
+            const pickingNow = pickingRef.current;
 
-            if (picking.kind === 'replacement') {
-                assignReplacement(product, picking.key);
-            } else {
+            if (pickingWhenStarted.kind === 'replacement') {
+                if (
+                    pickingNow.kind === 'replacement' &&
+                    pickingNow.key === pickingWhenStarted.key
+                ) {
+                    assignReplacement(product, pickingNow.key);
+                }
+            } else if (pickingNow.kind === 'returned') {
                 addReturned(product);
             }
 
@@ -427,6 +448,7 @@ export default function Index({
             return;
         }
 
+        setSubmitting(true);
         form.transform(() => ({
             items: lines.map((line) => ({
                 action: line.action,
@@ -444,6 +466,7 @@ export default function Index({
         }));
         form.post(route('returns.store'), {
             onFinish: () => {
+                setSubmitting(false);
                 form.transform((data) => data);
             },
             onSuccess: () => {

@@ -131,10 +131,12 @@ class ReturnService
                     'returned_product_id' => $line['returned']->id,
                     'returned_quantity' => $line['returned_qty'],
                     'returned_unit_price' => $line['returned_price'],
+                    'returned_unit_cost' => $line['returned_cost'],
                     'returned_value' => $line['returned_value'],
                     'replacement_product_id' => $line['replacement']?->id,
                     'replacement_quantity' => $line['replacement_qty'],
                     'replacement_unit_price' => $line['replacement_price'],
+                    'replacement_unit_cost' => $line['replacement_cost'],
                     'replacement_value' => $line['action'] === CustomerReturn::ACTION_REPLACE
                         ? $line['replacement_value']
                         : null,
@@ -228,10 +230,12 @@ class ReturnService
      *     returned: Product,
      *     returned_qty: float,
      *     returned_price: float,
+     *     returned_cost: float,
      *     returned_value: float,
      *     replacement: Product|null,
      *     replacement_qty: float|null,
      *     replacement_price: float|null,
+     *     replacement_cost: float|null,
      *     replacement_value: float,
      *     supplier_id: int|null,
      *     supplier_status: string
@@ -265,11 +269,13 @@ class ReturnService
         $returned = $locked[(int) $item['returned_product_id']];
         $this->assertPieceQuantity($returned, $returnedQty, $field('returned_quantity'));
         $returnedPrice = round((float) $returned->sale_price, 2);
+        $returnedCost = round((float) $returned->cost_price, 2);
         $returnedValue = round($returnedQty * $returnedPrice, 2);
 
         $replacement = null;
         $replacementQty = null;
         $replacementPrice = null;
+        $replacementCost = null;
         $replacementValue = 0.0;
 
         if ($action === CustomerReturn::ACTION_REPLACE) {
@@ -298,6 +304,7 @@ class ReturnService
             $this->assertPieceQuantity($replacement, $replacementQty, $field('replacement_quantity'));
 
             $replacementPrice = round((float) $replacement->sale_price, 2);
+            $replacementCost = round((float) $replacement->cost_price, 2);
             $replacementValue = round($replacementQty * $replacementPrice, 2);
         }
 
@@ -328,10 +335,12 @@ class ReturnService
             'returned' => $returned,
             'returned_qty' => $returnedQty,
             'returned_price' => $returnedPrice,
+            'returned_cost' => $returnedCost,
             'returned_value' => $returnedValue,
             'replacement' => $replacement,
             'replacement_qty' => $replacementQty,
             'replacement_price' => $replacementPrice,
+            'replacement_cost' => $replacementCost,
             'replacement_value' => $replacementValue,
             'supplier_id' => $supplierId,
             'supplier_status' => $supplierStatus,

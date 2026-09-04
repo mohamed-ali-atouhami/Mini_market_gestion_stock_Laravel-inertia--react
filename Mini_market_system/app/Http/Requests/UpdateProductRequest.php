@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Product;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 use Illuminate\Validation\Rule;
 
 class UpdateProductRequest extends FormRequest
@@ -76,5 +77,29 @@ class UpdateProductRequest extends FormRequest
             'image.mimes' => 'The photo must be jpeg, png, or webp.',
             'image.max' => 'The photo is too large.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $product = $this->route('product');
+
+            if (! $product instanceof Product) {
+                return;
+            }
+
+            if ($this->input('unit') === $product->unit) {
+                return;
+            }
+
+            if (round((float) $product->stock_quantity, 3) === 0.0) {
+                return;
+            }
+
+            $validator->errors()->add(
+                'unit',
+                'Clear the stock before changing the unit.',
+            );
+        });
     }
 }

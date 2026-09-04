@@ -23,6 +23,8 @@ class CashSessionService
     {
         try {
             return DB::transaction(function () use ($user, $openingAmount) {
+                User::query()->whereKey($user->id)->lockForUpdate()->first();
+
                 $existing = CashSession::query()
                     ->where('user_id', $user->id)
                     ->where('status', CashSession::STATUS_OPEN)

@@ -1,7 +1,6 @@
 import FlashToasts from '@/Components/FlashToasts';
 import { AppSidebar } from '@/Components/layout/AppSidebar';
 import { HeaderUserMenu } from '@/Components/layout/HeaderUserMenu';
-import { LanguageSwitcher } from '@/Components/layout/LanguageSwitcher';
 import { Badge } from '@/Components/ui/badge';
 import {
     SidebarInset,
@@ -103,7 +102,6 @@ export default function PosLayout({
                             </>
                         ) : null}
                     </div>
-                    <LanguageSwitcher />
                     <HeaderUserMenu user={auth.user} />
                     <div className="hidden items-center gap-1.5 text-sm leading-none text-muted-foreground sm:flex">
                         <Clock className="size-4 shrink-0" />

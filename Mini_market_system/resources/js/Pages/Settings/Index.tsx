@@ -1,3 +1,4 @@
+import { LanguageSwitcher } from '@/Components/layout/LanguageSwitcher';
 import { Button } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
 import {
@@ -159,9 +160,17 @@ export default function Index({
                             </FieldLabel>
                         </Field>
                     </FieldGroup>
-                    <Button type="submit" disabled={form.processing}>
-                        {t('Save')}
-                    </Button>
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">
+                                {t('Language')}
+                            </span>
+                            <LanguageSwitcher />
+                        </div>
+                        <Button type="submit" disabled={form.processing}>
+                            {t('Save')}
+                        </Button>
+                    </div>
                 </form>
             </div>
         </>
