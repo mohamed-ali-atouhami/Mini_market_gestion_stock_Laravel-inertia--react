@@ -24,6 +24,7 @@ const getColumns = (
     {
         header: t('Category'),
         accessor: 'category',
+        className: 'hidden md:table-cell',
         filter: {
             type: 'select',
             paramKey: 'category',
@@ -61,6 +62,7 @@ const getColumns = (
     {
         header: t('Status'),
         accessor: 'status',
+        className: 'hidden md:table-cell',
         filter: {
             type: 'select',
             paramKey: 'status',
@@ -94,7 +96,7 @@ export default function Index({
                     <h1 className="text-3xl font-bold">Products</h1>
                 </div> */}
 
-                <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
+                <div className="min-w-0 rounded-md bg-card p-4 ring-1 ring-foreground/10">
                     <div className="mb-4 flex flex-col items-center justify-between gap-4 md:flex-row">
                         <h2 className="hidden text-lg font-semibold md:block">
                             {t('All Products')}

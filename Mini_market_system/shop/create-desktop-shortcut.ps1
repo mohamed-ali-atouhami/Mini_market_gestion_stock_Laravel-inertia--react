@@ -18,3 +18,4 @@ $shortcut.Save()
 
 Write-Host "Shortcut created: $lnkPath"
 Write-Host "Double-click Mini market on the desktop. It opens http://127.0.0.1:8000"
+Write-Host "Same Wi-Fi phone: start Mini market, then open shop\phone-url.txt"

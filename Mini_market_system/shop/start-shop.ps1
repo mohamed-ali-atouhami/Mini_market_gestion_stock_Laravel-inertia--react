@@ -5,8 +5,10 @@ $ErrorActionPreference = 'Stop'
 
 $appRoot = Split-Path -Parent $PSScriptRoot
 $port = 8000
+$listenHost = '0.0.0.0'
 $url = "http://127.0.0.1:$port"
 $profileDir = Join-Path $env:LOCALAPPDATA 'MiniMarketShop\browser'
+$phoneUrlFile = Join-Path $PSScriptRoot 'phone-url.txt'
 
 Set-Location $appRoot
 
@@ -24,6 +26,23 @@ function Test-ShopPort {
     } catch {
         return $false
     }
+}
+
+function Test-ShopLanListen {
+    $lines = netstat -ano | Select-String ":$port\s+"
+
+    foreach ($line in $lines) {
+        $text = $line.Line
+        if ($text -notmatch 'LISTENING') {
+            continue
+        }
+
+        if ($text -match '0\.0\.0\.0:8000' -or $text -match '\[::\]:8000') {
+            return $true
+        }
+    }
+
+    return $false
 }
 
 function Get-ShopBrowserProcesses {
@@ -53,6 +72,52 @@ function Stop-ShopPhp {
         if ($proc -and $proc.ProcessName -eq 'php') {
             Stop-Process -Id $processId -Force
         }
+    }
+}
+
+function Get-ShopLanIps {
+    Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.IPAddress -and
+            $_.IPAddress -notlike '127.*' -and
+            $_.IPAddress -notlike '169.254.*'
+        } |
+        Select-Object -ExpandProperty IPAddress -Unique
+}
+
+function Write-ShopPhoneUrl {
+    $ips = @(Get-ShopLanIps)
+    $lines = @(
+        'Open one of these on your phone (same Wi-Fi as this PC).',
+        'The PC must stay on, and the Mini market window must stay open.',
+        ''
+    )
+
+    if ($ips.Count -eq 0) {
+        $lines += 'No Wi-Fi address was found. Connect this PC to the shop Wi-Fi, then start Mini market again.'
+    } else {
+        foreach ($ip in $ips) {
+            $lines += "http://${ip}:${port}"
+        }
+    }
+
+    $lines += ''
+    $lines += 'If the phone cannot open the page, right-click shop\enable-phone-access.ps1 and Run with PowerShell as Administrator once.'
+
+    Set-Content -Path $phoneUrlFile -Value $lines -Encoding UTF8
+}
+
+function Ensure-ShopFirewallRule {
+    $name = 'Mini market shop'
+
+    try {
+        if (Get-NetFirewallRule -DisplayName $name -ErrorAction SilentlyContinue) {
+            return
+        }
+
+        New-NetFirewallRule -DisplayName $name -Direction Inbound -Protocol TCP -LocalPort $port -Action Allow -Profile Private,Public | Out-Null
+    } catch {
+        # Not elevated. Windows may prompt when PHP first listens on the LAN.
     }
 }
 
@@ -93,15 +158,22 @@ if (-not $browserExe) {
 
 $alreadyOpen = [bool](Get-ShopBrowserProcesses)
 
-if (-not (Test-ShopPort)) {
+Ensure-ShopFirewallRule
+
+if (-not (Test-ShopPort) -or -not (Test-ShopLanListen)) {
     $php = Get-Command php -ErrorAction SilentlyContinue
     if (-not $php) {
         Show-ShopMessage "PHP was not found. Install XAMPP or Laragon, then try again."
         exit 1
     }
 
+    if (Test-ShopPort) {
+        Stop-ShopPhp
+        Start-Sleep -Milliseconds 400
+    }
+
     Start-Process -FilePath $php.Source -ArgumentList @(
-        'artisan', 'serve', "--host=127.0.0.1", "--port=$port"
+        'artisan', 'serve', "--host=$listenHost", "--port=$port"
     ) -WorkingDirectory $appRoot -WindowStyle Hidden
 
     $ready = $false
@@ -118,6 +190,8 @@ if (-not (Test-ShopPort)) {
         exit 1
     }
 }
+
+Write-ShopPhoneUrl
 
 New-Item -ItemType Directory -Force -Path $profileDir | Out-Null
 

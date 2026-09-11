@@ -17,6 +17,19 @@ You do **not** need `stop-shop.ps1` for a normal day. That command is only a bac
 
 Close the **Mini market window** (the one the shortcut opens). Do not only close some other Chrome tab — the shop uses its own window so your normal browser can stay open.
 
+## From a phone (same home Wi-Fi)
+
+The shop PC and the phone must be on the **same Wi-Fi**. The PC must stay on, and the Mini market window must stay open.
+
+1. Double-click **Mini market** as usual (the till on the PC still opens `http://127.0.0.1:8000`).
+2. Open `Mini_market_system/shop/phone-url.txt` — that file has the address for the phone, like `http://192.168.1.15:8000`.
+3. On the phone, open Chrome and type that full address (not `127.0.0.1`).
+4. Log in as the owner.
+
+The first time Windows may ask if PHP can accept network connections — click **Allow**. If the phone still cannot load the page, right-click `shop\enable-phone-access.ps1` and run it as Administrator once. On this PC the home Wi-Fi may show as a **Public** network; the firewall script allows that so the phone can connect.
+
+This does **not** work away from the house (4G / another Wi-Fi). Leave the shop Wi-Fi and the phone cannot reach the PC.
+
 ## One-time setup on this PC
 
 From `Mini_market_system/`:

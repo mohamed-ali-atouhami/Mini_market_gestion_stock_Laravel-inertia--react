@@ -46,7 +46,9 @@ export function StockTable({
                         {formatQty(product.stock_quantity)}
                     </span>
                 </TableCell>
-                <TableCell>{formatQty(product.min_stock)}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                    {formatQty(product.min_stock)}
+                </TableCell>
                 <TableCell>
                     <ButtonLink
                         variant="outline"
@@ -54,7 +56,9 @@ export function StockTable({
                         className="text-xs font-normal hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground"
                     >
                         <HistoryIcon size={10} />
-                        <span className="ms-2 text-xs">{t('History')}</span>
+                        <span className="ms-2 hidden text-xs sm:inline">
+                            {t('History')}
+                        </span>
                     </ButtonLink>
                 </TableCell>
             </TableRow>

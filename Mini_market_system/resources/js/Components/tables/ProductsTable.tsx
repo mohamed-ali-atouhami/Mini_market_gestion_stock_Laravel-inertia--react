@@ -52,7 +52,7 @@ export function ProductsTable({
                 <TableCell className="hidden md:table-cell">
                     {product.barcode ?? '—'}
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden md:table-cell">
                     <Badge variant="outline">{product.category ?? '—'}</Badge>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
@@ -67,7 +67,7 @@ export function ProductsTable({
                         {formatQty(product.stock_quantity)}
                     </span>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden md:table-cell">
                     <Badge variant={product.is_active ? 'default' : 'secondary'}>
                         {product.is_active ? t('Active') : t('Disabled')}
                     </Badge>

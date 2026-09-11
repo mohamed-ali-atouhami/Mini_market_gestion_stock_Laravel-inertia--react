@@ -255,6 +255,9 @@ export function AppSidebar({
                                             render={
                                                 <Link
                                                     href={route(item.href)}
+                                                    onClick={() =>
+                                                        setOpenMobile(false)
+                                                    }
                                                 />
                                             }
                                         >

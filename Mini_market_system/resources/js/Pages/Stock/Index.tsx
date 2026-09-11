@@ -37,6 +37,7 @@ const getColumns = (
     {
         header: t('Min stock'),
         accessor: 'min_stock',
+        className: 'hidden md:table-cell',
         sortable: true,
     },
     {
@@ -64,7 +65,7 @@ export default function Index({
                     </p>
                 </div>
 
-                <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
+                <div className="min-w-0 rounded-md bg-card p-4 ring-1 ring-foreground/10">
                     <div className="mb-4 flex flex-col items-center justify-between gap-4 md:flex-row">
                         <h2 className="hidden text-lg font-semibold md:block">
                             {t('All products in stock')}

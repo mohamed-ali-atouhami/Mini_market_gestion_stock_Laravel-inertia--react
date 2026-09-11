@@ -46,9 +46,9 @@ export function ProductNameCell({
     thumbClassName?: string;
 }) {
     return (
-        <div className={cn('flex items-center gap-3', className)}>
+        <div className={cn('flex min-w-0 items-center gap-3', className)}>
             <ProductThumb src={src} name={name} className={thumbClassName} />
-            <span className="font-medium">{name || '—'}</span>
+            <span className="min-w-0 font-medium break-words">{name || '—'}</span>
         </div>
     );
 }
