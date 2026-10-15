@@ -43,7 +43,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
                         as="button"
                         className="text-sm text-muted-foreground underline-offset-4 hover:underline"
                     >
-                        {t('Log Out')}
+                        {t('Sign out')}
                     </Link>
                 </div>
             </form>

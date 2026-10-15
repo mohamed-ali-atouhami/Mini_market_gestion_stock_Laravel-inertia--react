@@ -35,7 +35,6 @@ import {
     PackagePlus,
     Receipt,
     ScanLine,
-    ShoppingCart,
     Tags,
     Truck,
     Undo2,
@@ -223,15 +222,14 @@ export function AppSidebar({
                         <SidebarMenuButton
                             size="lg"
                             tooltip={shopName}
-                            className="group-data-[collapsible=icon]:p-2!"
+                            className="h-16 px-0 group-data-[collapsible=icon]:!size-12 group-data-[collapsible=icon]:!p-1"
                             render={<Link href={route('dashboard')} />}
                         >
-                            <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground group-data-[collapsible=icon]:size-4 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:text-current">
-                                <ShoppingCart className="size-4" />
-                            </div>
-                            <span className="truncate font-semibold group-data-[collapsible=icon]:hidden">
-                                {shopName}
-                            </span>
+                            <img
+                                src="/images/logo.png?v=2"
+                                alt={shopName}
+                                className="size-14 shrink-0 object-contain group-data-[collapsible=icon]:size-10"
+                            />
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
@@ -275,11 +273,11 @@ export function AppSidebar({
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton
-                            tooltip={t('Log out')}
+                            tooltip={t('Sign out')}
                             onClick={requestLogout}
                         >
                             <LogOut className="text-red-500" />
-                            <span className="text-red-500">{t('Log out')}</span>
+                            <span className="text-red-500">{t('Sign out')}</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>

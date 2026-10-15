@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\CashSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -16,6 +17,32 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertStatus(200);
+    }
+
+    public function test_remember_me_keeps_a_long_lived_login_cookie(): void
+    {
+        $owner = User::factory()->owner()->create();
+
+        $remembered = $this->post('/login', [
+            'username' => $owner->username,
+            'password' => 'password',
+            'remember' => true,
+        ]);
+
+        $this->assertAuthenticated();
+        $remembered->assertRedirect(route('dashboard', absolute: false));
+        $this->assertTrue($this->responseHasRememberCookie($remembered));
+
+        $this->post('/logout');
+
+        $plain = $this->post('/login', [
+            'username' => $owner->username,
+            'password' => 'password',
+            'remember' => false,
+        ]);
+
+        $this->assertAuthenticated();
+        $this->assertFalse($this->responseHasRememberCookie($plain));
     }
 
     public function test_owner_is_redirected_to_dashboard_after_login(): void
@@ -153,5 +180,19 @@ class AuthenticationTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertGuest();
+    }
+
+    private function responseHasRememberCookie(TestResponse $response): bool
+    {
+        foreach ($response->headers->getCookies() as $cookie) {
+            if (
+                str_starts_with($cookie->getName(), 'remember_')
+                && $cookie->getExpiresTime() > time()
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
