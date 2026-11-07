@@ -80,4 +80,22 @@ class CategoryManagementTest extends TestCase
 
         $this->assertFalse($category->refresh()->is_active);
     }
+
+    public function test_only_twelve_categories_can_show_on_the_till(): void
+    {
+        $owner = User::factory()->owner()->create();
+        Category::factory()->count(12)->create(['show_on_till' => true]);
+
+        $this->actingAs($owner)
+            ->from(route('categories.index'))
+            ->post(route('categories.store'), [
+                'name' => 'One more',
+                'is_active' => 1,
+                'show_on_till' => 1,
+            ])
+            ->assertRedirect(route('categories.index'))
+            ->assertSessionHasErrors('show_on_till');
+
+        $this->assertDatabaseMissing('categories', ['name' => 'One more']);
+    }
 }

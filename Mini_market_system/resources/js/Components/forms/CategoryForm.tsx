@@ -25,6 +25,7 @@ export default function CategoryForm({
     const form = useForm({
         name: data?.name ?? '',
         is_active: data?.is_active ?? true,
+        show_on_till: data?.show_on_till ?? false,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -62,6 +63,24 @@ export default function CategoryForm({
                     />
                     <FieldError>{form.errors.name ? t(form.errors.name) : null}</FieldError>
                 </Field>
+                <Field orientation="horizontal">
+                    <Checkbox
+                        id="show_on_till"
+                        checked={form.data.show_on_till}
+                        onCheckedChange={(checked) =>
+                            form.setData('show_on_till', checked === true)
+                        }
+                    />
+                    <FieldLabel htmlFor="show_on_till" className="font-normal">
+                        {t('Show on till')}
+                    </FieldLabel>
+                </Field>
+                <p className="text-xs text-muted-foreground">
+                    {t('Shows this category as a tab. At most 12 categories.')}
+                </p>
+                <FieldError>
+                    {form.errors.show_on_till ? t(form.errors.show_on_till) : null}
+                </FieldError>
                 <Field orientation="horizontal">
                     <Checkbox
                         id="is_active"

@@ -47,6 +47,7 @@ export function ProductsTable({
                     <ProductNameCell
                         src={product.image_url}
                         name={product.name}
+                        enlarge
                     />
                 </TableCell>
                 <TableCell className="hidden md:table-cell">

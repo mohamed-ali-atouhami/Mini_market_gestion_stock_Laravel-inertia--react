@@ -45,6 +45,7 @@ class CategoryController extends Controller
                 'id' => $category->id,
                 'name' => $category->name,
                 'is_active' => $category->is_active,
+                'show_on_till' => $category->show_on_till,
             ]);
 
         return Inertia::render('Categories/Index', [
@@ -56,6 +57,7 @@ class CategoryController extends Controller
     {
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active', true);
+        $data['show_on_till'] = $request->boolean('show_on_till');
 
         Category::query()->create($data);
 
@@ -68,6 +70,10 @@ class CategoryController extends Controller
     {
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active');
+
+        if ($request->exists('show_on_till')) {
+            $data['show_on_till'] = $request->boolean('show_on_till');
+        }
 
         $category->update($data);
 

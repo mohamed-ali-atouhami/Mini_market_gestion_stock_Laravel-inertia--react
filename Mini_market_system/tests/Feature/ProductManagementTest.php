@@ -121,6 +121,39 @@ class ProductManagementTest extends TestCase
         ]);
     }
 
+    public function test_first_on_till_is_saved_and_can_be_turned_off(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $category = Category::factory()->create();
+
+        $this->actingAs($owner)
+            ->post(route('products.store'), $this->productPayload($category, [
+                'name' => '1 DH',
+                'barcode' => null,
+                'first_on_till' => 1,
+            ]))
+            ->assertRedirect(route('products.index'));
+
+        $product = Product::query()->where('name', '1 DH')->firstOrFail();
+        $this->assertTrue($product->first_on_till);
+
+        $this->actingAs($owner)
+            ->patch(route('products.update', $product), [
+                'name' => $product->name,
+                'category_id' => $product->category_id,
+                'barcode' => $product->barcode,
+                'cost_price' => $product->cost_price,
+                'sale_price' => $product->sale_price,
+                'min_stock' => $product->min_stock,
+                'unit' => $product->unit,
+                'is_active' => 1,
+                'first_on_till' => 0,
+            ])
+            ->assertRedirect(route('products.index'));
+
+        $this->assertFalse($product->refresh()->first_on_till);
+    }
+
     public function test_stock_cannot_be_changed_on_update(): void
     {
         $owner = User::factory()->owner()->create();
@@ -320,6 +353,48 @@ class ProductManagementTest extends TestCase
         $this->assertNotNull($product->image_path);
         Storage::disk('public')->assertExists($product->image_path);
         $this->assertSame('/storage/'.$product->image_path, $product->imageUrl());
+    }
+
+    public function test_owner_can_export_only_the_filtered_category(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $sodas = Category::factory()->create(['name' => 'Sodas']);
+        $water = Category::factory()->create(['name' => 'Water']);
+        Product::factory()->create([
+            'name' => 'Coca-Cola 2L',
+            'barcode' => '0000042105244',
+            'category_id' => $sodas->id,
+            'image_path' => 'products/0000042105244.jpg',
+        ]);
+        Product::factory()->create([
+            'name' => 'Sidi Ali 1.5L',
+            'barcode' => '6111252420999',
+            'category_id' => $water->id,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->get(route('products.export', ['category' => $sodas->id]));
+
+        $response->assertOk();
+        $response->assertHeader(
+            'content-type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        );
+        $body = $response->getContent();
+        $this->assertStringContainsString('Coca-Cola 2L', $body);
+        $this->assertStringContainsString('0000042105244', $body);
+        $this->assertStringContainsString('image_path', $body);
+        $this->assertStringContainsString('products/0000042105244.jpg', $body);
+        $this->assertStringNotContainsString('Sidi Ali 1.5L', $body);
+    }
+
+    public function test_cashier_cannot_export_products(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+
+        $this->actingAs($cashier)
+            ->get(route('products.export'))
+            ->assertForbidden();
     }
 
     /**

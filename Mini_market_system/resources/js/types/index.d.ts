@@ -14,12 +14,14 @@ export type RoleOption = {
 export type CategoryOption = {
     id: number;
     name: string;
+    show_on_till?: boolean;
 };
 
 export type ShopCategory = {
     id: number;
     name: string;
     is_active: boolean;
+    show_on_till: boolean;
 };
 
 export type ShopSupplier = {
@@ -43,6 +45,7 @@ export type ShopProduct = {
     min_stock: string;
     unit: string;
     is_active: boolean;
+    first_on_till: boolean;
     is_low_stock: boolean;
     image_url: string | null;
 };
@@ -121,6 +124,7 @@ export type PurchaseProduct = {
     cost_price: string;
     unit: string;
     is_active: boolean;
+    first_on_till: boolean;
     is_low_stock: boolean;
     stock_quantity: string;
     min_stock: string;
@@ -137,6 +141,7 @@ export type PosProduct = {
     min_stock: string;
     unit: string;
     is_active: boolean;
+    first_on_till: boolean;
     is_low_stock: boolean;
     image_url: string | null;
     last_supplier_id?: number | null;

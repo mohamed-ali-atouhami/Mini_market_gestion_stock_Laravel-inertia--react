@@ -26,6 +26,7 @@ class ProductFactory extends Factory
             'min_stock' => 6,
             'unit' => Product::UNIT_PIECE,
             'is_active' => true,
+            'first_on_till' => false,
         ];
     }
 }

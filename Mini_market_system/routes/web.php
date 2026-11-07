@@ -69,6 +69,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::patch('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
 
         Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+        Route::get('/products/export', [ProductController::class, 'export'])->name('products.export');
         Route::post('/products', [ProductController::class, 'store'])->name('products.store');
         Route::patch('/products/{product}', [ProductController::class, 'update'])->name('products.update');
 

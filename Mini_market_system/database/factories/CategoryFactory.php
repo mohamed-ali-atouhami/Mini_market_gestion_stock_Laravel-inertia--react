@@ -18,6 +18,7 @@ class CategoryFactory extends Factory
         return [
             'name' => fake()->unique()->words(2, true),
             'is_active' => true,
+            'show_on_till' => false,
         ];
     }
 }

@@ -1,3 +1,4 @@
+import BtnExportExcl from '@/Components/Btn_export_excl';
 import FormModal from '@/Components/forms/FormModal';
 import Pagination from '@/Components/tables/Pagination';
 import TableSearch from '@/Components/tables/TableSearch';
@@ -5,6 +6,7 @@ import { TableColumn } from '@/Components/tables/Table';
 import { ProductsTable } from '@/Components/tables/ProductsTable';
 import { useT } from '@/lib/i18n';
 import { CategoryOption, Paginated, ShopProduct } from '@/types';
+import { usePage } from '@inertiajs/react';
 
 const getColumns = (
     t: (key: string, replace?: Record<string, string | number>) => string,
@@ -88,6 +90,10 @@ export default function Index({
     categories: CategoryOption[];
 }) {
     const t = useT();
+    const pageUrl = usePage().url;
+    const query = new URLSearchParams(
+        pageUrl.includes('?') ? pageUrl.slice(pageUrl.indexOf('?') + 1) : '',
+    );
 
     return (
         <>
@@ -103,6 +109,18 @@ export default function Index({
                         </h2>
                         <div className="flex w-full flex-col items-center gap-4 md:w-auto md:flex-row">
                             <TableSearch placeholder={t('Search by name or barcode...')} />
+                            <BtnExportExcl
+                                href={route('products.export')}
+                                label={t('Export Excel')}
+                                params={{
+                                    search: query.get('search') ?? '',
+                                    category: query.get('category') ?? '',
+                                    stock: query.get('stock') ?? '',
+                                    status: query.get('status') ?? '',
+                                    sort: query.get('sort') ?? '',
+                                    order: query.get('order') ?? '',
+                                }}
+                            />
                             <FormModal
                                 table="products"
                                 type="create"

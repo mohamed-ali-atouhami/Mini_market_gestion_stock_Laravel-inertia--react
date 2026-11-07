@@ -198,7 +198,11 @@ class PosSaleTest extends TestCase
     public function test_pos_categories_only_include_active_ones_with_active_products(): void
     {
         $cashier = User::factory()->cashier()->create();
-        $bakery = Category::factory()->create(['name' => 'Bakery']);
+        $bakery = Category::factory()->create([
+            'name' => 'Bakery',
+            'show_on_till' => true,
+        ]);
+        $hidden = Category::factory()->create(['name' => 'Hidden']);
         $empty = Category::factory()->create(['name' => 'Empty']);
         $inactive = Category::factory()->create([
             'name' => 'Old',
@@ -208,6 +212,11 @@ class PosSaleTest extends TestCase
         Product::factory()->create([
             'name' => 'Pain',
             'category_id' => $bakery->id,
+            'stock_quantity' => 1,
+        ]);
+        Product::factory()->create([
+            'name' => 'Secret',
+            'category_id' => $hidden->id,
             'stock_quantity' => 1,
         ]);
         Product::factory()->create([
@@ -260,6 +269,45 @@ class PosSaleTest extends TestCase
             ->get(route('pos.lookup-product', ['product_id' => $flour->id]))
             ->assertOk()
             ->assertJsonPath('product.stock_quantity', '2');
+    }
+
+    public function test_pos_lookup_by_product_ids_returns_every_line_once(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $milk = Product::factory()->create([
+            'name' => 'Lait',
+            'stock_quantity' => 4,
+        ]);
+        $bread = Product::factory()->create([
+            'name' => 'Pain',
+            'stock_quantity' => 6,
+        ]);
+
+        $this->actingAs($cashier)
+            ->post(route('caisse.open'), ['opening_amount' => 0]);
+
+        $this->actingAs($cashier)
+            ->get(route('pos.lookup-product', ['product_ids' => [$milk->id, $bread->id]]))
+            ->assertOk()
+            ->assertJsonCount(2, 'products')
+            ->assertJsonFragment(['id' => $milk->id, 'stock_quantity' => '4'])
+            ->assertJsonFragment(['id' => $bread->id, 'stock_quantity' => '6']);
+    }
+
+    public function test_pos_lookup_by_product_ids_fails_when_one_line_is_inactive(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $milk = Product::factory()->create(['stock_quantity' => 4]);
+        $hidden = Product::factory()->create(['is_active' => false]);
+
+        $this->actingAs($cashier)
+            ->post(route('caisse.open'), ['opening_amount' => 0]);
+
+        $this->actingAs($cashier)
+            ->get(route('pos.lookup-product', [
+                'product_ids' => [$milk->id, $hidden->id],
+            ]))
+            ->assertNotFound();
     }
 
     public function test_inactive_product_is_not_found_on_pos_id_lookup(): void

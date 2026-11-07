@@ -10,8 +10,11 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\StockMovement;
 use App\Services\StockService;
+use App\Support\SimpleXlsx;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -29,47 +32,11 @@ class ProductController extends Controller
     {
         $this->authorize('viewAny', Product::class);
 
-        $search = $request->string('search')->toString();
-        $category = $request->string('category')->toString();
-        $status = $request->string('status')->toString();
-        $stock = $request->string('stock')->toString();
-        $sort = $request->string('sort')->toString();
-        $order = $request->string('order')->toString() === 'desc' ? 'desc' : 'asc';
-
-        $query = Product::query()->with('category');
-
-        if ($search !== '') {
-            $query->where(function ($builder) use ($search) {
-                $builder
-                    ->where('name', 'like', '%'.$search.'%')
-                    ->orWhere('barcode', 'like', '%'.$search.'%');
-            });
-        }
-
-        if ($category !== '' && $category !== 'ALL') {
-            $query->where('category_id', $category);
-        }
-
-        if ($status === 'ACTIVE') {
-            $query->where('is_active', true);
-        } elseif ($status === 'INACTIVE') {
-            $query->where('is_active', false);
-        }
-
-        if ($stock === 'LOW') {
-            $query->whereColumn('stock_quantity', '<=', 'min_stock');
-        } elseif ($stock === 'OK') {
-            $query->whereColumn('stock_quantity', '>', 'min_stock');
-        }
-
-        $sortColumn = in_array($sort, ['name', 'barcode', 'sale_price', 'stock_quantity'], true)
-            ? $sort
-            : 'name';
-
         $lowStockEnabled = Setting::current()->low_stock_enabled;
 
-        $products = $query
-            ->orderBy($sortColumn, $order)
+        $products = $this->filteredProducts($request)
+            ->with('category')
+            ->orderBy($this->sortColumn($request), $this->sortOrder($request))
             ->paginate(self::PER_PAGE)
             ->withQueryString()
             ->through(fn (Product $product) => [
@@ -84,6 +51,7 @@ class ProductController extends Controller
                 'min_stock' => $this->formatDecimal($product->min_stock, 3),
                 'unit' => $product->unit,
                 'is_active' => $product->is_active,
+                'first_on_till' => $product->first_on_till,
                 'is_low_stock' => $lowStockEnabled && $product->isLowStock(),
                 'image_url' => $product->imageUrl(),
             ]);
@@ -94,10 +62,43 @@ class ProductController extends Controller
         ]);
     }
 
+    public function export(Request $request): HttpResponse
+    {
+        $this->authorize('viewAny', Product::class);
+
+        $products = $this->filteredProducts($request)
+            ->with('category')
+            ->orderBy($this->sortColumn($request), $this->sortOrder($request))
+            ->get();
+
+        $rows = $products->map(fn (Product $product) => [
+            $product->name,
+            $product->category?->name,
+            $product->barcode,
+            $this->formatDecimal($product->cost_price, 2),
+            $this->formatDecimal($product->sale_price, 2),
+            $this->formatDecimal($product->stock_quantity, 3),
+            $this->formatDecimal($product->min_stock, 3),
+            $product->unit,
+            $product->image_path,
+        ])->all();
+
+        $file = SimpleXlsx::make(
+            ['Name', 'Category', 'Barcode', 'Cost price', 'Sale price', 'Stock', 'Min stock', 'Unit', 'image_path'],
+            $rows,
+        );
+
+        return response($file, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="products.xlsx"',
+        ]);
+    }
+
     public function store(StoreProductRequest $request): RedirectResponse
     {
         $data = $request->safe()->except(['image', 'remove_image']);
         $data['is_active'] = $request->boolean('is_active', true);
+        $data['first_on_till'] = $request->boolean('first_on_till');
         $openingStock = (float) ($data['stock_quantity'] ?? 0);
         $data['stock_quantity'] = 0;
         $data['unit'] = $data['unit'] ?? Product::UNIT_PIECE;
@@ -155,12 +156,69 @@ class ProductController extends Controller
         $data = $request->safe()->except(['stock_quantity', 'image', 'remove_image']);
         $data['is_active'] = $request->boolean('is_active');
 
+        if ($request->exists('first_on_till')) {
+            $data['first_on_till'] = $request->boolean('first_on_till');
+        }
+
         $product->update($data);
         $product->syncImage($request->file('image'), $request->boolean('remove_image'));
 
         return redirect()
             ->route('products.index')
             ->with('status', 'Product updated.');
+    }
+
+    /**
+     * @return Builder<Product>
+     */
+    private function filteredProducts(Request $request): Builder
+    {
+        $search = $request->string('search')->toString();
+        $category = $request->string('category')->toString();
+        $status = $request->string('status')->toString();
+        $stock = $request->string('stock')->toString();
+
+        $query = Product::query();
+
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder
+                    ->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('barcode', 'like', '%'.$search.'%');
+            });
+        }
+
+        if ($category !== '' && $category !== 'ALL') {
+            $query->where('category_id', $category);
+        }
+
+        if ($status === 'ACTIVE') {
+            $query->where('is_active', true);
+        } elseif ($status === 'INACTIVE') {
+            $query->where('is_active', false);
+        }
+
+        if ($stock === 'LOW') {
+            $query->whereColumn('stock_quantity', '<=', 'min_stock');
+        } elseif ($stock === 'OK') {
+            $query->whereColumn('stock_quantity', '>', 'min_stock');
+        }
+
+        return $query;
+    }
+
+    private function sortColumn(Request $request): string
+    {
+        $sort = $request->string('sort')->toString();
+
+        return in_array($sort, ['name', 'barcode', 'sale_price', 'stock_quantity'], true)
+            ? $sort
+            : 'name';
+    }
+
+    private function sortOrder(Request $request): string
+    {
+        return $request->string('order')->toString() === 'desc' ? 'desc' : 'asc';
     }
 
     /**

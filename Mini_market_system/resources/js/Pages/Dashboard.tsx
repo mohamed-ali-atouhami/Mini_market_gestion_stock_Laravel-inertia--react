@@ -46,7 +46,31 @@ const getWeekConfig = (
         },
     }) satisfies ChartConfig;
 
-const categoryColors = ['#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#94a3b8'];
+const categoryHues = [
+    ['#ef4444', '#dc2626', '#b91c1c'],
+    ['#f97316', '#ea580c', '#c2410c'],
+    ['#f59e0b', '#d97706', '#b45309'],
+    ['#eab308', '#ca8a04', '#a16207'],
+    ['#84cc16', '#65a30d', '#4d7c0f'],
+    ['#22c55e', '#16a34a', '#15803d'],
+    ['#10b981', '#059669', '#047857'],
+    ['#14b8a6', '#0d9488', '#0f766e'],
+    ['#06b6d4', '#0891b2', '#0e7490'],
+    ['#0ea5e9', '#0284c7', '#0369a1'],
+    ['#3b82f6', '#2563eb', '#1d4ed8'],
+    ['#6366f1', '#4f46e5', '#4338ca'],
+    ['#8b5cf6', '#7c3aed', '#6d28d9'],
+    ['#a855f7', '#9333ea', '#7e22ce'],
+    ['#d946ef', '#c026d3', '#a21caf'],
+    ['#ec4899', '#db2777', '#be185d'],
+    ['#f43f5e', '#e11d48', '#be123c'],
+];
+
+const categoryHueOrder = [0, 6, 12, 1, 7, 13, 2, 8, 14, 3, 9, 15, 4, 10, 16, 5, 11];
+
+const categoryColors = [0, 1, 2].flatMap((shade) =>
+    categoryHueOrder.map((hue) => categoryHues[hue][shade]),
+);
 
 type WeekDay = {
     day: string;
@@ -646,7 +670,7 @@ function CategoryDonut({
                                 </Pie>
                             </PieChart>
                         </ChartContainer>
-                        <ul className="w-full space-y-2 text-sm">
+                        <ul className="max-h-[220px] w-full space-y-2 overflow-y-auto pe-1 text-sm">
                             {data.map((row) => (
                                 <li
                                     key={row.key}

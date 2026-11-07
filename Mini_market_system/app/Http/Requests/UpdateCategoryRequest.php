@@ -6,6 +6,7 @@ use App\Models\Category;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateCategoryRequest extends FormRequest
 {
@@ -42,6 +43,7 @@ class UpdateCategoryRequest extends FormRequest
                 Rule::unique('categories', 'name')->ignore($categoryId),
             ],
             'is_active' => ['required', 'boolean'],
+            'show_on_till' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -53,6 +55,24 @@ class UpdateCategoryRequest extends FormRequest
         return [
             'name.required' => 'Enter the name.',
             'name.unique' => 'This name is already used.',
+            'show_on_till' => 'Only 12 categories can show on the till.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $category = $this->route('category');
+            $categoryId = $category instanceof Category ? $category->id : null;
+
+            if (! $this->boolean('show_on_till') || ! Category::tillIsFull($categoryId)) {
+                return;
+            }
+
+            $validator->errors()->add(
+                'show_on_till',
+                'Only 12 categories can show on the till.',
+            );
+        });
     }
 }

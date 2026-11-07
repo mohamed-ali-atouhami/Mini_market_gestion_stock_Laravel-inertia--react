@@ -59,6 +59,7 @@ export default function ProductForm({
         min_stock: formatInputNumber(data?.min_stock) || '0',
         unit: data?.unit ?? 'piece',
         is_active: data?.is_active ?? true,
+        first_on_till: data?.first_on_till ?? false,
         image: null as File | null,
         remove_image: false,
         return_to: returnTo ?? '',
@@ -75,6 +76,7 @@ export default function ProductForm({
             }
 
             payload.is_active = values.is_active ? 1 : 0;
+            payload.first_on_till = values.first_on_till ? 1 : 0;
 
             if (values.remove_image) {
                 payload.remove_image = 1;
@@ -301,6 +303,28 @@ export default function ProductForm({
                     </select>
                     <FieldError>{form.errors.unit ? t(form.errors.unit) : null}</FieldError>
                 </Field>
+                <Field orientation="horizontal">
+                    <Checkbox
+                        id="first_on_till"
+                        checked={form.data.first_on_till}
+                        onCheckedChange={(checked) =>
+                            form.setData('first_on_till', checked === true)
+                        }
+                    />
+                    <FieldLabel htmlFor="first_on_till" className="font-normal">
+                        {t('First on the till')}
+                    </FieldLabel>
+                </Field>
+                <p className="text-xs text-muted-foreground">
+                    {t(
+                        'Shows this product first on All, before the other products with no barcode.',
+                    )}
+                </p>
+                <FieldError>
+                    {form.errors.first_on_till
+                        ? t(form.errors.first_on_till)
+                        : null}
+                </FieldError>
                 <Field orientation="horizontal">
                     <Checkbox
                         id="is_active"

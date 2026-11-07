@@ -27,6 +27,7 @@ import {
 import { Input } from '@/Components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { useT } from '@/lib/i18n';
+import { compareAllTillProducts, compareByName } from '@/lib/tillOrder';
 import { cn, formatInputNumber, formatMoney, isPieceQuantity } from '@/lib/utils';
 import {
     CartLine,
@@ -45,7 +46,7 @@ import {
     Search,
     Trash2,
 } from 'lucide-react';
-import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 const selectClassName =
@@ -69,6 +70,51 @@ function roundQty(value: number): number {
 function qtyStep(unit: string | undefined): number {
     return unit === 'kg' ? 0.1 : 1;
 }
+
+const PosProductCard = memo(function PosProductCard({
+    product,
+    disabled,
+    onPick,
+}: {
+    product: PosProduct;
+    disabled: boolean;
+    onPick: (product: PosProduct) => void;
+}) {
+    const t = useT();
+    const outOfStock = Number(product.stock_quantity) <= 0;
+
+    return (
+        <button
+            type="button"
+            disabled={disabled || outOfStock}
+            onClick={() => onPick(product)}
+            className={cn(
+                'relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-background text-start outline-none transition hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50',
+            )}
+        >
+            <div className="relative">
+                <ProductThumb
+                    src={product.image_url}
+                    name={product.name}
+                    className="h-20 w-full rounded-none object-cover sm:h-24"
+                />
+                {product.is_low_stock && !outOfStock ? (
+                    <StockCornerBadge kind="low" />
+                ) : outOfStock ? (
+                    <StockCornerBadge kind="out" />
+                ) : null}
+            </div>
+            <span className="truncate px-3 pt-2 text-sm font-medium">
+                {product.name}
+            </span>
+            <span className="px-3 pb-3 text-xs text-muted-foreground">
+                {Number(product.sale_price).toFixed(2)} MAD
+                {product.unit === 'kg' ? t(' / kg') : ''}
+                {outOfStock ? ' · ' + t('out of stock') : ''}
+            </span>
+        </button>
+    );
+});
 
 function Index({
     products = [],
@@ -133,13 +179,8 @@ function Index({
     const visibleProducts = useMemo(() => {
         const query = search.trim().toLowerCase();
 
-        return products
-            .filter((product) => {
-                if (tab === 'no-barcode') {
-                    if (product.barcode) {
-                        return false;
-                    }
-                } else if (tab !== 'all' && String(product.category_id) !== tab) {
+        const filtered = products.filter((product) => {
+                if (tab !== 'all' && String(product.category_id) !== tab) {
                     return false;
                 }
 
@@ -151,63 +192,73 @@ function Index({
                     product.name.toLowerCase().includes(query) ||
                     (product.barcode ?? '').toLowerCase().includes(query)
                 );
-            })
-            .slice()
-            .sort((a, b) => {
-                const aOut = Number(a.stock_quantity) <= 0;
-                const bOut = Number(b.stock_quantity) <= 0;
-
-                if (aOut !== bOut) {
-                    return aOut ? 1 : -1;
-                }
-
-                return a.name.localeCompare(b.name);
             });
+
+        if (tab === 'all') {
+            return filtered.slice().sort(compareAllTillProducts);
+        }
+
+        return filtered.slice().sort(compareByName);
     }, [products, search, tab]);
 
     const addProduct = (product: PosProduct) => {
         const stock = Number(product.stock_quantity);
-        const existing = form.data.items.find(
-            (item) => item.product_id === product.id,
-        );
         const step = qtyStep(product.unit);
         const firstQty =
             product.unit === 'kg' ? roundQty(Math.min(1, stock)) : 1;
-        const nextQty = existing
-            ? roundQty(Number(existing.quantity) + step)
-            : firstQty;
 
-        if (nextQty > stock || nextQty < 0.001) {
-            toast.error(t('Not enough stock for :name.', { name: product.name }));
-            return;
-        }
-
-        if (existing) {
-            form.setData(
-                'items',
-                form.data.items.map((item) =>
-                    item.product_id === product.id
-                        ? { ...item, quantity: String(nextQty) }
-                        : item,
-                ),
+        form.setData((data) => {
+            const existing = data.items.find(
+                (item) => item.product_id === product.id,
             );
-            return;
-        }
+            const nextQty = existing
+                ? roundQty(Number(existing.quantity) + step)
+                : firstQty;
 
-        form.setData('items', [
-            ...form.data.items,
-            {
-                product_id: product.id,
-                name: product.name,
-                barcode: product.barcode,
-                quantity: String(nextQty),
-                unit_price: formatInputNumber(product.sale_price) || '0',
-                unit: product.unit,
-                stock_quantity: formatInputNumber(product.stock_quantity) || '0',
-                image_url: product.image_url,
-            },
-        ]);
+            if (nextQty > stock || nextQty < 0.001) {
+                toast.error(
+                    t('Not enough stock for :name.', { name: product.name }),
+                );
+
+                return data;
+            }
+
+            if (existing) {
+                return {
+                    ...data,
+                    items: data.items.map((item) =>
+                        item.product_id === product.id
+                            ? { ...item, quantity: String(nextQty) }
+                            : item,
+                    ),
+                };
+            }
+
+            return {
+                ...data,
+                items: [
+                    ...data.items,
+                    {
+                        product_id: product.id,
+                        name: product.name,
+                        barcode: product.barcode,
+                        quantity: String(nextQty),
+                        unit_price: formatInputNumber(product.sale_price) || '0',
+                        unit: product.unit,
+                        stock_quantity:
+                            formatInputNumber(product.stock_quantity) || '0',
+                        image_url: product.image_url,
+                    },
+                ],
+            };
+        });
     };
+
+    const addProductRef = useRef(addProduct);
+    addProductRef.current = addProduct;
+    const pickProduct = useCallback((product: PosProduct) => {
+        addProductRef.current(product);
+    }, []);
 
     const lookup = async (input: { barcode?: string; productId?: number }) => {
         if (scanning) {
@@ -219,6 +270,18 @@ function Index({
 
         if (productId === undefined && code === '') {
             return;
+        }
+
+        if (productId === undefined) {
+            const loaded = products.find((product) => product.barcode === code);
+
+            if (loaded) {
+                addProduct(loaded);
+                setBarcode('');
+                window.setTimeout(() => barcodeRef.current?.focus(), 50);
+
+                return;
+            }
         }
 
         setScanning(true);
@@ -257,47 +320,86 @@ function Index({
     };
 
     const updateQty = (productId: number, value: string) => {
-        const line = form.data.items.find((item) => item.product_id === productId);
+        form.setData((data) => {
+            const line = data.items.find((item) => item.product_id === productId);
 
-        if (!line) {
-            return;
-        }
+            if (!line) {
+                return data;
+            }
 
-        if (value !== '' && !isPieceQuantity(line.unit, Number(value))) {
-            toast.error(t('This product is sold by the piece. Use a whole number.'));
-            return;
-        }
+            if (value !== '' && !isPieceQuantity(line.unit, Number(value))) {
+                toast.error(
+                    t('This product is sold by the piece. Use a whole number.'),
+                );
 
-        if (value !== '' && Number(value) > Number(line.stock_quantity)) {
-            toast.error(t('Not enough stock for :name.', { name: line.name }));
-            return;
-        }
+                return data;
+            }
 
-        form.setData(
-            'items',
-            form.data.items.map((item) =>
-                item.product_id === productId
-                    ? { ...item, quantity: value }
-                    : item,
-            ),
-        );
+            if (value !== '' && Number(value) > Number(line.stock_quantity)) {
+                toast.error(t('Not enough stock for :name.', { name: line.name }));
+
+                return data;
+            }
+
+            return {
+                ...data,
+                items: data.items.map((item) =>
+                    item.product_id === productId
+                        ? { ...item, quantity: value }
+                        : item,
+                ),
+            };
+        });
     };
 
     const bumpQty = (item: CartLine, direction: 1 | -1) => {
-        const next = roundQty(Number(item.quantity) + direction * qtyStep(item.unit));
+        form.setData((data) => {
+            const line = data.items.find(
+                (row) => row.product_id === item.product_id,
+            );
 
-        if (next < 0.001) {
-            return;
-        }
+            if (!line) {
+                return data;
+            }
 
-        updateQty(item.product_id, String(next));
+            const next = roundQty(
+                Number(line.quantity) + direction * qtyStep(line.unit),
+            );
+
+            if (next < 0.001) {
+                return data;
+            }
+
+            if (!isPieceQuantity(line.unit, next)) {
+                toast.error(
+                    t('This product is sold by the piece. Use a whole number.'),
+                );
+
+                return data;
+            }
+
+            if (next > Number(line.stock_quantity)) {
+                toast.error(t('Not enough stock for :name.', { name: line.name }));
+
+                return data;
+            }
+
+            return {
+                ...data,
+                items: data.items.map((row) =>
+                    row.product_id === item.product_id
+                        ? { ...row, quantity: String(next) }
+                        : row,
+                ),
+            };
+        });
     };
 
     const removeLine = (productId: number) => {
-        form.setData(
-            'items',
-            form.data.items.filter((line) => line.product_id !== productId),
-        );
+        form.setData((data) => ({
+            ...data,
+            items: data.items.filter((line) => line.product_id !== productId),
+        }));
     };
 
     const pay = async (method: 'cash' | 'credit') => {
@@ -326,21 +428,40 @@ function Index({
         setScanning(true);
 
         try {
+            const response = await window.axios.get<{ products: PosProduct[] }>(
+                route('pos.lookup-product'),
+                {
+                    params: {
+                        product_ids: form.data.items.map(
+                            (item) => item.product_id,
+                        ),
+                    },
+                },
+            );
+            const live = new Map(
+                response.data.products.map((product) => [product.id, product]),
+            );
             const nextItems: CartLine[] = [];
 
             for (const item of form.data.items) {
-                const response = await window.axios.get<{ product: PosProduct }>(
-                    route('pos.lookup-product'),
-                    { params: { product_id: item.product_id } },
-                );
-                const product = response.data.product;
+                const product = live.get(item.product_id);
+
+                if (!product) {
+                    toast.error(
+                        t('A product in the cart is no longer available.'),
+                    );
+                    setScanning(false);
+
+                    return;
+                }
+
                 const qty = Number(item.quantity);
 
                 if (qty > Number(product.stock_quantity)) {
                     toast.error(t('Not enough stock for :name.', { name: product.name }));
-                    form.setData(
-                        'items',
-                        form.data.items.map((line) =>
+                    form.setData((data) => ({
+                        ...data,
+                        items: data.items.map((line) =>
                             line.product_id === item.product_id
                                 ? {
                                       ...line,
@@ -354,7 +475,7 @@ function Index({
                                   }
                                 : line,
                         ),
-                    );
+                    }));
                     setScanning(false);
                     return;
                 }
@@ -715,12 +836,6 @@ function Index({
                                             {category.name}
                                         </TabsTrigger>
                                     ))}
-                                    <TabsTrigger
-                                        value="no-barcode"
-                                        className="flex-none px-2"
-                                    >
-                                        {t('No barcode')}
-                                    </TabsTrigger>
                                 </TabsList>
                             </Tabs>
                         </div>
@@ -735,55 +850,14 @@ function Index({
                         </p>
                     ) : (
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                            {visibleProducts.map((product) => {
-                                const outOfStock =
-                                    Number(product.stock_quantity) <= 0;
-
-                                return (
-                                    <button
-                                        key={product.id}
-                                        type="button"
-                                        disabled={busy || outOfStock}
-                                        onClick={() => {
-                                            void lookup({
-                                                productId: product.id,
-                                            });
-                                        }}
-                                        className={cn(
-                                            'relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-background text-start outline-none transition hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50',
-                                        )}
-                                    >
-                                        <div className="relative">
-                                            <ProductThumb
-                                                src={product.image_url}
-                                                name={product.name}
-                                                className="h-20 w-full rounded-none object-cover sm:h-24"
-                                            />
-                                            {product.is_low_stock &&
-                                            !outOfStock ? (
-                                                <StockCornerBadge kind="low" />
-                                            ) : outOfStock ? (
-                                                <StockCornerBadge kind="out" />
-                                            ) : null}
-                                        </div>
-                                        <span className="truncate px-3 pt-2 text-sm font-medium">
-                                            {product.name}
-                                        </span>
-                                        <span className="px-3 pb-3 text-xs text-muted-foreground">
-                                            {Number(product.sale_price).toFixed(
-                                                2,
-                                            )}{' '}
-                                            MAD
-                                            {product.unit === 'kg'
-                                                ? t(' / kg')
-                                                : ''}
-                                            {outOfStock
-                                                ? ' · ' + t('out of stock')
-                                                : ''}
-                                        </span>
-                                    </button>
-                                );
-                            })}
+                            {visibleProducts.map((product) => (
+                                <PosProductCard
+                                    key={product.id}
+                                    product={product}
+                                    disabled={busy}
+                                    onPick={pickProduct}
+                                />
+                            ))}
                         </div>
                     )}
                 </CardContent>

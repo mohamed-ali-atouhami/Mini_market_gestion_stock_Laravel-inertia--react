@@ -239,10 +239,11 @@ class PurchaseController extends Controller
                 ->all(),
             'categories' => Category::query()
                 ->orderBy('name')
-                ->get(['id', 'name'])
+                ->get(['id', 'name', 'show_on_till'])
                 ->map(fn (Category $category) => [
                     'id' => $category->id,
                     'name' => $category->name,
+                    'show_on_till' => $category->show_on_till,
                 ])
                 ->all(),
             'products' => Product::query()
@@ -267,6 +268,7 @@ class PurchaseController extends Controller
             'cost_price' => $this->formatDecimal($product->cost_price, 2),
             'unit' => $product->unit,
             'is_active' => $product->is_active,
+            'first_on_till' => $product->first_on_till,
             'is_low_stock' => $lowStockEnabled && $product->isLowStock(),
             'stock_quantity' => $this->formatDecimal($product->stock_quantity, 3),
             'min_stock' => $this->formatDecimal($product->min_stock, 3),

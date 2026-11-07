@@ -52,6 +52,37 @@ class PosController extends Controller
     {
         $this->authorize('create', Sale::class);
 
+        $rawIds = $request->input('product_ids', []);
+
+        if (is_array($rawIds) && $rawIds !== []) {
+            $ids = array_values(array_unique(array_filter(
+                array_map(static fn ($id) => (int) $id, $rawIds),
+                static fn (int $id) => $id > 0,
+            )));
+
+            if ($ids === []) {
+                return response()->json(['products' => null], 404);
+            }
+
+            $found = Product::query()
+                ->where('is_active', true)
+                ->whereIn('id', $ids)
+                ->get();
+
+            if ($found->count() !== count($ids)) {
+                return response()->json(['products' => null], 404);
+            }
+
+            $lowStockEnabled = Setting::current()->low_stock_enabled;
+
+            return response()->json([
+                'products' => $found
+                    ->map(fn (Product $product) => $this->productPayload($product, $lowStockEnabled))
+                    ->values()
+                    ->all(),
+            ]);
+        }
+
         $productId = $request->integer('product_id');
         $barcode = trim($request->string('barcode')->toString());
 
@@ -100,6 +131,7 @@ class PosController extends Controller
     {
         return Category::query()
             ->where('is_active', true)
+            ->where('show_on_till', true)
             ->whereHas('products', function ($query) {
                 $query->where('is_active', true);
             })
@@ -144,6 +176,7 @@ class PosController extends Controller
             'min_stock' => $this->formatDecimal($product->min_stock, 3),
             'unit' => $product->unit,
             'is_active' => $product->is_active,
+            'first_on_till' => $product->first_on_till,
             'is_low_stock' => $lowStockEnabled && $product->isLowStock(),
             'image_url' => $product->imageUrl(),
         ];

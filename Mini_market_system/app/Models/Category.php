@@ -9,12 +9,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Category extends Model
 {
+    public const TILL_LIMIT = 12;
+
     /** @use HasFactory<CategoryFactory> */
     use HasFactory;
 
     protected $fillable = [
         'name',
         'is_active',
+        'show_on_till',
     ];
 
     /**
@@ -24,7 +27,19 @@ class Category extends Model
     {
         return [
             'is_active' => 'boolean',
+            'show_on_till' => 'boolean',
         ];
+    }
+
+    public static function tillIsFull(?int $exceptId = null): bool
+    {
+        $query = static::query()->where('show_on_till', true);
+
+        if ($exceptId !== null) {
+            $query->whereKeyNot($exceptId);
+        }
+
+        return $query->count() >= self::TILL_LIMIT;
     }
 
     /**

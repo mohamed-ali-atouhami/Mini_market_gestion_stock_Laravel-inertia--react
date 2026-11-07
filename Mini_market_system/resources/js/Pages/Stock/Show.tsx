@@ -33,7 +33,7 @@ export default function Show({
     const t = useT();
     const form = useForm({
         direction: 'out',
-        quantity: '',
+        quantity: '0',
         reason: '',
     });
 
@@ -131,15 +131,16 @@ export default function Show({
                                     <Input
                                         id="quantity"
                                         type="number"
-                                        min="0.001"
-                                        step={product.unit === 'kg' ? '0.1' : '1'}
+                                        min="0"
+                                        step={product.unit === 'kg' ? 'any' : '1'}
                                         value={form.data.quantity}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
                                             form.setData(
                                                 'quantity',
                                                 e.target.value,
-                                            )
-                                        }
+                                            );
+                                            form.clearErrors('quantity');
+                                        }}
                                         required
                                     />
                                     <FieldError>

@@ -25,6 +25,7 @@ import {
 } from '@/Components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { useT } from '@/lib/i18n';
+import { compareAllTillProducts, compareByName } from '@/lib/tillOrder';
 import { cn, formatMoney, isPieceQuantity } from '@/lib/utils';
 import {
     CategoryOption,
@@ -33,7 +34,7 @@ import {
 } from '@/types';
 import { router, useForm } from '@inertiajs/react';
 import axios from 'axios';
-import { ScanLine, Search, Trash2, Undo2 } from 'lucide-react';
+import { Minus, Plus, ScanLine, Search, Trash2, Undo2 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -147,12 +148,8 @@ export default function Index({
     const visibleProducts = useMemo(() => {
         const query = search.trim().toLowerCase();
 
-        return products.filter((product) => {
-            if (tab === 'no-barcode') {
-                if (product.barcode) {
-                    return false;
-                }
-            } else if (tab !== 'all' && String(product.category_id) !== tab) {
+        const filtered = products.filter((product) => {
+            if (tab !== 'all' && String(product.category_id) !== tab) {
                 return false;
             }
 
@@ -165,6 +162,12 @@ export default function Index({
                 (product.barcode ?? '').toLowerCase().includes(query)
             );
         });
+
+        if (tab === 'all') {
+            return filtered.slice().sort(compareAllTillProducts);
+        }
+
+        return filtered.slice().sort(compareByName);
     }, [products, search, tab]);
 
     const sellableReturnedIds = new Set(
@@ -202,7 +205,7 @@ export default function Index({
                 {
                     key: nextKey(),
                     product,
-                    returned_quantity: product.unit === 'kg' ? '0.1' : '1',
+                    returned_quantity: '1',
                     condition: 'sellable',
                     action: 'refund',
                     replacement: null,
@@ -242,13 +245,23 @@ export default function Index({
                           ...row,
                           action: 'replace',
                           replacement: product,
-                          replacement_quantity:
-                              product.unit === 'kg' ? '0.1' : '1',
+                          replacement_quantity: '1',
                       }
                     : row,
             ),
         );
         setPicking({ kind: 'returned' });
+    };
+
+    const pickProduct = (product: ReturnProduct) => {
+        const current = pickingRef.current;
+
+        if (current.kind === 'replacement') {
+            assignReplacement(product, current.key);
+            return;
+        }
+
+        addReturned(product);
     };
 
     const lookup = async (input: { barcode?: string; productId?: number }) => {
@@ -261,6 +274,18 @@ export default function Index({
 
         if (productId === undefined && code === '') {
             return;
+        }
+
+        if (productId === undefined) {
+            const loaded = products.find((product) => product.barcode === code);
+
+            if (loaded) {
+                pickProduct(loaded);
+                setBarcode('');
+                window.setTimeout(() => barcodeRef.current?.focus(), 50);
+
+                return;
+            }
         }
 
         setScanning(true);
@@ -311,6 +336,42 @@ export default function Index({
             setScanning(false);
             window.setTimeout(() => barcodeRef.current?.focus(), 50);
         }
+    };
+
+    const bumpQuantity = (
+        key: string,
+        field: 'returned_quantity' | 'replacement_quantity',
+        direction: 1 | -1,
+    ) => {
+        setLines((current) =>
+            current.map((line) => {
+                if (line.key !== key) {
+                    return line;
+                }
+
+                const unit =
+                    field === 'returned_quantity'
+                        ? line.product.unit
+                        : line.replacement?.unit;
+                const next = roundQty(
+                    Number(line[field]) + direction * qtyStep(unit),
+                );
+
+                if (next < 0.001) {
+                    return line;
+                }
+
+                if (!isPieceQuantity(unit, next)) {
+                    toast.error(
+                        t('This product is sold by the piece. Use a whole number.'),
+                    );
+
+                    return line;
+                }
+
+                return { ...line, [field]: String(next) };
+            }),
+        );
     };
 
     const updateLine = (key: string, patch: Partial<DraftLine>) => {
@@ -581,6 +642,9 @@ export default function Index({
                                             })
                                         }
                                         onUpdate={(patch) => updateLine(line.key, patch)}
+                                        onBump={(field, direction) =>
+                                            bumpQuantity(line.key, field, direction)
+                                        }
                                         onRemove={() => removeLine(line.key)}
                                     />
                                 ))}
@@ -692,12 +756,6 @@ export default function Index({
                                             {category.name}
                                         </TabsTrigger>
                                     ))}
-                                    <TabsTrigger
-                                        value="no-barcode"
-                                        className="flex-none px-2"
-                                    >
-                                        {t('No barcode')}
-                                    </TabsTrigger>
                                 </TabsList>
                             </Tabs>
                         </div>
@@ -738,9 +796,7 @@ export default function Index({
                                             key={product.id}
                                             type="button"
                                             disabled={disabled}
-                                            onClick={() => {
-                                                void lookup({ productId: product.id });
-                                            }}
+                                            onClick={() => pickProduct(product)}
                                             className={cn(
                                                 'relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-background text-start outline-none transition hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50',
                                                 selected && 'border-primary ring-2 ring-primary/30',
@@ -833,6 +889,54 @@ export default function Index({
     );
 }
 
+function QtyStepper({
+    value,
+    unit,
+    disabled,
+    onChange,
+    onBump,
+}: {
+    value: string;
+    unit: string | undefined;
+    disabled: boolean;
+    onChange: (value: string) => void;
+    onBump: (direction: 1 | -1) => void;
+}) {
+    return (
+        <div className="flex items-center rounded-full border">
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="rounded-full"
+                disabled={disabled}
+                onClick={() => onBump(-1)}
+            >
+                <Minus />
+            </Button>
+            <Input
+                className="h-7 w-12 border-0 bg-transparent px-0 text-center shadow-none focus-visible:ring-0"
+                type="number"
+                min="0.001"
+                step={qtyStep(unit)}
+                value={value}
+                disabled={disabled}
+                onChange={(event) => onChange(event.target.value)}
+            />
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="rounded-full"
+                disabled={disabled}
+                onClick={() => onBump(1)}
+            >
+                <Plus />
+            </Button>
+        </div>
+    );
+}
+
 function ReturnLineCard({
     line,
     error,
@@ -841,6 +945,7 @@ function ReturnLineCard({
     disabled,
     onPickReplacement,
     onUpdate,
+    onBump,
     onRemove,
 }: {
     line: DraftLine;
@@ -850,6 +955,10 @@ function ReturnLineCard({
     disabled: boolean;
     onPickReplacement: () => void;
     onUpdate: (patch: Partial<DraftLine>) => void;
+    onBump: (
+        field: 'returned_quantity' | 'replacement_quantity',
+        direction: 1 | -1,
+    ) => void;
     onRemove: () => void;
 }) {
     const t = useT();
@@ -872,15 +981,13 @@ function ReturnLineCard({
                         {line.product.unit === 'kg' ? t(' / kg') : ''}
                     </p>
                 </div>
-                <Input
-                    className="h-8 w-16 text-center"
-                    type="number"
-                    min="0.001"
-                    step={qtyStep(line.product.unit)}
+                <QtyStepper
                     value={line.returned_quantity}
+                    unit={line.product.unit}
                     disabled={disabled}
-                    onChange={(event) =>
-                        onUpdate({ returned_quantity: event.target.value })
+                    onChange={(value) => onUpdate({ returned_quantity: value })}
+                    onBump={(direction) =>
+                        onBump('returned_quantity', direction)
                     }
                 />
                 <Button
@@ -968,17 +1075,15 @@ function ReturnLineCard({
                                     </p>
                                 </div>
                             </button>
-                            <Input
-                                className="h-8 w-16 text-center"
-                                type="number"
-                                min="0.001"
-                                step={qtyStep(line.replacement.unit)}
+                            <QtyStepper
                                 value={line.replacement_quantity}
+                                unit={line.replacement.unit}
                                 disabled={disabled}
-                                onChange={(event) =>
-                                    onUpdate({
-                                        replacement_quantity: event.target.value,
-                                    })
+                                onChange={(value) =>
+                                    onUpdate({ replacement_quantity: value })
+                                }
+                                onBump={(direction) =>
+                                    onBump('replacement_quantity', direction)
                                 }
                             />
                         </>

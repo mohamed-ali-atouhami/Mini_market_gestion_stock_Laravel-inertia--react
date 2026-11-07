@@ -30,6 +30,7 @@ class Product extends Model
         'min_stock',
         'unit',
         'is_active',
+        'first_on_till',
     ];
 
     /**
@@ -43,6 +44,7 @@ class Product extends Model
             'stock_quantity' => 'decimal:3',
             'min_stock' => 'decimal:3',
             'is_active' => 'boolean',
+            'first_on_till' => 'boolean',
         ];
     }
 

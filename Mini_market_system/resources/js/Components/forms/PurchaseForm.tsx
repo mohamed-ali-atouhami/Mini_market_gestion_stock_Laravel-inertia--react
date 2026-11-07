@@ -19,6 +19,7 @@ import {
 import { Input } from '@/Components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { useT } from '@/lib/i18n';
+import { compareAllTillProducts, compareByName } from '@/lib/tillOrder';
 import { cn, formatInputNumber, formatMoney, isPieceQuantity } from '@/lib/utils';
 import {
     CategoryOption,
@@ -131,19 +132,16 @@ export default function PurchaseForm({
     const tillCategories = useMemo(() => {
         const used = new Set(products.map((product) => product.category_id));
 
-        return categories.filter((category) => used.has(category.id));
+        return categories.filter(
+            (category) => used.has(category.id) && category.show_on_till,
+        );
     }, [categories, products]);
 
     const visibleProducts = useMemo(() => {
         const query = search.trim().toLowerCase();
 
-        return products
-            .filter((product) => {
-                if (tab === 'no-barcode') {
-                    if (product.barcode) {
-                        return false;
-                    }
-                } else if (tab !== 'all' && String(product.category_id) !== tab) {
+        const filtered = products.filter((product) => {
+                if (tab !== 'all' && String(product.category_id) !== tab) {
                     return false;
                 }
 
@@ -155,55 +153,53 @@ export default function PurchaseForm({
                     product.name.toLowerCase().includes(query) ||
                     (product.barcode ?? '').toLowerCase().includes(query)
                 );
-            })
-            .slice()
-            .sort((a, b) => {
-                const aOk =
-                    Number(a.stock_quantity) > Number(a.min_stock);
-                const bOk =
-                    Number(b.stock_quantity) > Number(b.min_stock);
-
-                if (aOk !== bOk) {
-                    return aOk ? -1 : 1;
-                }
-
-                return a.name.localeCompare(b.name);
             });
+
+        if (tab === 'all') {
+            return filtered.slice().sort(compareAllTillProducts);
+        }
+
+        return filtered.slice().sort(compareByName);
     }, [products, search, tab]);
 
     const addProduct = (product: PurchaseProduct | ScannedProduct) => {
-        const existing = form.data.items.find(
-            (item) => item.product_id === product.id,
-        );
         const step = qtyStep(product.unit);
-        const nextQty = existing
-            ? roundQty(Number(existing.quantity) + step)
-            : step;
 
-        if (existing) {
-            form.setData(
-                'items',
-                form.data.items.map((item) =>
-                    item.product_id === product.id
-                        ? { ...item, quantity: String(nextQty) }
-                        : item,
-                ),
+        form.setData((data) => {
+            const existing = data.items.find(
+                (item) => item.product_id === product.id,
             );
-            return;
-        }
+            const nextQty = existing
+                ? roundQty(Number(existing.quantity) + step)
+                : 1;
 
-        form.setData('items', [
-            ...form.data.items,
-            {
-                product_id: product.id,
-                name: product.name,
-                barcode: product.barcode,
-                quantity: String(nextQty),
-                unit_cost: formatInputNumber(product.cost_price) || '0',
-                unit: product.unit,
-                image_url: product.image_url ?? null,
-            },
-        ]);
+            if (existing) {
+                return {
+                    ...data,
+                    items: data.items.map((item) =>
+                        item.product_id === product.id
+                            ? { ...item, quantity: String(nextQty) }
+                            : item,
+                    ),
+                };
+            }
+
+            return {
+                ...data,
+                items: [
+                    ...data.items,
+                    {
+                        product_id: product.id,
+                        name: product.name,
+                        barcode: product.barcode,
+                        quantity: String(nextQty),
+                        unit_cost: formatInputNumber(product.cost_price) || '0',
+                        unit: product.unit,
+                        image_url: product.image_url ?? null,
+                    },
+                ],
+            };
+        });
     };
 
     const lookup = async (input: { barcode?: string; productId?: number }) => {
@@ -216,6 +212,18 @@ export default function PurchaseForm({
 
         if (productId === undefined && code === '') {
             return;
+        }
+
+        if (productId === undefined) {
+            const loaded = products.find((product) => product.barcode === code);
+
+            if (loaded) {
+                addProduct(loaded);
+                setBarcode('');
+                window.setTimeout(() => barcodeRef.current?.focus(), 50);
+
+                return;
+            }
         }
 
         setScanning(true);
@@ -287,22 +295,47 @@ export default function PurchaseForm({
     };
 
     const bumpQty = (item: PurchaseLine, direction: 1 | -1) => {
-        const next = roundQty(
-            Number(item.quantity) + direction * qtyStep(item.unit),
-        );
+        form.setData((data) => {
+            const line = data.items.find(
+                (row) => row.product_id === item.product_id,
+            );
 
-        if (next < 0.001) {
-            return;
-        }
+            if (!line) {
+                return data;
+            }
 
-        updateLine(item.product_id, 'quantity', String(next));
+            const next = roundQty(
+                Number(line.quantity) + direction * qtyStep(line.unit),
+            );
+
+            if (next < 0.001) {
+                return data;
+            }
+
+            if (!isPieceQuantity(line.unit, next)) {
+                toast.error(
+                    t('This product is sold by the piece. Use a whole number.'),
+                );
+
+                return data;
+            }
+
+            return {
+                ...data,
+                items: data.items.map((row) =>
+                    row.product_id === item.product_id
+                        ? { ...row, quantity: String(next) }
+                        : row,
+                ),
+            };
+        });
     };
 
     const removeLine = (productId: number) => {
-        form.setData(
-            'items',
-            form.data.items.filter((item) => item.product_id !== productId),
-        );
+        form.setData((data) => ({
+            ...data,
+            items: data.items.filter((item) => item.product_id !== productId),
+        }));
     };
 
     const clearLines = () => {
@@ -686,12 +719,6 @@ export default function PurchaseForm({
                                                 {category.name}
                                             </TabsTrigger>
                                         ))}
-                                        <TabsTrigger
-                                            value="no-barcode"
-                                            className="flex-none px-2"
-                                        >
-                                            {t('No barcode')}
-                                        </TabsTrigger>
                                     </TabsList>
                                 </Tabs>
                             </div>
@@ -715,11 +742,7 @@ export default function PurchaseForm({
                                         key={product.id}
                                         type="button"
                                         disabled={busy}
-                                        onClick={() => {
-                                            void lookup({
-                                                productId: product.id,
-                                            });
-                                        }}
+                                        onClick={() => addProduct(product)}
                                         className={cn(
                                             'relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-background text-start outline-none transition hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50',
                                         )}

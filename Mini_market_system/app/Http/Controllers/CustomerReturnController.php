@@ -144,6 +144,7 @@ class CustomerReturnController extends Controller
             'min_stock' => Formats::decimal($product->min_stock, 3),
             'unit' => $product->unit,
             'is_active' => $product->is_active,
+            'first_on_till' => $product->first_on_till,
             'is_low_stock' => $lowStockEnabled && $product->isLowStock(),
             'image_url' => $product->imageUrl(),
         ];
@@ -156,6 +157,7 @@ class CustomerReturnController extends Controller
     {
         return Category::query()
             ->where('is_active', true)
+            ->where('show_on_till', true)
             ->whereHas('products', function ($query) {
                 $query->where('is_active', true);
             })

@@ -55,6 +55,7 @@ class UpdateProductRequest extends FormRequest
             'min_stock' => ['required', 'numeric', 'min:0'],
             'unit' => ['required', 'string', Rule::in([Product::UNIT_PIECE, Product::UNIT_KG])],
             'is_active' => ['required', 'boolean'],
+            'first_on_till' => ['sometimes', 'boolean'],
             'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
             'remove_image' => ['sometimes', 'boolean'],
         ];

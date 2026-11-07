@@ -6,6 +6,7 @@ use App\Models\Category;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreCategoryRequest extends FormRequest
 {
@@ -31,6 +32,7 @@ class StoreCategoryRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('categories', 'name')],
             'is_active' => ['sometimes', 'boolean'],
+            'show_on_till' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -42,6 +44,21 @@ class StoreCategoryRequest extends FormRequest
         return [
             'name.required' => 'Enter the name.',
             'name.unique' => 'This name is already used.',
+            'show_on_till' => 'Only 12 categories can show on the till.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            if (! $this->boolean('show_on_till') || ! Category::tillIsFull()) {
+                return;
+            }
+
+            $validator->errors()->add(
+                'show_on_till',
+                'Only 12 categories can show on the till.',
+            );
+        });
     }
 }
