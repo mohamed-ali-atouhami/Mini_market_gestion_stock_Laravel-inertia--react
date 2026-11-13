@@ -42,7 +42,7 @@ function useClock(): string {
 export default function PosLayout({
     children,
     till = 'pos',
-}: PropsWithChildren<{ till?: 'pos' | 'delivery' }>) {
+}: PropsWithChildren<{ till?: 'pos' | 'delivery' | 'returns' }>) {
     const { auth, shop, purchase, cashSession } = usePage<
         PageProps & { purchase?: ShopPurchase }
     >().props;
@@ -53,6 +53,12 @@ export default function PosLayout({
     const deliveryHeading = purchase?.reference
         ? t('Draft :reference', { reference: purchase.reference })
         : t('New delivery');
+    const heading =
+        till === 'returns'
+            ? t('Returns')
+            : isDelivery
+              ? deliveryHeading
+              : t('POS');
 
     if (!auth.user) {
         return null;
@@ -65,7 +71,7 @@ export default function PosLayout({
             defaultOpen={false}
             className="min-h-svh lg:h-svh lg:min-h-0 lg:overflow-hidden"
         >
-            <Head title={isDelivery ? deliveryHeading : t('POS')} />
+            <Head title={heading} />
             <FlashToasts />
             <AppSidebar collapsible="offcanvas" />
             <SidebarInset className="min-h-0 bg-muted/40 lg:overflow-hidden">
@@ -74,20 +80,15 @@ export default function PosLayout({
                         <TextAlignStart className="size-4" />
                     </SidebarTrigger>
                     <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-                        <ShoppingCartIcon
-                            className="size-4 text-muted-foreground"
-                        />
+                        <ShoppingCartIcon className="size-4 text-muted-foreground" />
                         <span className="truncate text-sm font-semibold">
                             {shop?.name || 'Mini market'}
                         </span>
-                        {isDelivery ? (
-                            <>
-                                <span className="text-muted-foreground">|</span>
-                                <span className="truncate text-sm text-muted-foreground">
-                                    {deliveryHeading}
-                                </span>
-                            </>
-                        ) : cashSession ? (
+                        <span className="text-muted-foreground">|</span>
+                        <span className="truncate text-sm text-muted-foreground">
+                            {heading}
+                        </span>
+                        {cashSession && !isDelivery ? (
                             <>
                                 <Badge
                                     variant="default"

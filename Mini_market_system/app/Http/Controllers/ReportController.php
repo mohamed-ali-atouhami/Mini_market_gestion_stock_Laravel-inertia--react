@@ -9,10 +9,14 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\Setting;
 use App\Models\StockMovement;
 use App\Support\Formats;
+use App\Support\SimplePdf;
+use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,27 +38,8 @@ class ReportController extends Controller
 
     public function index(Request $request): Response
     {
-        $from = $request->date('from')?->toDateString() ?? now()->startOfMonth()->toDateString();
-        $to = $request->date('to')?->toDateString() ?? now()->toDateString();
-
-        if ($from > $to) {
-            [$from, $to] = [$to, $from];
-        }
-
-        $salesQuery = Sale::query()
-            ->where('status', Sale::STATUS_COMPLETED)
-            ->whereDate('created_at', '>=', $from)
-            ->whereDate('created_at', '<=', $to);
-
-        $salesTotal = (float) (clone $salesQuery)->sum('total');
-        $ticketCount = (clone $salesQuery)->count();
-        $profit = $this->profitForPeriod($from, $to);
-
-        $purchasesTotal = (float) Purchase::query()
-            ->where('status', Purchase::STATUS_RECEIVED)
-            ->whereDate('purchase_date', '>=', $from)
-            ->whereDate('purchase_date', '<=', $to)
-            ->sum('total');
+        [$from, $to] = $this->range($request);
+        $summary = $this->summary($from, $to);
 
         return Inertia::render('Reports/Index', [
             'filters' => [
@@ -62,10 +47,10 @@ class ReportController extends Controller
                 'to' => $to,
             ],
             'summary' => [
-                'sales_total' => Formats::money($salesTotal),
-                'ticket_count' => $ticketCount,
-                'profit' => Formats::money($profit),
-                'purchases_total' => Formats::money($purchasesTotal),
+                'sales_total' => Formats::money($summary['sales_total']),
+                'ticket_count' => $summary['ticket_count'],
+                'profit' => Formats::money($summary['profit']),
+                'purchases_total' => Formats::money($summary['purchases_total']),
             ],
             'sales_by_day' => $this->salesByDay($from, $to),
             'top_products' => $this->topProducts($from, $to, 10),
@@ -74,6 +59,173 @@ class ReportController extends Controller
             'sessions' => $this->sessions($from, $to),
             'movements' => $this->movements($from, $to),
         ]);
+    }
+
+    public function pdf(Request $request): HttpResponse
+    {
+        [$from, $to] = $this->range($request);
+        $summary = $this->summary($from, $to);
+        $shop = Setting::current();
+        $shopName = trim((string) $shop->shop_name) !== '' ? $shop->shop_name : 'Mini market';
+        $currency = trim((string) $shop->currency) !== '' ? $shop->currency : 'MAD';
+        $days = $this->salesByDay($from, $to);
+        $soldDays = array_values(array_filter(
+            $days,
+            fn (array $day): bool => $day['tickets'] > 0,
+        ));
+
+        $pdf = new SimplePdf($shopName);
+        $pdf->title($shopName);
+        $pdf->subtitle('Report');
+        $pdf->subtitle($this->periodLabel($from, $to));
+        $pdf->metrics([
+            ['label' => 'Sales', 'value' => $this->pdfMoney($summary['sales_total'], $currency)],
+            ['label' => 'Tickets', 'value' => (string) $summary['ticket_count']],
+            [
+                'label' => 'Profit',
+                'value' => $this->pdfMoney($summary['profit'], $currency),
+                'color' => $summary['profit'] < 0 ? '0.75 0.15 0.15' : '0.09 0.45 0.20',
+            ],
+            ['label' => 'Purchases', 'value' => $this->pdfMoney($summary['purchases_total'], $currency)],
+        ]);
+
+        $pdf->heading('Sales by day');
+
+        if ($soldDays === []) {
+            $pdf->paragraph('No sales in this period.');
+        } else {
+            if (count($days) <= 16) {
+                $pdf->bars(array_map(fn (array $day): array => [
+                    'label' => count($days) <= 7 ? $day['weekday'] : $day['date_label'],
+                    'value' => $day['total'],
+                ], $days));
+            }
+
+            $pdf->table(
+                ['Date', 'Tickets', 'Sales'],
+                array_map(fn (array $day): array => [
+                    $day['day'],
+                    (string) $day['tickets'],
+                    $this->pdfMoney($day['total'], $currency),
+                ], $soldDays),
+                [0.4, 0.2, 0.4],
+            );
+        }
+
+        $pdf->heading('Top products');
+        $products = $this->topProducts($from, $to, 10);
+
+        if ($products === []) {
+            $pdf->paragraph('No products sold in this period.');
+        } else {
+            $pdf->table(
+                ['Product', 'Qty', 'Sales'],
+                array_map(fn (array $product): array => [
+                    $product['name'],
+                    $product['quantity'],
+                    $product['total'].' '.$currency,
+                ], $products),
+                [0.56, 0.14, 0.3],
+            );
+        }
+
+        $pdf->heading('Purchases');
+        $suppliers = $this->purchasesBySupplier($from, $to);
+
+        if ($suppliers === []) {
+            $pdf->paragraph('No purchases in this period.');
+        } else {
+            $pdf->table(
+                ['Supplier', 'Deliveries', 'Total'],
+                array_map(fn (array $supplier): array => [
+                    $supplier['name'],
+                    (string) $supplier['deliveries'],
+                    $supplier['total'].' '.$currency,
+                ], $suppliers),
+                [0.5, 0.2, 0.3],
+            );
+        }
+
+        $pdf->heading('Caisse');
+        $sessions = $this->sessions($from, $to);
+
+        if ($sessions === []) {
+            $pdf->paragraph('No caisse sessions in this period.');
+        } else {
+            $pdf->table(
+                ['Cashier', 'Opened', 'Status', 'Difference'],
+                array_map(fn (array $session): array => [
+                    (string) ($session['cashier'] ?? ''),
+                    (string) ($session['opened_at'] ?? ''),
+                    (string) $session['status'],
+                    $session['difference'] ?? '-',
+                ], $sessions),
+                [0.28, 0.34, 0.16, 0.22],
+            );
+
+            if (count($sessions) === 50) {
+                $pdf->paragraph('Latest 50 caisse sessions in this period.');
+            }
+        }
+
+        $name = $from === $to
+            ? 'report-'.$from.'.pdf'
+            : 'report-'.$from.'-to-'.$to.'.pdf';
+
+        return response($pdf->render(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$name.'"',
+        ]);
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function range(Request $request): array
+    {
+        $from = $request->date('from')?->toDateString() ?? now()->startOfMonth()->toDateString();
+        $to = $request->date('to')?->toDateString() ?? now()->toDateString();
+
+        if ($from > $to) {
+            [$from, $to] = [$to, $from];
+        }
+
+        return [$from, $to];
+    }
+
+    /**
+     * @return array{sales_total: float, ticket_count: int, profit: float, purchases_total: float}
+     */
+    private function summary(string $from, string $to): array
+    {
+        $salesQuery = Sale::query()
+            ->where('status', Sale::STATUS_COMPLETED)
+            ->whereDate('created_at', '>=', $from)
+            ->whereDate('created_at', '<=', $to);
+
+        return [
+            'sales_total' => (float) (clone $salesQuery)->sum('total'),
+            'ticket_count' => (clone $salesQuery)->count(),
+            'profit' => $this->profitForPeriod($from, $to),
+            'purchases_total' => (float) Purchase::query()
+                ->where('status', Purchase::STATUS_RECEIVED)
+                ->whereDate('purchase_date', '>=', $from)
+                ->whereDate('purchase_date', '<=', $to)
+                ->sum('total'),
+        ];
+    }
+
+    private function periodLabel(string $from, string $to): string
+    {
+        $start = Carbon::parse($from)->format('j M Y');
+        $end = Carbon::parse($to)->format('j M Y');
+
+        return $from === $to ? $start : $start.' - '.$end;
+    }
+
+    private function pdfMoney(float $amount, string $currency): string
+    {
+        return number_format($amount, 2, '.', ',').' '.$currency;
     }
 
     private function profitForPeriod(string $from, string $to): float

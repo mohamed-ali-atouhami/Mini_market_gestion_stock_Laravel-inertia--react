@@ -23,8 +23,7 @@ class CustomerReturnController extends Controller
     public function __construct(
         private ReturnService $returns,
         private CashSessionService $sessions,
-    ) {
-    }
+    ) {}
 
     public function index(): Response|RedirectResponse
     {
@@ -85,7 +84,9 @@ class CustomerReturnController extends Controller
             ->orderBy('name')
             ->get();
 
-        $lastSuppliers = $this->lastSupplierIds($products->pluck('id')->all());
+        $productIds = $products->pluck('id')->all();
+        $lastSuppliers = $this->lastSupplierIds($productIds);
+        $returnable = $this->returns->returnableByProduct($productIds);
 
         return $products
             ->sortBy(fn (Product $product) => ((float) $product->stock_quantity > 0 ? '0' : '1')
@@ -94,6 +95,7 @@ class CustomerReturnController extends Controller
             ->map(fn (Product $product) => [
                 ...$this->productPayload($product, $lowStockEnabled),
                 'last_supplier_id' => $lastSuppliers[$product->id] ?? null,
+                'returnable_quantity' => Formats::decimal($returnable[$product->id] ?? 0, 3),
             ])
             ->all();
     }

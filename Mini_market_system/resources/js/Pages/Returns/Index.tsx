@@ -24,6 +24,7 @@ import {
     TableRow,
 } from '@/Components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
+import PosLayout from '@/Layouts/PosLayout';
 import { useT } from '@/lib/i18n';
 import { compareAllTillProducts, compareByName } from '@/lib/tillOrder';
 import { cn, formatMoney, isPieceQuantity } from '@/lib/utils';
@@ -35,7 +36,7 @@ import {
 import { router, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { Minus, Plus, ScanLine, Search, Trash2, Undo2 } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 const selectClassName =
@@ -43,6 +44,7 @@ const selectClassName =
 
 type ReturnProduct = PosProduct & {
     last_supplier_id?: number | null;
+    returnable_quantity?: string;
 };
 
 type Picking =
@@ -70,6 +72,30 @@ function qtyStep(unit: string | undefined): number {
 
 function money(value: number): number {
     return Math.round(value * 100) / 100;
+}
+
+function returnableQuantity(product: ReturnProduct): number {
+    return Number(product.returnable_quantity ?? 0);
+}
+
+function quantityOnTicket(
+    lines: DraftLine[],
+    productId: number,
+    exceptKey?: string,
+): number {
+    return roundQty(
+        lines.reduce((sum, line) => {
+            if (line.product.id !== productId || line.key === exceptKey) {
+                return sum;
+            }
+
+            return sum + (Number(line.returned_quantity) || 0);
+        }, 0),
+    );
+}
+
+function quantityLabel(value: number): string {
+    return String(roundQty(value));
 }
 
 function nextKey(): string {
@@ -145,10 +171,33 @@ export default function Index({
             ? (lines.find((line) => line.key === picking.key) ?? null)
             : null;
 
+    const catalog = useMemo(() => {
+        if (picking.kind === 'replacement') {
+            return products;
+        }
+
+        return products.filter((product) => returnableQuantity(product) > 0);
+    }, [picking.kind, products]);
+
+    const visibleCategories = useMemo(() => {
+        const ids = new Set(catalog.map((product) => product.category_id));
+
+        return categories.filter((category) => ids.has(category.id));
+    }, [catalog, categories]);
+
+    useEffect(() => {
+        if (
+            tab !== 'all' &&
+            !visibleCategories.some((category) => String(category.id) === tab)
+        ) {
+            setTab('all');
+        }
+    }, [tab, visibleCategories]);
+
     const visibleProducts = useMemo(() => {
         const query = search.trim().toLowerCase();
 
-        const filtered = products.filter((product) => {
+        const filtered = catalog.filter((product) => {
             if (tab !== 'all' && String(product.category_id) !== tab) {
                 return false;
             }
@@ -168,7 +217,7 @@ export default function Index({
         }
 
         return filtered.slice().sort(compareByName);
-    }, [products, search, tab]);
+    }, [catalog, search, tab]);
 
     const sellableReturnedIds = new Set(
         lines
@@ -177,43 +226,81 @@ export default function Index({
     );
 
     const addReturned = (product: ReturnProduct) => {
-        setLines((current) => {
-            const existing = current.find(
-                (line) =>
-                    line.product.id === product.id &&
-                    line.action === 'refund' &&
-                    line.condition === 'sellable',
-            );
+        const current = linesRef.current;
+        const left =
+            returnableQuantity(product) -
+            quantityOnTicket(current, product.id);
+        const minimum = product.unit === 'kg' ? 0.001 : qtyStep(product.unit);
+        const existing = current.find(
+            (line) =>
+                line.product.id === product.id &&
+                line.action === 'refund' &&
+                line.condition === 'sellable',
+        );
 
-            if (existing) {
-                const step = qtyStep(product.unit);
+        if (existing) {
+            const step = qtyStep(product.unit);
 
-                return current.map((line) =>
-                    line.key === existing.key
-                        ? {
-                              ...line,
-                              returned_quantity: String(
-                                  roundQty(Number(line.returned_quantity) + step),
-                              ),
-                          }
-                        : line,
+            if (step > left + 0.0001) {
+                toast.error(
+                    t('Only :quantity of :name left the shop.', {
+                        quantity: quantityLabel(
+                            roundQty(
+                                left + (Number(existing.returned_quantity) || 0),
+                            ),
+                        ),
+                        name: product.name,
+                    }),
                 );
+
+                return;
             }
 
-            return [
-                ...current,
-                {
-                    key: nextKey(),
-                    product,
-                    returned_quantity: '1',
-                    condition: 'sellable',
-                    action: 'refund',
-                    replacement: null,
-                    replacement_quantity: '1',
-                    supplier_id: product.last_supplier_id ?? '',
-                },
-            ];
-        });
+            const next = current.map((line) =>
+                line.key === existing.key
+                    ? {
+                          ...line,
+                          returned_quantity: String(
+                              roundQty(Number(line.returned_quantity) + step),
+                          ),
+                      }
+                    : line,
+            );
+            linesRef.current = next;
+            setLines(next);
+            setPicking({ kind: 'returned' });
+
+            return;
+        }
+
+        if (left + 0.0001 < minimum) {
+            toast.error(
+                quantityOnTicket(current, product.id) > 0
+                    ? t('Only :quantity of :name left the shop.', {
+                          quantity: quantityLabel(returnableQuantity(product)),
+                          name: product.name,
+                      })
+                    : t('This product has not left the shop.'),
+            );
+
+            return;
+        }
+
+        const next = [
+            ...current,
+            {
+                key: nextKey(),
+                product,
+                returned_quantity: String(roundQty(Math.min(1, left))),
+                condition: 'sellable' as const,
+                action: 'refund' as const,
+                replacement: null,
+                replacement_quantity: '1',
+                supplier_id: product.last_supplier_id ?? '',
+            },
+        ];
+        linesRef.current = next;
+        setLines(next);
         setPicking({ kind: 'returned' });
     };
 
@@ -279,6 +366,17 @@ export default function Index({
         if (productId === undefined) {
             const loaded = products.find((product) => product.barcode === code);
 
+            if (
+                loaded &&
+                pickingRef.current.kind === 'returned' &&
+                returnableQuantity(loaded) <= 0
+            ) {
+                toast.error(t('This product has not left the shop.'));
+                setBarcode('');
+
+                return;
+            }
+
             if (loaded) {
                 pickProduct(loaded);
                 setBarcode('');
@@ -305,6 +403,15 @@ export default function Index({
                 products.find((row) => row.id === response.data.product.id) ??
                 response.data.product;
             const pickingNow = pickingRef.current;
+
+            if (
+                pickingWhenStarted.kind === 'returned' &&
+                returnableQuantity(product) <= 0
+            ) {
+                toast.error(t('This product has not left the shop.'));
+
+                return;
+            }
 
             if (pickingWhenStarted.kind === 'replacement') {
                 if (
@@ -343,6 +450,32 @@ export default function Index({
         field: 'returned_quantity' | 'replacement_quantity',
         direction: 1 | -1,
     ) => {
+        const line = linesRef.current.find((row) => row.key === key);
+
+        if (
+            line &&
+            field === 'returned_quantity' &&
+            direction === 1
+        ) {
+            const next = roundQty(
+                Number(line.returned_quantity) + qtyStep(line.product.unit),
+            );
+            const left =
+                returnableQuantity(line.product) -
+                quantityOnTicket(linesRef.current, line.product.id, line.key);
+
+            if (next > left + 0.0001) {
+                toast.error(
+                    t('Only :quantity of :name left the shop.', {
+                        quantity: quantityLabel(Math.max(left, 0)),
+                        name: line.product.name,
+                    }),
+                );
+
+                return;
+            }
+        }
+
         setLines((current) =>
             current.map((line) => {
                 if (line.key !== key) {
@@ -390,6 +523,30 @@ export default function Index({
                         t('This product is sold by the piece. Use a whole number.'),
                     );
                     return line;
+                }
+
+                if (
+                    patch.returned_quantity !== undefined &&
+                    patch.returned_quantity !== ''
+                ) {
+                    const qty = Number(patch.returned_quantity);
+                    const max = roundQty(
+                        returnableQuantity(line.product) -
+                            quantityOnTicket(current, line.product.id, line.key),
+                    );
+
+                    if (Number.isFinite(qty) && qty > max + 0.0001) {
+                        toast.error(
+                            t('Only :quantity of :name left the shop.', {
+                                quantity: quantityLabel(Math.max(max, 0)),
+                                name: line.product.name,
+                            }),
+                        );
+                        patch = {
+                            ...patch,
+                            returned_quantity: String(Math.max(max, 0)),
+                        };
+                    }
                 }
 
                 if (
@@ -456,8 +613,28 @@ export default function Index({
             return;
         }
 
+        const returnedByProduct = new Map<number, number>();
+
         for (const line of lines) {
-            if ((Number(line.returned_quantity) || 0) < 0.001) {
+            const qty = Number(line.returned_quantity) || 0;
+            const next = roundQty(
+                (returnedByProduct.get(line.product.id) ?? 0) + qty,
+            );
+            returnedByProduct.set(line.product.id, next);
+
+            if (next > returnableQuantity(line.product) + 0.0001) {
+                toast.error(
+                    t('Only :quantity of :name left the shop.', {
+                        quantity: quantityLabel(
+                            returnableQuantity(line.product),
+                        ),
+                        name: line.product.name,
+                    }),
+                );
+                return;
+            }
+
+            if (qty < 0.001) {
                 toast.error(t('Quantity must be greater than zero.'));
                 return;
             }
@@ -573,19 +750,13 @@ export default function Index({
     };
 
     return (
-        <div className="space-y-6">
-            <p className="text-muted-foreground">
-                {t(
-                    'They brought it back. Refund the money, or give them another product. Bad items stay off the shelf until the truck comes.',
-                )}
-            </p>
-
-            <div className="grid gap-4 lg:grid-cols-[minmax(18rem,24rem)_1fr]">
-                <Card className="min-h-0 gap-0 overflow-hidden py-0">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 lg:overflow-hidden">
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:h-full lg:grid-cols-[minmax(18rem,24rem)_1fr]">
+                <Card className="min-h-0 gap-0 overflow-hidden py-0 lg:h-full">
                     <CardHeader className="border-b py-4">
                         <CardTitle>{t('Returns')}</CardTitle>
                     </CardHeader>
-                    <CardContent className="flex flex-col gap-3 py-4">
+                    <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto py-4">
                         <Field>
                             <FieldLabel htmlFor="scan_return_barcode" className="sr-only">
                                 {t('Scan barcode')}
@@ -726,7 +897,7 @@ export default function Index({
                     </CardFooter>
                 </Card>
 
-                <Card className="min-h-0 min-w-0 gap-0 overflow-hidden py-0">
+                <Card className="min-h-0 min-w-0 gap-0 overflow-hidden py-0 lg:h-full">
                     <CardHeader className="min-w-0 gap-3 overflow-hidden border-b py-4">
                         <div className="relative">
                             <Search className="pointer-events-none absolute top-1/2 start-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -747,7 +918,7 @@ export default function Index({
                                     <TabsTrigger value="all" className="flex-none px-2">
                                         {t('All')}
                                     </TabsTrigger>
-                                    {categories.map((category) => (
+                                    {visibleCategories.map((category) => (
                                         <TabsTrigger
                                             key={category.id}
                                             value={String(category.id)}
@@ -760,10 +931,16 @@ export default function Index({
                             </Tabs>
                         </div>
                     </CardHeader>
-                    <CardContent className="py-4">
+                    <CardContent className="min-h-0 py-4 lg:flex-1 lg:overflow-y-auto">
                         {visibleProducts.length === 0 ? (
                             <p className="py-12 text-center text-sm text-muted-foreground">
-                                {t('No products in this list.')}
+                                {t(
+                                    picking.kind === 'returned' &&
+                                        search.trim() === '' &&
+                                        tab === 'all'
+                                        ? 'Nothing is out of the shop.'
+                                        : 'No products in this list.',
+                                )}
                             </p>
                         ) : (
                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
@@ -808,9 +985,12 @@ export default function Index({
                                                     name={product.name}
                                                     className="h-20 w-full rounded-none object-cover sm:h-24"
                                                 />
-                                                {product.is_low_stock && !outOfStock ? (
+                                                {picking.kind === 'replacement' &&
+                                                product.is_low_stock &&
+                                                !outOfStock ? (
                                                     <StockCornerBadge kind="low" />
-                                                ) : outOfStock ? (
+                                                ) : picking.kind === 'replacement' &&
+                                                  outOfStock ? (
                                                     <StockCornerBadge kind="out" />
                                                 ) : null}
                                             </div>
@@ -830,7 +1010,7 @@ export default function Index({
                 </Card>
             </div>
 
-            <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
+            <div className="max-h-48 shrink-0 overflow-y-auto rounded-md bg-card p-4 ring-1 ring-foreground/10">
                 <h2 className="mb-3 text-lg font-semibold">
                     {t('Waiting for the company')}
                 </h2>
@@ -888,6 +1068,10 @@ export default function Index({
         </div>
     );
 }
+
+Index.layout = (page: ReactNode) => (
+    <PosLayout till="returns">{page}</PosLayout>
+);
 
 function QtyStepper({
     value,

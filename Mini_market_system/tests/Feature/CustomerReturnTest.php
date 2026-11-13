@@ -8,6 +8,8 @@ use App\Models\CustomerReturnItem;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
+use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\User;
@@ -52,6 +54,7 @@ class CustomerReturnTest extends TestCase
         ]);
         $this->receivedPurchase($cashier, $supplier, $milk);
         $this->openCaisse($cashier);
+        $this->sell($cashier, $milk);
 
         $this->actingAs($cashier)
             ->post(route('returns.store'), [
@@ -100,6 +103,7 @@ class CustomerReturnTest extends TestCase
             'stock_quantity' => 5,
         ]);
         $this->openCaisse($cashier, 200);
+        $this->sell($cashier, $product);
 
         $this->actingAs($cashier)
             ->post(route('returns.store'), [
@@ -152,6 +156,7 @@ class CustomerReturnTest extends TestCase
             'stock_quantity' => 10,
         ]);
         $this->openCaisse($cashier);
+        $this->sell($cashier, $cheap);
 
         $this->actingAs($cashier)
             ->post(route('returns.store'), [
@@ -196,6 +201,7 @@ class CustomerReturnTest extends TestCase
             'stock_quantity' => 10,
         ]);
         $this->openCaisse($cashier);
+        $this->sell($cashier, $dear);
 
         $this->actingAs($cashier)
             ->post(route('returns.store'), [
@@ -234,6 +240,7 @@ class CustomerReturnTest extends TestCase
         ]);
         $this->receivedPurchase($cashier, $supplier, $bad);
         $this->openCaisse($cashier);
+        $this->sell($cashier, $bad);
 
         $this->actingAs($cashier)
             ->from(route('returns.index'))
@@ -267,6 +274,7 @@ class CustomerReturnTest extends TestCase
         ]);
         $this->receivedPurchase($cashier, $supplier, $milk);
         $this->openCaisse($cashier);
+        $this->sell($cashier, $milk);
 
         $this->actingAs($cashier)
             ->post(route('returns.store'), [
@@ -305,6 +313,7 @@ class CustomerReturnTest extends TestCase
         $cheap = Product::factory()->create(['sale_price' => 8, 'stock_quantity' => 10]);
         $dear = Product::factory()->create(['sale_price' => 13, 'stock_quantity' => 10]);
         $this->openCaisse($cashier);
+        $this->sell($cashier, $cheap);
 
         $this->actingAs($cashier)
             ->from(route('returns.index'))
@@ -341,6 +350,8 @@ class CustomerReturnTest extends TestCase
             'stock_quantity' => 10,
         ]);
         $this->openCaisse($cashier);
+        $this->sell($cashier, $milk);
+        $this->sell($cashier, $water);
 
         $this->actingAs($cashier)
             ->post(route('returns.store'), [
@@ -394,6 +405,7 @@ class CustomerReturnTest extends TestCase
             'stock_quantity' => 10,
         ]);
         $this->openCaisse($owner);
+        $this->sell($owner, $milk);
 
         $this->actingAs($owner)
             ->post(route('returns.store'), [
@@ -430,10 +442,233 @@ class CustomerReturnTest extends TestCase
                 ->where('movements.0.reason', 'replacement for Milk 1L'));
     }
 
+    public function test_returns_page_marks_only_what_left_the_shop(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $sold = Product::factory()->create([
+            'name' => 'Coca-Cola 1L',
+            'stock_quantity' => 7,
+        ]);
+        $shelf = Product::factory()->create([
+            'name' => 'Fanta 1L',
+            'stock_quantity' => 10,
+        ]);
+        $this->openCaisse($cashier);
+        $this->sell($cashier, $sold, 3);
+
+        $this->actingAs($cashier)
+            ->get(route('returns.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Returns/Index')
+                ->has('products', 2)
+                ->where('products', function ($products) use ($sold, $shelf) {
+                    $rows = collect($products)->keyBy('id');
+
+                    return (float) $rows[$sold->id]['returnable_quantity'] === 3.0
+                        && (float) $rows[$shelf->id]['returnable_quantity'] === 0.0;
+                }));
+    }
+
+    public function test_return_is_refused_when_the_product_never_left(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $product = Product::factory()->create([
+            'sale_price' => 8,
+            'stock_quantity' => 5,
+        ]);
+        $this->openCaisse($cashier);
+
+        $this->actingAs($cashier)
+            ->from(route('returns.index'))
+            ->post(route('returns.store'), [
+                'items' => [[
+                    'action' => CustomerReturn::ACTION_REFUND,
+                    'condition' => CustomerReturn::CONDITION_SELLABLE,
+                    'returned_product_id' => $product->id,
+                    'returned_quantity' => 1,
+                ]],
+            ])
+            ->assertRedirect(route('returns.index'))
+            ->assertSessionHasErrors('items.0.returned_quantity');
+
+        $this->assertDatabaseCount('customer_returns', 0);
+        $this->assertSame('5.000', $product->refresh()->stock_quantity);
+    }
+
+    public function test_return_cannot_exceed_what_left_the_shop(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $product = Product::factory()->create([
+            'sale_price' => 8,
+            'stock_quantity' => 5,
+        ]);
+        $this->openCaisse($cashier);
+        $this->sell($cashier, $product, 1);
+
+        $this->actingAs($cashier)
+            ->from(route('returns.index'))
+            ->post(route('returns.store'), [
+                'items' => [[
+                    'action' => CustomerReturn::ACTION_REFUND,
+                    'condition' => CustomerReturn::CONDITION_SELLABLE,
+                    'returned_product_id' => $product->id,
+                    'returned_quantity' => 2,
+                ]],
+            ])
+            ->assertRedirect(route('returns.index'))
+            ->assertSessionHasErrors('items.0.returned_quantity');
+
+        $this->assertDatabaseCount('customer_returns', 0);
+        $this->assertSame('5.000', $product->refresh()->stock_quantity);
+    }
+
+    public function test_two_lines_cannot_return_more_than_what_left(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $product = Product::factory()->create([
+            'sale_price' => 8,
+            'stock_quantity' => 5,
+        ]);
+        $this->openCaisse($cashier);
+        $this->sell($cashier, $product, 1);
+
+        $this->actingAs($cashier)
+            ->from(route('returns.index'))
+            ->post(route('returns.store'), [
+                'items' => [
+                    [
+                        'action' => CustomerReturn::ACTION_REFUND,
+                        'condition' => CustomerReturn::CONDITION_SELLABLE,
+                        'returned_product_id' => $product->id,
+                        'returned_quantity' => 1,
+                    ],
+                    [
+                        'action' => CustomerReturn::ACTION_REFUND,
+                        'condition' => CustomerReturn::CONDITION_DEFECTIVE,
+                        'returned_product_id' => $product->id,
+                        'returned_quantity' => 1,
+                        'supplier_id' => Supplier::factory()->create()->id,
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('returns.index'))
+            ->assertSessionHasErrors('items.1.returned_quantity');
+
+        $this->assertDatabaseCount('customer_returns', 0);
+    }
+
+    public function test_a_replacement_that_left_can_be_brought_back(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $milk = Product::factory()->create([
+            'name' => 'Milk 1L',
+            'sale_price' => 8,
+            'stock_quantity' => 5,
+        ]);
+        $fanta = Product::factory()->create([
+            'name' => 'Fanta 1L',
+            'sale_price' => 8,
+            'stock_quantity' => 4,
+        ]);
+        $this->openCaisse($cashier, 20);
+        $this->sell($cashier, $milk, 1);
+
+        $this->actingAs($cashier)
+            ->post(route('returns.store'), [
+                'items' => [[
+                    'action' => CustomerReturn::ACTION_REPLACE,
+                    'condition' => CustomerReturn::CONDITION_SELLABLE,
+                    'returned_product_id' => $milk->id,
+                    'returned_quantity' => 1,
+                    'replacement_product_id' => $fanta->id,
+                    'replacement_quantity' => 1,
+                ]],
+            ])
+            ->assertRedirect(route('returns.index'));
+
+        $this->actingAs($cashier)
+            ->get(route('returns.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('products', function ($products) use ($milk, $fanta) {
+                    $rows = collect($products)->keyBy('id');
+
+                    return (float) $rows[$milk->id]['returnable_quantity'] === 0.0
+                        && (float) $rows[$fanta->id]['returnable_quantity'] === 1.0;
+                }));
+
+        $this->actingAs($cashier)
+            ->post(route('returns.store'), [
+                'items' => [[
+                    'action' => CustomerReturn::ACTION_REFUND,
+                    'condition' => CustomerReturn::CONDITION_SELLABLE,
+                    'returned_product_id' => $fanta->id,
+                    'returned_quantity' => 1,
+                ]],
+            ])
+            ->assertRedirect(route('returns.index'));
+
+        $this->assertSame('4.000', $fanta->refresh()->stock_quantity);
+    }
+
+    public function test_a_small_weight_that_left_can_be_returned(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $product = Product::factory()->create([
+            'unit' => Product::UNIT_KG,
+            'sale_price' => 20,
+            'stock_quantity' => 2,
+        ]);
+        $this->openCaisse($cashier, 50);
+        $this->sell($cashier, $product, 0.05);
+
+        $this->actingAs($cashier)
+            ->post(route('returns.store'), [
+                'items' => [[
+                    'action' => CustomerReturn::ACTION_REFUND,
+                    'condition' => CustomerReturn::CONDITION_SELLABLE,
+                    'returned_product_id' => $product->id,
+                    'returned_quantity' => 0.05,
+                ]],
+            ])
+            ->assertRedirect(route('returns.index'));
+
+        $this->assertSame('2.050', $product->refresh()->stock_quantity);
+    }
+
     private function openCaisse(User $user, float $opening = 0): void
     {
         $this->actingAs($user)
             ->post(route('caisse.open'), ['opening_amount' => $opening]);
+    }
+
+    private function sell(User $user, Product $product, float $quantity = 1): void
+    {
+        $session = CashSession::query()
+            ->where('user_id', $user->id)
+            ->where('status', CashSession::STATUS_OPEN)
+            ->firstOrFail();
+
+        $sale = Sale::query()->create([
+            'reference' => Sale::nextReference(),
+            'user_id' => $user->id,
+            'cash_session_id' => $session->id,
+            'status' => Sale::STATUS_COMPLETED,
+            'payment_method' => Sale::PAYMENT_CASH,
+            'total' => 0,
+            'amount_paid' => 0,
+            'change_amount' => 0,
+            'remaining_amount' => 0,
+        ]);
+
+        SaleItem::query()->create([
+            'sale_id' => $sale->id,
+            'product_id' => $product->id,
+            'quantity' => $quantity,
+            'unit_price' => $product->sale_price,
+            'unit_cost' => $product->cost_price,
+        ]);
     }
 
     private function receivedPurchase(User $user, Supplier $supplier, Product $product): void

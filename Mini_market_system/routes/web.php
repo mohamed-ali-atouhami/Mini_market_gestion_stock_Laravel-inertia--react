@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\CashSessionController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CreditController;
 use App\Http\Controllers\CustomerReturnController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -91,6 +91,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/stock/{product}/adjust', [StockController::class, 'adjust'])->name('stock.adjust');
 
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
 
         Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
         Route::patch('/settings', [SettingController::class, 'update'])->name('settings.update');

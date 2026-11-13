@@ -9,6 +9,8 @@ use App\Models\CustomerReturnItem;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
+use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\User;
@@ -17,9 +19,7 @@ use Illuminate\Validation\ValidationException;
 
 class ReturnService
 {
-    public function __construct(private StockService $stock)
-    {
-    }
+    public function __construct(private StockService $stock) {}
 
     /**
      * @param  array{
@@ -82,9 +82,10 @@ class ReturnService
             $parsed = [];
             $returnedValue = 0.0;
             $replacementValue = 0.0;
+            $returnable = $this->returnableByProduct($productIds);
 
             foreach ($items as $index => $item) {
-                $parsed[] = $this->parseItem($item, $index, $locked);
+                $parsed[] = $this->parseItem($item, $index, $locked, $returnable);
                 $returnedValue = round($returnedValue + $parsed[$index]['returned_value'], 2);
                 $replacementValue = round($replacementValue + $parsed[$index]['replacement_value'], 2);
             }
@@ -209,6 +210,67 @@ class ReturnService
         });
     }
 
+    /**
+     * Quantity that left in a completed sale or as a replacement, and has not come back yet.
+     *
+     * @param  list<int>  $productIds
+     * @return array<int, float>
+     */
+    public function returnableByProduct(array $productIds): array
+    {
+        $productIds = array_values(array_unique(array_map('intval', $productIds)));
+
+        if ($productIds === []) {
+            return [];
+        }
+
+        $sold = [];
+
+        foreach (SaleItem::query()
+            ->selectRaw('sale_items.product_id as product_id, SUM(sale_items.quantity) as quantity')
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sales.status', Sale::STATUS_COMPLETED)
+            ->whereIn('sale_items.product_id', $productIds)
+            ->groupBy('sale_items.product_id')
+            ->get() as $row) {
+            $sold[(int) $row->product_id] = (float) $row->quantity;
+        }
+
+        $returned = [];
+
+        foreach (CustomerReturnItem::query()
+            ->selectRaw('returned_product_id as product_id, SUM(returned_quantity) as quantity')
+            ->whereIn('returned_product_id', $productIds)
+            ->groupBy('returned_product_id')
+            ->get() as $row) {
+            $returned[(int) $row->product_id] = (float) $row->quantity;
+        }
+
+        $givenInstead = [];
+
+        foreach (CustomerReturnItem::query()
+            ->selectRaw('replacement_product_id as product_id, SUM(replacement_quantity) as quantity')
+            ->where('action', CustomerReturn::ACTION_REPLACE)
+            ->whereNotNull('replacement_product_id')
+            ->whereIn('replacement_product_id', $productIds)
+            ->groupBy('replacement_product_id')
+            ->get() as $row) {
+            $givenInstead[(int) $row->product_id] = (float) $row->quantity;
+        }
+
+        $map = [];
+
+        foreach ($productIds as $id) {
+            $left = round(
+                ($sold[$id] ?? 0) + ($givenInstead[$id] ?? 0) - ($returned[$id] ?? 0),
+                3,
+            );
+            $map[$id] = $left > 0 ? $left : 0.0;
+        }
+
+        return $map;
+    }
+
     public function lastSupplierId(int $productId): ?int
     {
         $id = PurchaseItem::query()
@@ -224,6 +286,7 @@ class ReturnService
     /**
      * @param  array<string, mixed>  $item
      * @param  array<int, Product>  $locked
+     * @param  array<int, float>  $returnable
      * @return array{
      *     action: string,
      *     condition: string,
@@ -241,7 +304,7 @@ class ReturnService
      *     supplier_status: string
      * }
      */
-    private function parseItem(array $item, int $index, array $locked): array
+    private function parseItem(array $item, int $index, array $locked, array &$returnable): array
     {
         $action = $item['action'] ?? '';
         $condition = $item['condition'] ?? '';
@@ -267,6 +330,17 @@ class ReturnService
         }
 
         $returned = $locked[(int) $item['returned_product_id']];
+        $available = $returnable[$returned->id] ?? 0.0;
+
+        if ($returnedQty > $available + 0.0001) {
+            throw ValidationException::withMessages([
+                $field('returned_quantity') => $available <= 0
+                    ? 'This product has not left the shop.'
+                    : 'Only '.rtrim(rtrim(number_format($available, 3, '.', ''), '0'), '.').' of '.$returned->name.' left the shop.',
+            ]);
+        }
+
+        $returnable[$returned->id] = round($available - $returnedQty, 3);
         $this->assertPieceQuantity($returned, $returnedQty, $field('returned_quantity'));
         $returnedPrice = round((float) $returned->sale_price, 2);
         $returnedCost = round((float) $returned->cost_price, 2);

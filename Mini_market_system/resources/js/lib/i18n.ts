@@ -47,6 +47,14 @@ function interpolatedKey(key: string): { template: string; replace: Replacements
         };
     }
 
+    const stillInShop = /^Only ([\d.]+) of (.+) left the shop\.$/.exec(key);
+    if (stillInShop) {
+        return {
+            template: 'Only :quantity of :name left the shop.',
+            replace: { quantity: stillInShop[1], name: stillInShop[2] },
+        };
+    }
+
     const throttle = /^Too many login attempts. Try again in (\d+) seconds\.$/.exec(key);
     if (throttle) {
         return {

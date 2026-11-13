@@ -1,3 +1,4 @@
+import BtnExportExcl from '@/Components/Btn_export_excl';
 import { ProductNameCell, ProductThumb } from '@/Components/ProductThumb';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
@@ -172,6 +173,20 @@ export default function Index({
     return (
         <div className="space-y-6">
             <div className="rounded-md bg-card p-4 ring-1 ring-foreground/10">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm text-muted-foreground">
+                        {filters.from} — {filters.to}
+                    </p>
+                    <BtnExportExcl
+                        className="w-full sm:w-auto"
+                        href={route('reports.pdf')}
+                        label={t('Download PDF')}
+                        params={{
+                            from: filters.from,
+                            to: filters.to,
+                        }}
+                    />
+                </div>
                 <form
                     className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end"
                     onSubmit={(e) => {
