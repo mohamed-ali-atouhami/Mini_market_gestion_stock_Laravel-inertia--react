@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    working-directory: Mini_market_system
+
 jobs:
   tests:
     runs-on: ubuntu-latest
