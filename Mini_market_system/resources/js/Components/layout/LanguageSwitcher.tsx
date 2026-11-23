@@ -1,11 +1,18 @@
-import { useLocale } from '@/lib/i18n';
+import { AppLocale, useLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { router } from '@inertiajs/react';
+
+const languages: { locale: AppLocale; label: string }[] = [
+    { locale: 'en', label: 'EN' },
+    { locale: 'fr', label: 'FR' },
+    { locale: 'es', label: 'ES' },
+    { locale: 'ar', label: 'عربي' },
+];
 
 export function LanguageSwitcher({ className }: { className?: string }) {
     const locale = useLocale();
 
-    const switchTo = (next: 'en' | 'ar') => {
+    const switchTo = (next: AppLocale) => {
         if (next === locale) {
             return;
         }
@@ -27,30 +34,21 @@ export function LanguageSwitcher({ className }: { className?: string }) {
                 className,
             )}
         >
-            <button
-                type="button"
-                className={cn(
-                    'rounded px-2 py-1 transition-colors',
-                    locale === 'en'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground',
-                )}
-                onClick={() => switchTo('en')}
-            >
-                EN
-            </button>
-            <button
-                type="button"
-                className={cn(
-                    'rounded px-2 py-1 transition-colors',
-                    locale === 'ar'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground',
-                )}
-                onClick={() => switchTo('ar')}
-            >
-                عربي
-            </button>
+            {languages.map((language) => (
+                <button
+                    key={language.locale}
+                    type="button"
+                    className={cn(
+                        'rounded px-2 py-1 transition-colors',
+                        locale === language.locale
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-muted-foreground hover:text-foreground',
+                    )}
+                    onClick={() => switchTo(language.locale)}
+                >
+                    {language.label}
+                </button>
+            ))}
         </div>
     );
 }

@@ -7,11 +7,12 @@ SQLite stays the database. The shortcut does not replace backups; it only starts
 ## Every morning (after the shortcut exists)
 
 1. Double-click **Mini market** on the desktop.
-2. Chrome (or Edge) opens `http://127.0.0.1:8000`.
-3. Log in (`younes` / `password` for the owner).
-4. Open the caisse, then sell.
+2. An opening screen appears at once: the logo and a spinner. PHP is starting behind that screen.
+3. The sign-in page opens when the shop is ready (`http://127.0.0.1:8000`).
+4. Log in (`younes` / `password` for the owner).
+5. Open the caisse, then sell.
 
-No `php artisan serve`. No `npm run`. PHP starts when the shop window opens and **stops when you close that window**.
+No `php artisan serve`. No `npm run`. PHP starts when you use the shortcut and **stops when you close that window**. The opening screen is only there while the shop is starting. If the shop is already running, the shortcut opens it directly.
 
 You do **not** need `stop-shop.ps1` for a normal day. That command is only a backup if PHP is stuck.
 

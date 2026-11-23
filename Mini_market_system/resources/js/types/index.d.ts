@@ -84,7 +84,7 @@ export type PageProps<
         currency: string;
         low_stock_enabled: boolean;
     };
-    locale: 'en' | 'ar';
+    locale: 'en' | 'fr' | 'es' | 'ar';
     flash: {
         status: string | null;
         error: string | null;

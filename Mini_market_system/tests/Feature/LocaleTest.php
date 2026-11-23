@@ -42,10 +42,38 @@ class LocaleTest extends TestCase
             );
     }
 
-    public function test_invalid_locale_is_rejected(): void
+    public function test_guest_can_switch_locale_to_french(): void
     {
         $this->from(route('login'))
             ->post(route('locale.update'), ['locale' => 'fr'])
+            ->assertRedirect(route('login'));
+
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Auth/Login')
+                ->where('locale', 'fr')
+            );
+    }
+
+    public function test_guest_can_switch_locale_to_spanish(): void
+    {
+        $this->from(route('login'))
+            ->post(route('locale.update'), ['locale' => 'es'])
+            ->assertRedirect(route('login'));
+
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Auth/Login')
+                ->where('locale', 'es')
+            );
+    }
+
+    public function test_invalid_locale_is_rejected(): void
+    {
+        $this->from(route('login'))
+            ->post(route('locale.update'), ['locale' => 'de'])
             ->assertSessionHasErrors('locale');
     }
 

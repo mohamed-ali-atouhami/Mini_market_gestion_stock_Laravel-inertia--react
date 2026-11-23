@@ -12,6 +12,7 @@ use App\Models\SaleItem;
 use App\Models\Setting;
 use App\Models\StockMovement;
 use App\Support\Formats;
+use App\Support\LocaleCatalog;
 use App\Support\SimplePdf;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -74,35 +75,35 @@ class ReportController extends Controller
             fn (array $day): bool => $day['tickets'] > 0,
         ));
 
-        $pdf = new SimplePdf($shopName);
+        $pdf = new SimplePdf($shopName, app()->getLocale() === 'ar', $this->pdfText('Page'));
         $pdf->title($shopName);
-        $pdf->subtitle('Report');
+        $pdf->subtitle($this->pdfText('Report'));
         $pdf->subtitle($this->periodLabel($from, $to));
         $pdf->metrics([
-            ['label' => 'Sales', 'value' => $this->pdfMoney($summary['sales_total'], $currency)],
-            ['label' => 'Tickets', 'value' => (string) $summary['ticket_count']],
+            ['label' => $this->pdfText('Sales'), 'value' => $this->pdfMoney($summary['sales_total'], $currency)],
+            ['label' => $this->pdfText('Tickets'), 'value' => (string) $summary['ticket_count']],
             [
-                'label' => 'Profit',
+                'label' => $this->pdfText('Profit'),
                 'value' => $this->pdfMoney($summary['profit'], $currency),
                 'color' => $summary['profit'] < 0 ? '0.75 0.15 0.15' : '0.09 0.45 0.20',
             ],
-            ['label' => 'Purchases', 'value' => $this->pdfMoney($summary['purchases_total'], $currency)],
+            ['label' => $this->pdfText('Purchases'), 'value' => $this->pdfMoney($summary['purchases_total'], $currency)],
         ]);
 
-        $pdf->heading('Sales by day');
+        $pdf->heading($this->pdfText('Sales by day'));
 
         if ($soldDays === []) {
-            $pdf->paragraph('No sales in this period.');
+            $pdf->paragraph($this->pdfText('No sales in this period.'));
         } else {
             if (count($days) <= 16) {
                 $pdf->bars(array_map(fn (array $day): array => [
-                    'label' => count($days) <= 7 ? $day['weekday'] : $day['date_label'],
+                    'label' => count($days) <= 7 ? $this->pdfText($day['weekday']) : $day['date_label'],
                     'value' => $day['total'],
                 ], $days));
             }
 
             $pdf->table(
-                ['Date', 'Tickets', 'Sales'],
+                [$this->pdfText('Date'), $this->pdfText('Tickets'), $this->pdfText('Sales')],
                 array_map(fn (array $day): array => [
                     $day['day'],
                     (string) $day['tickets'],
@@ -112,14 +113,14 @@ class ReportController extends Controller
             );
         }
 
-        $pdf->heading('Top products');
+        $pdf->heading($this->pdfText('Top products'));
         $products = $this->topProducts($from, $to, 10);
 
         if ($products === []) {
-            $pdf->paragraph('No products sold in this period.');
+            $pdf->paragraph($this->pdfText('No products sold in this period.'));
         } else {
             $pdf->table(
-                ['Product', 'Qty', 'Sales'],
+                [$this->pdfText('Product'), $this->pdfText('Qty'), $this->pdfText('Sales')],
                 array_map(fn (array $product): array => [
                     $product['name'],
                     $product['quantity'],
@@ -129,14 +130,14 @@ class ReportController extends Controller
             );
         }
 
-        $pdf->heading('Purchases');
+        $pdf->heading($this->pdfText('Purchases'));
         $suppliers = $this->purchasesBySupplier($from, $to);
 
         if ($suppliers === []) {
-            $pdf->paragraph('No purchases in this period.');
+            $pdf->paragraph($this->pdfText('No purchases in this period.'));
         } else {
             $pdf->table(
-                ['Supplier', 'Deliveries', 'Total'],
+                [$this->pdfText('Supplier'), $this->pdfText('Deliveries'), $this->pdfText('Total')],
                 array_map(fn (array $supplier): array => [
                     $supplier['name'],
                     (string) $supplier['deliveries'],
@@ -146,25 +147,30 @@ class ReportController extends Controller
             );
         }
 
-        $pdf->heading('Caisse');
+        $pdf->heading($this->pdfText('Caisse'));
         $sessions = $this->sessions($from, $to);
 
         if ($sessions === []) {
-            $pdf->paragraph('No caisse sessions in this period.');
+            $pdf->paragraph($this->pdfText('No caisse sessions in this period.'));
         } else {
             $pdf->table(
-                ['Cashier', 'Opened', 'Status', 'Difference'],
+                [
+                    $this->pdfText('Cashier'),
+                    $this->pdfText('Opened'),
+                    $this->pdfText('Status'),
+                    $this->pdfText('Difference'),
+                ],
                 array_map(fn (array $session): array => [
                     (string) ($session['cashier'] ?? ''),
                     (string) ($session['opened_at'] ?? ''),
-                    (string) $session['status'],
+                    $this->pdfText($session['status'] === 'open' ? 'Open' : 'Closed'),
                     $session['difference'] ?? '-',
                 ], $sessions),
                 [0.28, 0.34, 0.16, 0.22],
             );
 
             if (count($sessions) === 50) {
-                $pdf->paragraph('Latest 50 caisse sessions in this period.');
+                $pdf->paragraph($this->pdfText('Latest 50 caisse sessions in this period.'));
             }
         }
 
@@ -215,12 +221,28 @@ class ReportController extends Controller
         ];
     }
 
+    private function pdfText(string $key): string
+    {
+        return LocaleCatalog::line(app()->getLocale(), $key);
+    }
+
     private function periodLabel(string $from, string $to): string
     {
-        $start = Carbon::parse($from)->format('j M Y');
-        $end = Carbon::parse($to)->format('j M Y');
+        $start = $this->periodDate($from);
 
-        return $from === $to ? $start : $start.' - '.$end;
+        return $from === $to ? $start : $start.' - '.$this->periodDate($to);
+    }
+
+    private function periodDate(string $day): string
+    {
+        $date = Carbon::parse($day);
+        $locale = app()->getLocale();
+
+        if ($locale === 'en') {
+            return $date->format('j M Y');
+        }
+
+        return $date->locale($locale)->translatedFormat('j M Y');
     }
 
     private function pdfMoney(float $amount, string $currency): string

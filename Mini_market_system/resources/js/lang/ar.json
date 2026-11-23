@@ -408,5 +408,13 @@
     "Enter the username.": "أدخل اسم المستخدم.",
     "This username is already used.": "اسم المستخدم هذا مستخدم مسبقاً.",
     "Enter the password.": "أدخل كلمة المرور.",
-    "Choose a role.": "اختر دوراً."
+    "Choose a role.": "اختر دوراً.",
+    "Report": "تقرير",
+    "Page": "صفحة",
+    "No products sold in this period.": "لم يُبع أي منتج في هذه الفترة.",
+    "No purchases in this period.": "لا مشتريات في هذه الفترة.",
+    "Latest 50 caisse sessions in this period.": "آخر 50 جلسة صندوق في هذه الفترة.",
+    "Someone left their till open. Count that drawer, then close it here.": "أحدهم ترك الصندوق مفتوحاً. عدّ هذا الدرج، ثم أغلقه من هنا.",
+    "You cannot disable your own account.": "لا يمكنك تعطيل حسابك.",
+    "There must be at least one active owner.": "يجب أن يبقى مالك واحد نشط على الأقل."
 }

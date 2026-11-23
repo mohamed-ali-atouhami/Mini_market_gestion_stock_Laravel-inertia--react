@@ -318,6 +318,43 @@ class ReportTest extends TestCase
         $this->assertStringNotContainsString('December Milk', $monthBody);
     }
 
+    public function test_report_pdf_uses_the_app_language(): void
+    {
+        $owner = User::factory()->owner()->create();
+        $product = Product::factory()->create(['name' => 'Today Milk']);
+        $this->sellOn($owner, $product, '2026-11-01 11:00:00', 12);
+
+        $french = $this->actingAs($owner)
+            ->withSession(['locale' => 'fr'])
+            ->get(route('reports.pdf', ['from' => '2026-11-01', 'to' => '2026-11-01']));
+
+        $french->assertOk();
+        $frenchBody = $french->getContent();
+        $this->assertStringContainsString('(Rapport)', $frenchBody);
+        $this->assertStringContainsString('(Ventes)', $frenchBody);
+        $this->assertStringContainsString('Today Milk', $frenchBody);
+        $this->assertStringNotContainsString('(Report)', $frenchBody);
+
+        $spanish = $this->actingAs($owner)
+            ->withSession(['locale' => 'es'])
+            ->get(route('reports.pdf', ['from' => '2026-11-01', 'to' => '2026-11-01']));
+
+        $spanish->assertOk();
+        $spanishBody = $spanish->getContent();
+        $this->assertStringContainsString('(Informe)', $spanishBody);
+        $this->assertStringContainsString('(Ventas)', $spanishBody);
+
+        $arabic = $this->actingAs($owner)
+            ->withSession(['locale' => 'ar'])
+            ->get(route('reports.pdf', ['from' => '2026-11-01', 'to' => '2026-11-01']));
+
+        $arabic->assertOk();
+        $arabicBody = $arabic->getContent();
+        $this->assertStringContainsString('/FontFile2', $arabicBody);
+        $this->assertStringNotContainsString('(Report)', $arabicBody);
+        $this->assertStringNotContainsString('(Ventes)', $arabicBody);
+    }
+
     private function sellOn(User $user, Product $product, string $at, float $total): void
     {
         $session = CashSession::query()->create([

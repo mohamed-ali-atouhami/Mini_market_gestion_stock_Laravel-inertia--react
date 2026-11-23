@@ -1,4 +1,4 @@
-# Stops the hidden php artisan serve started by the Mini market shortcut.
+# Stops the hidden PHP server started by the Mini market shortcut.
 
 $port = 8000
 $killed = $false

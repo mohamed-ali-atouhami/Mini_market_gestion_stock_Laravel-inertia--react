@@ -1,13 +1,19 @@
 import ar from '@/lang/ar.json';
+import es from '@/lang/es.json';
+import fr from '@/lang/fr.json';
 import { PageProps } from '@/types';
 import { usePage } from '@inertiajs/react';
 import { useCallback } from 'react';
 
-export type AppLocale = 'en' | 'ar';
+export type AppLocale = 'en' | 'fr' | 'es' | 'ar';
 
 type Replacements = Record<string, string | number>;
 
-const arabic = ar as Record<string, string>;
+const catalogs: Partial<Record<AppLocale, Record<string, string>>> = {
+    ar: ar as Record<string, string>,
+    es: es as Record<string, string>,
+    fr: fr as Record<string, string>,
+};
 
 function interpolatedKey(key: string): { template: string; replace: Replacements } | null {
     const stock = /^Not enough stock for (.+)\.$/.exec(key);
@@ -77,7 +83,7 @@ export function translate(
         return translate(locale, interpolated.template, interpolated.replace);
     }
 
-    let text = locale === 'ar' ? (arabic[key] ?? key) : key;
+    let text = catalogs[locale]?.[key] ?? key;
 
     if (replace) {
         const names = Object.keys(replace).sort((a, b) => b.length - a.length);

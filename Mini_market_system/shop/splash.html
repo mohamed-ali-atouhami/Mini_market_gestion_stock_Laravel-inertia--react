@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mini market</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #121820 center / cover no-repeat;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.28)), url("/bg.jpg");
+            color: #fff;
+            font-family: "Segoe UI", system-ui, sans-serif;
+        }
+
+        .box {
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 4.5rem;
+            height: 4.5rem;
+            margin: 0 auto;
+            padding: 0.25rem;
+            border-radius: 999px;
+            background: #d7e0ea;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .rule {
+            width: 3rem;
+            height: 1px;
+            margin: 1.25rem auto 0;
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .spinner {
+            width: 1.65rem;
+            height: 1.65rem;
+            margin: 1.25rem auto 0;
+            border: 2px solid rgba(255, 255, 255, 0.28);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        p {
+            margin: 0.85rem 0 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        #error {
+            max-width: 16rem;
+            margin-right: auto;
+            margin-left: auto;
+            font-size: 0.85rem;
+            font-weight: 400;
+            line-height: 1.4;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .spinner {
+                animation: none;
+                border-top-color: rgba(255, 255, 255, 0.28);
+                border-right-color: #fff;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="box" role="status" aria-live="polite">
+        <div class="logo">
+            <img src="/logo.png" alt="" />
+        </div>
+        <div class="rule"></div>
+        <div id="spinner" class="spinner"></div>
+        <p id="status"></p>
+        <p id="error" class="hidden"></p>
+    </div>
+    <script>
+        const copy = {
+            en: {
+                opening: "Opening…",
+                still: "Still opening…",
+                failed: "Mini market did not open",
+                retry: "Close this window, then open Mini market again.",
+            },
+            fr: {
+                opening: "Ouverture…",
+                still: "Ouverture en cours…",
+                failed: "Mini market ne s'est pas ouvert",
+                retry: "Fermez cette fenêtre, puis ouvrez Mini market à nouveau.",
+            },
+            es: {
+                opening: "Abriendo…",
+                still: "Sigue abriendo…",
+                failed: "Mini market no se abrió",
+                retry: "Cierra esta ventana y vuelve a abrir Mini market.",
+            },
+            ar: {
+                opening: "جارٍ الفتح…",
+                still: "ما زال الفتح جارياً…",
+                failed: "لم يُفتح Mini market",
+                retry: "أغلق هذه النافذة، ثم افتح Mini market من جديد.",
+            },
+        };
+
+        const params = new URLSearchParams(location.search);
+        const requested = params.get("lang");
+        const lang = Object.prototype.hasOwnProperty.call(copy, requested) ? requested : "en";
+        const text = copy[lang];
+        const nextUrl = params.get("next") || "http://127.0.0.1:8000/login";
+        const statusEl = document.getElementById("status");
+        const errorEl = document.getElementById("error");
+        const spinnerEl = document.getElementById("spinner");
+        const started = Date.now();
+        const giveUpAfterMs = 90000;
+
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+        statusEl.textContent = text.opening;
+
+        function showFailure() {
+            spinnerEl.classList.add("hidden");
+            statusEl.textContent = text.failed;
+            errorEl.textContent = text.retry;
+            errorEl.classList.remove("hidden");
+        }
+
+        async function poll() {
+            const elapsed = Date.now() - started;
+
+            if (elapsed > giveUpAfterMs) {
+                showFailure();
+                return;
+            }
+
+            if (elapsed > 8000) {
+                statusEl.textContent = text.still;
+            }
+
+            try {
+                const response = await fetch("/status?t=" + Date.now(), { cache: "no-store" });
+                if (response.ok) {
+                    statusEl.textContent = text.opening;
+                    location.replace(nextUrl);
+                    return;
+                }
+            } catch (error) {
+                // The opener is still starting, or this page outlived it.
+            }
+
+            setTimeout(poll, 300);
+        }
+
+        poll();
+    </script>
+</body>
+</html>
